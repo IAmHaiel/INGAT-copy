@@ -1,13 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getConnectedPublicKey, isFreighterInstalled, requestWalletAccess, getFreighterNetwork } from '@/lib/stellar/freighter';
 import { WalletConnectionStatus } from '@/types/wallet';
+
+const WALLET_SESSION_KEY = 'ingat_wallet_connected';
 
 export const useWallet = () => {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
   const [connectionStatus, setConnectionStatus] = useState<WalletConnectionStatus>('idle');
   const [error, setError] = useState<string | null>(null);
+  const initDone = useRef(false);
 
   const checkWalletConnection = useCallback(async () => {
     try {
@@ -72,6 +76,7 @@ export const useWallet = () => {
       setPublicKey(address);
       setIsConnected(true);
       setConnectionStatus('idle');
+      sessionStorage.setItem(WALLET_SESSION_KEY, 'true');
     } catch {
       setError('Connection request failed');
       setConnectionStatus('error');
@@ -85,24 +90,28 @@ export const useWallet = () => {
     setIsConnected(false);
     setConnectionStatus('idle');
     setError(null);
+    sessionStorage.removeItem(WALLET_SESSION_KEY);
   }, []);
 
   useEffect(() => {
-    let active = true;
-    Promise.resolve().then(() => {
-      if (active) {
-        checkWalletConnection();
+    if (initDone.current) return;
+    initDone.current = true;
+
+    const init = async () => {
+      if (sessionStorage.getItem(WALLET_SESSION_KEY)) {
+        await checkWalletConnection();
       }
-    });
-    return () => {
-      active = false;
+      setIsInitializing(false);
     };
+
+    init();
   }, [checkWalletConnection]);
 
   return {
     publicKey,
     isConnected,
     isConnecting,
+    isInitializing,
     connectionStatus,
     error,
     connect,

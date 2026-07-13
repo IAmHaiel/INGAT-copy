@@ -12,7 +12,7 @@ import { toast } from 'sonner';
  
 export default function DepositFormContainer() {
   const router = useRouter();
-  const { publicKey, isConnected, disconnect } = useWalletContext();
+  const { publicKey, isConnected, isInitializing, disconnect } = useWalletContext();
  
   const { deposit, isSubmitting, errors, txError } = useDeposit(publicKey, (hash) => {
     toast.success('Deposit Split Completed!', {
@@ -27,10 +27,11 @@ export default function DepositFormContainer() {
   });
 
   useEffect(() => {
+    if (isInitializing) return;
     if (!isConnected) {
       router.push('/');
     }
-  }, [isConnected, router]);
+  }, [isConnected, isInitializing, router]);
 
   if (!isConnected) {
     return (

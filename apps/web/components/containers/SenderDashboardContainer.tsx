@@ -13,7 +13,7 @@ import { formatXlmWithUsd } from '@/lib/utils/price';
 
 export default function SenderDashboardContainer() {
   const router = useRouter();
-  const { publicKey, isConnected, disconnect } = useWalletContext();
+  const { publicKey, isConnected, isInitializing, disconnect } = useWalletContext();
   const { allocations, isLoading: historyLoading } = useAllocationHistory(publicKey);
   const { priceUsd } = useXlmPrice();
   const [currentTime, setCurrentTime] = useState<number>(0);
@@ -25,10 +25,11 @@ export default function SenderDashboardContainer() {
   }, []);
 
   useEffect(() => {
+    if (isInitializing) return;
     if (!isConnected) {
       router.push('/');
     }
-  }, [isConnected, router]);
+  }, [isConnected, isInitializing, router]);
 
   if (!isConnected) {
     return (

@@ -13,22 +13,70 @@ import { useWithdraw } from '@/hooks/useWithdraw';
 
 export default function ReceiverDashboardContainer() {
   const router = useRouter();
-  const { publicKey, isConnected, disconnect } = useWalletContext();
+  const { 
+    publicKey, 
+    isConnected, 
+    isInitializing,
+    disconnect, 
+    isAuthenticating, 
+    authError, 
+    authenticate,
+    supabaseClient
+  } = useWalletContext();
   const { balances, isLoading, error: fetchError, refreshBalances } = useBucketBalances(publicKey);
   const { withdraw, isWithdrawing, error: withdrawError, txHash } = useWithdraw(publicKey, () => {
     refreshBalances();
   });
 
   useEffect(() => {
+    if (isInitializing) return;
     if (!isConnected) {
       router.push('/');
     }
-  }, [isConnected, router]);
+  }, [isConnected, isInitializing, router]);
 
-  if (!isConnected) {
+  if (!isConnected || (isAuthenticating && !supabaseClient)) {
     return (
       <div className="flex justify-center items-center h-screen">
         <span className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin"></span>
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen bg-background-warm px-4">
+        <div className="bg-white p-8 rounded-2xl border border-outline-variant shadow-lg max-w-md w-full text-center space-y-6 animate-[fadeIn_200ms_ease-out]">
+          <div className="bg-amber-50 text-amber-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto border border-amber-100">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-secondary">Signature Required</h2>
+            <p className="text-sm text-on-surface-variant leading-relaxed">
+              We need your secure signature to authenticate and load your protected vault buckets.
+            </p>
+            {authError !== 'The user rejected this request.' && (
+              <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 mt-2 font-mono break-words">
+                {authError}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => publicKey && authenticate(publicKey)}
+            disabled={isAuthenticating}
+            className="w-full bg-secondary text-white py-3 rounded-lg font-bold transition-all active:scale-95 cursor-pointer shadow-md hover:shadow-lg border-0 disabled:opacity-50"
+          >
+            {isAuthenticating ? 'Waiting for signature...' : 'Sign Authentication Message'}
+          </button>
+          <button
+            onClick={disconnect}
+            className="text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer border-0 bg-transparent"
+          >
+            Disconnect Wallet
+          </button>
+        </div>
       </div>
     );
   }
@@ -94,7 +142,7 @@ export default function ReceiverDashboardContainer() {
           <p className="text-on-surface-variant text-xs mt-1">Once a sender deposits funds for you, they will appear here.</p>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6 max-h-[550px] overflow-y-auto p-4 border border-outline-variant rounded-2xl bg-surface-container/20">
           {balances.map((bucket) => (
             <div key={bucket.id} className="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b border-outline-variant pb-3 mb-2">
@@ -103,7 +151,7 @@ export default function ReceiverDashboardContainer() {
                     Bucket #{bucket.id + 1}
                   </span>
                   <span className="text-xs text-on-surface-variant font-medium">
-                    Sender: <span className="font-mono bg-surface-container px-2 py-0.5 rounded text-[11px] select-all">{bucket.sender}</span>
+                    Sender: <span className="inline-block max-w-[150px] sm:max-w-none truncate font-mono bg-surface-container px-2 py-0.5 rounded text-[11px] select-all align-middle" title={bucket.sender}>{bucket.sender}</span>
                   </span>
                 </div>
               </div>

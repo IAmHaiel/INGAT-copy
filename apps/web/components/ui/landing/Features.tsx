@@ -1,27 +1,27 @@
 import React from 'react';
-import { ShieldAlert, Zap, Layers, BadgePercent } from 'lucide-react';
+import { SplitSquareVertical, Lock, Wallet, LayoutDashboard } from 'lucide-react';
 
 export default function Features() {
   const items = [
     {
-      icon: <BadgePercent className="w-6 h-6 text-primary" />,
-      title: 'Zero Hidden Fees',
-      desc: 'Direct peer-to-peer remittance with transparent Stellar network transaction fees only.',
+      icon: <SplitSquareVertical className="w-6 h-6 text-primary" />,
+      title: 'Programmable Split Remittance',
+      desc: 'Automatically divide every deposit into a Spending bucket and a Goal bucket using your chosen ratio — no manual budgeting needed.',
     },
     {
-      icon: <Zap className="w-6 h-6 text-primary" />,
-      title: 'Instant Transfers',
-      desc: 'Send money home to the Philippines in seconds, fully automated on Stellar Testnet.',
+      icon: <Lock className="w-6 h-6 text-primary" />,
+      title: 'On-Chain Goal Lock',
+      desc: 'Protect savings by locking the Goal bucket on-chain until a future date you set. Funds cannot be withdrawn early — enforced by the smart contract.',
     },
     {
-      icon: <ShieldAlert className="w-6 h-6 text-primary" />,
-      title: 'Guaranteed Savings',
-      desc: 'Lock educational or emergency funds securely using Soroban smart contracts. No early unlocks.',
+      icon: <Wallet className="w-6 h-6 text-primary" />,
+      title: 'Freighter Wallet Integration',
+      desc: 'Connect with one click via Freighter. Sign transactions securely without ever exposing your private keys.',
     },
     {
-      icon: <Layers className="w-6 h-6 text-primary" />,
-      title: 'Sleek Dual Role Views',
-      desc: 'One dashboard to seamlessly toggle between sending money and checking available vaults.',
+      icon: <LayoutDashboard className="w-6 h-6 text-primary" />,
+      title: 'Unified Sender & Receiver Dashboard',
+      desc: 'Toggle between Sender and Receiver modes in a single dashboard. Send splits, view vaults, withdraw funds, and track full transaction history.',
     },
   ];
 
@@ -30,10 +30,10 @@ export default function Features() {
       <div className="max-w-6xl mx-auto flex flex-col items-center space-y-12">
         <div className="text-center space-y-4">
           <h2 className="text-3xl md:text-4xl font-extrabold text-on-surface">
-            Core Security Features
+            Core Features
           </h2>
           <p className="text-sm md:text-base text-on-surface-variant max-w-xl font-medium mx-auto">
-            Engineered on Stellar for total transparency, top-tier performance, and absolute security.
+            Everything you need to send, split, and protect remittances — powered by Stellar and Soroban.
           </p>
         </div>
 

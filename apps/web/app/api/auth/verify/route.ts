@@ -79,5 +79,14 @@ export async function POST(request: NextRequest) {
     { expiresIn: '1h', subject: address }
   );
 
-  return NextResponse.json({ token });
+  // Set JWT as HttpOnly session cookie (no maxAge = session cookie, cleared on browser close)
+  const response = NextResponse.json({ token });
+  response.cookies.set('ingat_auth', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
+
+  return response;
 }
