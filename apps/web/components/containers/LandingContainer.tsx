@@ -6,6 +6,7 @@ import Image from 'next/image';
 import ConnectWalletButton from '@/components/ui/wallet/ConnectWalletButton';
 import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { useWalletContext } from '@/context/WalletContext';
+import { ShieldCheck, Send, Handshake, Coins, Zap } from 'lucide-react';
 
 export default function LandingContainer() {
   const router = useRouter();
@@ -42,9 +43,7 @@ export default function LandingContainer() {
         {/* Motif Illustration */}
         <div className="relative w-40 h-40 flex items-center justify-center bg-primary/5 rounded-full border border-primary/10">
           <div className="hero-blob absolute inset-0 bg-primary/5 animate-[pulse_6s_infinite]"></div>
-          <span className="material-symbols-outlined text-[64px] text-primary relative z-10" style={{ fontVariationSettings: "'FILL' 1" }}>
-            shield_with_heart
-          </span>
+          <ShieldCheck size={64} className="text-primary relative z-10" />
         </div>
 
         <div className="space-y-2">
@@ -82,14 +81,14 @@ export default function LandingContainer() {
                     onClick={() => handleSelectRole('sender')}
                     className="flex flex-col items-center gap-2 bg-primary text-white p-4 rounded-xl font-bold transition-all active:scale-95 shadow-sm hover:shadow-md cursor-pointer text-xs border-0"
                   >
-                    <span className="material-symbols-outlined text-[24px]">send</span>
+                    <Send size={24} />
                     <span>I am the Sender (OFW)</span>
                   </button>
                   <button
                     onClick={() => handleSelectRole('receiver')}
                     className="flex flex-col items-center gap-2 bg-secondary text-white p-4 rounded-xl font-bold transition-all active:scale-95 shadow-sm hover:shadow-md cursor-pointer text-xs border-0"
                   >
-                    <span className="material-symbols-outlined text-[24px]">handshake</span>
+                    <Handshake size={24} />
                     <span>I am the Receiver</span>
                   </button>
                 </div>
@@ -102,8 +101,8 @@ export default function LandingContainer() {
       {/* Info Bento */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg mt-8">
         <div className="bg-white/50 border border-outline-variant p-4 rounded-xl flex gap-3 items-start">
-          <div className="bg-primary/10 p-2 rounded-lg text-primary">
-            <span className="material-symbols-outlined text-[20px]">payments</span>
+          <div className="bg-primary/10 p-2 rounded-lg text-primary flex items-center justify-center">
+            <Coins size={20} />
           </div>
           <div>
             <h3 className="font-bold text-xs text-on-surface">Zero Leakage</h3>
@@ -111,8 +110,8 @@ export default function LandingContainer() {
           </div>
         </div>
         <div className="bg-white/50 border border-outline-variant p-4 rounded-xl flex gap-3 items-start">
-          <div className="bg-primary/10 p-2 rounded-lg text-primary">
-            <span className="material-symbols-outlined text-[20px]">bolt</span>
+          <div className="bg-primary/10 p-2 rounded-lg text-primary flex items-center justify-center">
+            <Zap size={20} />
           </div>
           <div>
             <h3 className="font-bold text-xs text-on-surface">Instant split</h3>

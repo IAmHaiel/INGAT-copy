@@ -1,6 +1,7 @@
 import React from 'react';
 import { DepositAllocation } from '@/types/transaction';
 import { formatAddress, formatAmount, formatDate } from '@/lib/utils/format';
+import { History, ExternalLink } from 'lucide-react';
 
 interface AllocationHistoryListProps {
   allocations: DepositAllocation[];
@@ -18,8 +19,8 @@ const AllocationHistoryList: React.FC<AllocationHistoryListProps> = ({ allocatio
 
   if (!allocations || allocations.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-outline-variant p-8 text-center text-on-surface-variant shadow-md">
-        <span className="material-symbols-outlined text-[48px] text-outline-variant mb-2">history</span>
+      <div className="bg-white rounded-xl border border-outline-variant p-8 text-center text-on-surface-variant shadow-md flex flex-col items-center">
+        <History size={48} className="text-outline-variant mb-2" />
         <p className="font-semibold text-sm">No deposits found</p>
         <p className="text-xs text-on-surface-variant mt-1">Start by sending your first remittance above!</p>
       </div>
@@ -43,7 +44,7 @@ const AllocationHistoryList: React.FC<AllocationHistoryListProps> = ({ allocatio
                   rel="noopener noreferrer"
                   className="text-[10px] text-primary hover:underline flex items-center"
                 >
-                  view tx <span className="material-symbols-outlined text-[10px] ml-0.5">open_in_new</span>
+                  view tx <ExternalLink size={10} className="ml-0.5" />
                 </a>
               </div>
               <div className="text-[10px] text-on-surface-variant flex items-center gap-2">

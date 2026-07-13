@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatAddress } from '@/lib/utils/format';
+import { LogOut } from 'lucide-react';
 
 interface WalletAddressBadgeProps {
   address: string | null;
@@ -18,7 +19,7 @@ const WalletAddressBadge: React.FC<WalletAddressBadgeProps> = ({ address, onDisc
         className="ml-1 text-on-surface-variant hover:text-red-600 transition-colors cursor-pointer border-0 bg-transparent p-0 flex items-center"
         title="Disconnect Wallet"
       >
-        <span className="material-symbols-outlined text-[16px]">logout</span>
+        <LogOut size={16} />
       </button>
     </div>
   );

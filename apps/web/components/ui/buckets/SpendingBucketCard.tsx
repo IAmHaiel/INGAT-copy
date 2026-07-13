@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { formatAmount } from '@/lib/utils/format';
+import { Coins } from 'lucide-react';
 
 interface SpendingBucketCardProps {
   balance: number;
@@ -28,8 +29,8 @@ const SpendingBucketCard: React.FC<SpendingBucketCardProps> = ({
   return (
     <div className="bg-white p-5 rounded-xl border border-outline-variant shadow-md space-y-4">
       <div className="flex items-center gap-3">
-        <div className="bg-primary/10 p-3 rounded-full text-primary">
-          <span className="material-symbols-outlined text-[24px]">payments</span>
+        <div className="bg-primary/10 p-3 rounded-full text-primary flex items-center justify-center">
+          <Coins size={24} />
         </div>
         <div>
           <h3 className="text-sm font-semibold text-on-surface-variant">Spending Bucket</h3>

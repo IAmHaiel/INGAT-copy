@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, Handshake } from 'lucide-react';
 import SpendingBucketCard from '@/components/ui/buckets/SpendingBucketCard';
 import GoalBucketCard from '@/components/ui/buckets/GoalBucketCard';
 import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
@@ -49,13 +50,13 @@ export default function ReceiverDashboardContainer() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/')}
-            className="p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer text-on-surface-variant border-0"
+            className="p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer text-on-surface-variant border-0 flex items-center justify-center"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <ArrowLeft size={20} />
           </button>
           <div>
             <h1 className="text-xl font-bold text-secondary flex items-center gap-2">
-              <span className="material-symbols-outlined text-[24px]">handshake</span>
+              <Handshake size={24} />
               Receiver Dashboard
             </h1>
             <p className="text-xs text-on-surface-variant mt-0.5">Access split funds, check lock timers, and withdraw savings.</p>

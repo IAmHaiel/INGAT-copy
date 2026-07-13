@@ -3,6 +3,7 @@ import SplitRatioInput from './SplitRatioInput';
 import UnlockDatePicker from './UnlockDatePicker';
 import { DepositFormInputs } from '@/types/transaction';
 import { ValidationError } from '@/lib/validation/deposit';
+import { Send } from 'lucide-react';
 
 interface DepositFormProps {
   onDeposit: (inputs: DepositFormInputs) => void;
@@ -50,7 +51,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
       )}
 
       <div className="space-y-1">
-        <label className="block text-sm font-semibold text-on-surface">Receiver's Stellar Address</label>
+        <label className="block text-sm font-semibold text-on-surface">Receiver&apos;s Stellar Address</label>
         <input
           type="text"
           placeholder="G..."
@@ -106,7 +107,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
           </>
         ) : (
           <>
-            <span className="material-symbols-outlined text-[20px]">send</span>
+            <Send size={20} />
             Execute Remittance Split
           </>
         )}

@@ -1,18 +1,19 @@
 import React from 'react';
+import { LucideIcon, Inbox } from 'lucide-react';
 
 interface EmptyStateProps {
-  icon?: string;
+  icon?: LucideIcon;
   title: string;
   description: string;
   actionText?: string;
   onAction?: () => void;
 }
 
-const EmptyState: React.FC<EmptyStateProps> = ({ icon = 'inbox', title, description, actionText, onAction }) => {
+const EmptyState: React.FC<EmptyStateProps> = ({ icon: Icon = Inbox, title, description, actionText, onAction }) => {
   return (
     <div className="bg-white border border-outline-variant p-8 rounded-xl flex flex-col items-center text-center space-y-3 max-w-sm mx-auto shadow-md">
       <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center text-on-surface-variant font-medium">
-        <span className="material-symbols-outlined text-[32px]">{icon}</span>
+        <Icon size={32} />
       </div>
       <div className="space-y-1">
         <h3 className="font-bold text-on-surface text-base">{title}</h3>
@@ -31,3 +32,4 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon = 'inbox', title, descript
 };
 
 export default EmptyState;
+

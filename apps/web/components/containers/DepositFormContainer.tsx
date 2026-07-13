@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import DepositForm from '@/components/ui/deposit/DepositForm';
 import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { useWalletContext } from '@/context/WalletContext';
@@ -41,9 +42,9 @@ export default function DepositFormContainer() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.push('/sender')}
-            className="p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer border-0 text-on-surface-variant"
+            className="p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer border-0 text-on-surface-variant flex items-center justify-center"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <ArrowLeft size={20} />
           </button>
           <div>
             <h1 className="text-base font-bold text-primary">New Remittance</h1>

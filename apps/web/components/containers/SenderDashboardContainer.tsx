@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, Send } from 'lucide-react';
 import AllocationHistoryList from '@/components/ui/history/AllocationHistoryList';
 import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { SummaryCard } from '@/components/ui/dashboard/SummaryCard';
@@ -12,6 +13,13 @@ export default function SenderDashboardContainer() {
   const router = useRouter();
   const { publicKey, isConnected, disconnect } = useWalletContext();
   const { allocations, isLoading: historyLoading } = useAllocationHistory(publicKey);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      setCurrentTime(Math.floor(Date.now() / 1000));
+    });
+  }, []);
 
   useEffect(() => {
     if (!isConnected) {
@@ -28,7 +36,7 @@ export default function SenderDashboardContainer() {
   }
 
   const totalRemitted = allocations.reduce((acc, curr) => acc + curr.amount, 0);
-  const activeLocks = allocations.filter((a) => a.unlockDate > Math.floor(Date.now() / 1000)).length;
+  const activeLocks = allocations.filter((a) => a.unlockDate > currentTime).length;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full">
@@ -37,13 +45,13 @@ export default function SenderDashboardContainer() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/')}
-            className="p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer text-on-surface-variant border-0"
+            className="p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer text-on-surface-variant border-0 flex items-center justify-center"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <ArrowLeft size={20} />
           </button>
           <div>
             <h1 className="text-xl font-bold text-primary flex items-center gap-2">
-              <span className="material-symbols-outlined text-[24px]">send</span>
+              <Send size={24} />
               Sender Dashboard
             </h1>
             <p className="text-xs text-on-surface-variant mt-0.5">Manage splits, lock savings, and track allocation history.</p>

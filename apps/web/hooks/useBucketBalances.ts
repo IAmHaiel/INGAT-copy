@@ -18,7 +18,7 @@ export const useBucketBalances = (receiverAddress: string | null) => {
       } else {
         setError('Failed to fetch bucket balances');
       }
-    } catch (err) {
+    } catch {
       setError('Error connecting to Stellar node');
     } finally {
       setIsLoading(false);
@@ -26,7 +26,15 @@ export const useBucketBalances = (receiverAddress: string | null) => {
   }, [receiverAddress]);
 
   useEffect(() => {
-    refreshBalances();
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) {
+        refreshBalances();
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [receiverAddress, refreshBalances]);
 
   return {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { formatAmount, formatDate, formatDistanceToNow } from '@/lib/utils/format';
+import { Lock, Unlock, Calendar } from 'lucide-react';
 
 interface GoalBucketCardProps {
   balance: number;
@@ -47,10 +48,8 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
     <div className={`p-5 rounded-xl border shadow-md space-y-4 transition-all ${isLocked ? 'bg-amber-50/40 border-amber-200/50' : 'bg-white border-outline-variant'}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`p-3 rounded-full ${isLocked ? 'bg-secondary/10 text-secondary' : 'bg-green-50 text-green-600'}`}>
-            <span className="material-symbols-outlined text-[24px]">
-              {isLocked ? 'lock' : 'lock_open'}
-            </span>
+          <div className={`p-3 rounded-full flex items-center justify-center ${isLocked ? 'bg-secondary/10 text-secondary' : 'bg-green-50 text-green-600'}`}>
+            {isLocked ? <Lock size={24} /> : <Unlock size={24} />}
           </div>
           <div>
             <h3 className="text-sm font-semibold text-on-surface-variant">Goal Bucket</h3>
@@ -74,7 +73,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
         </p>
         {unlockDate > 0 && (
           <div className="text-[11px] font-medium text-on-surface-variant flex items-center gap-1">
-            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+            <Calendar size={14} />
             <span>Release Date: {formatDate(unlockDate)}</span>
           </div>
         )}

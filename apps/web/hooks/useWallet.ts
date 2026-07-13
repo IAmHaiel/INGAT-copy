@@ -23,7 +23,7 @@ export const useWallet = () => {
         setPublicKey(null);
         setIsConnected(false);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to check wallet connection');
     }
   }, []);
@@ -45,7 +45,7 @@ export const useWallet = () => {
       } else {
         setError('Wallet connection rejected or no account selected');
       }
-    } catch (err) {
+    } catch {
       setError('Connection request failed');
     } finally {
       setIsConnecting(false);
@@ -59,7 +59,15 @@ export const useWallet = () => {
   }, []);
 
   useEffect(() => {
-    checkWalletConnection();
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) {
+        checkWalletConnection();
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [checkWalletConnection]);
 
   return {

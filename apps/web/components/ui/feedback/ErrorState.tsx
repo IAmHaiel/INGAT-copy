@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 interface ErrorStateProps {
   title?: string;
@@ -11,7 +12,7 @@ const ErrorState: React.FC<ErrorStateProps> = ({ title = 'Something went wrong',
   return (
     <div className="bg-red-50/50 border border-red-200 p-6 rounded-xl flex flex-col items-center text-center space-y-3 max-w-md mx-auto shadow-sm">
       <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600">
-        <span className="material-symbols-outlined text-[28px]">warning</span>
+        <AlertTriangle size={28} />
       </div>
       <div className="space-y-1">
         <h3 className="font-bold text-on-surface text-base">{title}</h3>

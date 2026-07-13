@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircle2, ExternalLink, XCircle } from 'lucide-react';
 
 interface TransactionStatusProps {
   status: 'idle' | 'pending' | 'success' | 'error';
@@ -21,7 +22,7 @@ const TransactionStatus: React.FC<TransactionStatusProps> = ({ status, hash, err
       {status === 'success' && (
         <>
           <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-1">
-            <span className="material-symbols-outlined text-[28px]">check_circle</span>
+            <CheckCircle2 size={28} />
           </div>
           <p className="text-sm font-bold text-green-700">Transaction Confirmed!</p>
           {hash && (
@@ -31,7 +32,7 @@ const TransactionStatus: React.FC<TransactionStatusProps> = ({ status, hash, err
               rel="noopener noreferrer"
               className="text-xs text-primary hover:underline flex items-center gap-1 mt-1 cursor-pointer"
             >
-              View on Stellar.expert <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+              View on Stellar.expert <ExternalLink size={12} />
             </a>
           )}
         </>
@@ -40,7 +41,7 @@ const TransactionStatus: React.FC<TransactionStatusProps> = ({ status, hash, err
       {status === 'error' && (
         <>
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-1">
-            <span className="material-symbols-outlined text-[28px]">error</span>
+            <XCircle size={28} />
           </div>
           <p className="text-sm font-bold text-red-700">Transaction Failed</p>
           <p className="text-xs text-on-surface-variant max-w-xs">{errorMsg || 'An unknown error occurred.'}</p>
