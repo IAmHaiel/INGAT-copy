@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWalletContext } from '@/context/WalletContext';
 import Header from '@/components/ui/layout/Header';
@@ -29,15 +29,13 @@ export default function LandingContainer() {
     setIsModalOpen(false);
   };
 
-  const prevConnected = useRef(isConnected);
-
-  // Redirect to dashboard only when transitioning from disconnected to connected
+  // Redirect to dashboard only when actively connecting through the modal
   useEffect(() => {
-    if (!prevConnected.current && isConnected) {
+    if (isConnected && isModalOpen) {
+      setIsModalOpen(false);
       router.push('/dashboard');
     }
-    prevConnected.current = isConnected;
-  }, [isConnected, router]);
+  }, [isConnected, isModalOpen, router]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background-warm text-on-surface">
