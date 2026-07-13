@@ -1,4 +1,4 @@
-import { isConnected, getAddress, signTransaction } from '@stellar/freighter-api';
+import { isConnected, getAddress, signTransaction, getNetworkDetails } from '@stellar/freighter-api';
 
 export const isFreighterInstalled = async (): Promise<boolean> => {
   try {
@@ -30,5 +30,22 @@ export const signTxWithFreighter = async (xdr: string): Promise<string> => {
   } catch (err) {
     console.error('Failed to sign transaction with Freighter:', err);
     throw err;
+  }
+};
+
+export const getFreighterNetwork = async (): Promise<{ network: string; networkPassphrase: string } | null> => {
+  try {
+    const details = await getNetworkDetails();
+    if (details.error) {
+      console.error('Failed to get network details:', details.error);
+      return null;
+    }
+    return {
+      network: details.network,
+      networkPassphrase: details.networkPassphrase,
+    };
+  } catch (err) {
+    console.error('Failed to get Freighter network:', err);
+    return null;
   }
 };
