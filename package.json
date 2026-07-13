@@ -10,8 +10,9 @@
     "build": "npm run build --workspace=web",
     "start": "npm run start --workspace=web",
     "lint": "npm run lint --workspace=web",
-    "contract:build": "cargo build --manifest-path contracts/ingat-vault/Cargo.toml --target wasm32-unknown-unknown --release",
+    "contract:build": "stellar contract build --manifest-path contracts/ingat-vault/Cargo.toml",
     "contract:test": "cargo test --manifest-path contracts/ingat-vault/Cargo.toml",
-    "contract:clean": "cargo clean --manifest-path contracts/ingat-vault/Cargo.toml"
+    "contract:clean": "cargo clean --manifest-path contracts/ingat-vault/Cargo.toml",
+    "contract:deploy": "bash scripts/deploy.sh"
   }
 }
