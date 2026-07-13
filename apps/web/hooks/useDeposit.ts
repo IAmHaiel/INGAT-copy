@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { buildDepositTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
 import { validateDeposit, ValidationError } from '@/lib/validation/deposit';
-import { DepositFormInputs, DepositAllocation } from '@/types/transaction';
+import { insertTransaction } from '@/lib/supabase';
+import { DepositFormInputs } from '@/types/transaction';
 
 export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: string) => void) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -44,20 +45,24 @@ export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: st
       const hash = await submitTransaction(signedXDR);
       setTxHash(hash);
 
-      const newAllocation: DepositAllocation = {
-        id: hash,
-        sender: senderAddress,
-        receiver: inputs.receiver,
-        amount: amountNum,
-        splitRatio: inputs.splitRatio,
-        unlockDate: unlockDateEpoch,
-        timestamp: Math.floor(Date.now() / 1000)
-      };
+      // Compute split amounts
+      const spendingAmount = amountNum * (inputs.splitRatio / 100);
+      const goalAmount = amountNum - spendingAmount;
 
-      const existingAllocations = localStorage.getItem(`allocations_${senderAddress}`);
-      const allocationsList: DepositAllocation[] = existingAllocations ? JSON.parse(existingAllocations) : [];
-      allocationsList.unshift(newAllocation);
-      localStorage.setItem(`allocations_${senderAddress}`, JSON.stringify(allocationsList));
+      // Persist to Supabase (fire-and-forget — tx is already confirmed on-chain)
+      insertTransaction({
+        tx_hash: hash,
+        type: 'deposit',
+        sender_address: senderAddress,
+        receiver_address: inputs.receiver,
+        amount: amountNum,
+        spending_amount: spendingAmount,
+        goal_amount: goalAmount,
+        split_ratio: inputs.splitRatio,
+        unlock_date: unlockDateEpoch,
+      }).catch((err) => {
+        console.error('[useDeposit] Supabase persistence failed:', err);
+      });
 
       if (onSuccess) {
         onSuccess(hash);
