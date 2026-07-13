@@ -8,7 +8,7 @@ import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 
 interface DepositFormProps {
-  onDeposit: (inputs: DepositFormInputs) => void;
+  onDeposit: (inputs: DepositFormInputs) => Promise<boolean>;
   isSubmitting: boolean;
   validationErrors: ValidationError[];
   txError: string | null;
@@ -29,14 +29,19 @@ const DepositForm: React.FC<DepositFormProps> = ({
     return validationErrors.find((e) => e.field === field)?.message;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onDeposit({
+    const success = await onDeposit({
       receiver,
       amount,
       splitRatio,
       unlockDate,
     });
+    if (success) {
+      setAmount('');
+      setSplitRatio(60);
+      setUnlockDate('');
+    }
   };
 
   return (
@@ -53,7 +58,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
       )}
 
       <div className="space-y-1">
-        <label className="block text-sm font-semibold text-on-surface">Receiver&apos;s Stellar Address</label>
+        <label className="block text-sm font-semibold text-on-surface">Receiver&apos;s Account Address</label>
         <input
           type="text"
           placeholder="G..."

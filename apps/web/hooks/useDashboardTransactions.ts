@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DepositAllocation } from '@/types/transaction';
-import { fetchTransactionsByAddress, fetchSentTransactions, fetchReceivedTransactions } from '@/lib/supabase';
+import { fetchTransactionsByAddress } from '@/lib/supabase';
 import { TransactionRow } from '@/lib/supabase/types';
 import { useWalletContext } from '@/context/WalletContext';
 
@@ -27,20 +27,27 @@ export const useDashboardTransactions = (address: string | null) => {
   const [allTransactions, setAllTransactions] = useState<DepositAllocation[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const fetchTransactions = useCallback(async () => {
-    if (!address) {
+  const fetchTransactions = useCallback(async (silent = false) => {
+    if (!supabaseClient || !address) {
       setSentTransactions([]);
       setReceivedTransactions([]);
       setAllTransactions([]);
       return;
     }
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     try {
-      const [allRows, sentRows, receivedRows] = await Promise.all([
-        fetchTransactionsByAddress(address, supabaseClient),
-        fetchSentTransactions(address, supabaseClient),
-        fetchReceivedTransactions(address, supabaseClient),
-      ]);
+      const allRows = await fetchTransactionsByAddress(address, supabaseClient);
+
+      // Sent/Deposit Tab: Deposits sent by the user, OR withdrawals made by the user
+      const sentRows = allRows.filter(r => 
+        (r.type === 'deposit' && r.sender_address === address) || 
+        (r.type.startsWith('withdraw') && r.sender_address === address)
+      );
+
+      // Received Tab: Only deposits where the user is strictly the receiver (not the sender)
+      const receivedRows = allRows.filter(r => 
+        r.type === 'deposit' && r.receiver_address === address && r.sender_address !== address
+      );
 
       const all = allRows.map(toDepositAllocation);
       const sent = sentRows.map(toDepositAllocation);
@@ -55,7 +62,7 @@ export const useDashboardTransactions = (address: string | null) => {
       setSentTransactions([]);
       setReceivedTransactions([]);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [address, supabaseClient]);
 

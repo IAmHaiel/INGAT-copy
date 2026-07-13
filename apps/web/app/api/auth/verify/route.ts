@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { StrKey } from '@stellar/stellar-sdk';
 import nacl from 'tweetnacl';
 import jwt from 'jsonwebtoken';
+import { createHash } from 'crypto';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -44,14 +45,20 @@ export async function POST(request: NextRequest) {
     .update({ used: true })
     .eq('id', nonceRecord.id);
 
-  // Verify the Ed25519 signature
+  // Verify the Ed25519 signature (SEP-53 format)
+  // Freighter signs: SHA256("Stellar Signed Message:\n" + message)
   const message = 'INGAT auth: ' + nonce;
-  const messageBytes = new TextEncoder().encode(message);
+  const prefix = 'Stellar Signed Message:\n';
+  const payload = Buffer.concat([
+    Buffer.from(prefix, 'utf-8'),
+    Buffer.from(message, 'utf-8'),
+  ]);
+  const messageHash = createHash('sha256').update(payload).digest();
   const signatureBytes = Buffer.from(signature, 'base64');
   const publicKeyBytes = StrKey.decodeEd25519PublicKey(address);
 
   const isValid = nacl.sign.detached.verify(
-    messageBytes,
+    new Uint8Array(messageHash),
     new Uint8Array(signatureBytes),
     publicKeyBytes
   );

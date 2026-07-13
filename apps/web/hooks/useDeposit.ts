@@ -13,16 +13,16 @@ export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: st
   const [txError, setTxError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
-  const deposit = async (inputs: DepositFormInputs) => {
+  const deposit = async (inputs: DepositFormInputs): Promise<boolean> => {
     if (!senderAddress) {
       setTxError('Wallet not connected');
-      return;
+      return false;
     }
 
     const validationErrors = validateDeposit(inputs);
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
-      return;
+      return false;
     }
 
     setErrors([]);
@@ -69,10 +69,12 @@ export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: st
       if (onSuccess) {
         onSuccess(hash);
       }
+      return true;
     } catch (err) {
       console.error(err);
       const errorMessage = err instanceof Error ? err.message : 'Transaction failed';
       setTxError(errorMessage);
+      return false;
     } finally {
       setIsSubmitting(false);
     }

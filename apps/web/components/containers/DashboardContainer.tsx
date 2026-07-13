@@ -19,6 +19,7 @@ import { SummaryCard } from '@/components/ui/dashboard/SummaryCard';
 import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 import { DepositFormInputs } from '@/types/transaction';
+import { toast } from 'sonner';
 
 export default function DashboardContainer() {
   const router = useRouter();
@@ -55,11 +56,19 @@ export default function DashboardContainer() {
     isWithdrawing, 
     error: withdrawError, 
     txHash: withdrawTxHash 
-  } = useWithdraw(publicKey, () => {
+  } = useWithdraw(publicKey, (hash) => {
     refreshBalances();
     refreshTransactions();
+    toast.success('Withdrawal Successful!', {
+      description: `Confirmed on testnet: ${hash.slice(0, 8)}...${hash.slice(-8)}`,
+      action: {
+        label: 'View Tx',
+        onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${hash}`, '_blank')
+      },
+      duration: 10000
+    });
   });
-
+ 
   // Deposit hook
   const { 
     deposit, 
@@ -68,15 +77,32 @@ export default function DashboardContainer() {
     txError: depositTxError 
   } = useDeposit(publicKey, (hash) => {
     refreshTransactions();
-    router.push(`/sender/confirmation?hash=${hash}`);
+    toast.success('Deposit Split Completed!', {
+      description: `Confirmed on testnet: ${hash.slice(0, 8)}...${hash.slice(-8)}`,
+      action: {
+        label: 'View Tx',
+        onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${hash}`, '_blank')
+      },
+      duration: 10000
+    });
   });
 
-  // Keep track of current system time (seconds)
+  // Real-time polling for transactions, balances, and current time
   useEffect(() => {
-    Promise.resolve().then(() => {
+    // Initial time set
+    setCurrentTime(Math.floor(Date.now() / 1000));
+
+    // Poll every 5 seconds for real-time background updates
+    const interval = setInterval(() => {
       setCurrentTime(Math.floor(Date.now() / 1000));
-    });
-  }, []);
+      if (isConnected) {
+        refreshBalances(true); // silent refresh
+        refreshTransactions(true); // silent refresh
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isConnected, refreshBalances, refreshTransactions]);
 
   // Redirect if wallet gets disconnected
   useEffect(() => {
@@ -97,8 +123,8 @@ export default function DashboardContainer() {
   const totalRemitted = sentTransactions.reduce((acc, curr) => acc + curr.amount, 0);
   const activeLocks = sentTransactions.filter((a) => a.unlockDate > currentTime).length;
 
-  const handleDepositSubmit = (inputs: DepositFormInputs) => {
-    deposit(inputs);
+  const handleDepositSubmit = async (inputs: DepositFormInputs): Promise<boolean> => {
+    return await deposit(inputs);
   };
 
   const handleWithdrawSpending = (amount: number) => {
@@ -109,7 +135,7 @@ export default function DashboardContainer() {
     withdraw('goal', amount);
   };
 
-  const showWithdrawStatus = isWithdrawing || withdrawTxHash || withdrawError;
+  const showWithdrawStatus = isWithdrawing || withdrawError;
 
   // Filter history based on active tab
   const getFilteredAllocations = () => {

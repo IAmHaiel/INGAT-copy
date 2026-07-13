@@ -173,7 +173,19 @@ export const signMessageWithFreighter = async (
   if (!result.signedMessage) {
     throw new Error('No signature returned from Freighter');
   }
-  return result.signedMessage;
+
+  const signed = result.signedMessage;
+  if (typeof signed === 'string') {
+    return signed;
+  }
+
+  // Safe base64 conversion in browser for Buffer / Uint8Array
+  const bytes = new Uint8Array(signed as any);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 };
 ```
 
@@ -482,15 +494,15 @@ SUPABASE_JWT_SECRET=your-jwt-secret
 
 ## Detailed Execution Steps & Checklist
 
-- [ ] **1. Nonce Table Migration**: Create `supabase/migrations/002_create_auth_nonces_table.sql`.
-- [ ] **2. Dependency Installation**: Install `jsonwebtoken` and `tweetnacl` dependencies.
-- [ ] **3. Nonce API Route**: Create `apps/web/app/api/auth/nonce/route.ts`.
-- [ ] **4. Verification API Route**: Create `apps/web/app/api/auth/verify/route.ts`.
-- [ ] **5. Freighter SDK Extension**: Add `signMessageWithFreighter` to `apps/web/lib/stellar/freighter.ts`.
-- [ ] **6. Supabase Client Update**: Update `apps/web/lib/supabase/client.ts` to support authenticated clients.
-- [ ] **7. Transactions Library Update**: Update `apps/web/lib/supabase/transactions.ts` to use custom Supabase clients.
-- [ ] **8. React Hook Creation**: Implement `apps/web/hooks/useAuth.ts` hook.
-- [ ] **9. Wallet Context Refactor**: Update `apps/web/context/WalletContext.tsx` with JWT auth state.
-- [ ] **10. Secure RLS Policies**: Create `supabase/migrations/003_tighten_rls_policies.sql` to enforce user ownership of data.
-- [ ] **11. Environment Configuration**: Update `.env.local` and `.env.example`.
+- [x] **1. Nonce Table Migration**: Create `supabase/migrations/002_create_auth_nonces_table.sql`.
+- [x] **2. Dependency Installation**: Install `jsonwebtoken` and `tweetnacl` dependencies.
+- [x] **3. Nonce API Route**: Create `apps/web/app/api/auth/nonce/route.ts`.
+- [x] **4. Verification API Route**: Create `apps/web/app/api/auth/verify/route.ts`.
+- [x] **5. Freighter SDK Extension**: Add `signMessageWithFreighter` to `apps/web/lib/stellar/freighter.ts`.
+- [x] **6. Supabase Client Update**: Update `apps/web/lib/supabase/client.ts` to support authenticated clients.
+- [x] **7. Transactions Library Update**: Update `apps/web/lib/supabase/transactions.ts` to use custom Supabase clients.
+- [x] **8. React Hook Creation**: Implement `apps/web/hooks/useAuth.ts` hook.
+- [x] **9. Wallet Context Refactor**: Update `apps/web/context/WalletContext.tsx` with JWT auth state.
+- [x] **10. Secure RLS Policies**: Create `supabase/migrations/003_tighten_rls_policies.sql` to enforce user ownership of data.
+- [x] **11. Environment Configuration**: Update `.env.local` and `.env.example`.
 - [ ] **12. Verification**: Run TypeScript checks (`npx tsc --noEmit`) and verify build passes before committing.

@@ -25,7 +25,7 @@ export const useAllocationHistory = (senderAddress: string | null) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const fetchHistory = useCallback(async () => {
-    if (!senderAddress) {
+    if (!supabaseClient || !senderAddress) {
       setAllocations([]);
       return;
     }

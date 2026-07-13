@@ -100,5 +100,17 @@ export const signMessageWithFreighter = async (
   if (!result.signedMessage) {
     throw new Error('No signature returned from Freighter');
   }
-  return result.signedMessage;
+
+  const signed = result.signedMessage;
+  if (typeof signed === 'string') {
+    return signed;
+  }
+
+  // Safe base64 conversion in browser for Buffer / Uint8Array
+  const bytes = new Uint8Array(signed as any);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 };

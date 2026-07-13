@@ -7,10 +7,10 @@ export const useBucketBalances = (receiverAddress: string | null) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshBalances = useCallback(async () => {
+  const refreshBalances = useCallback(async (silent = false) => {
     if (!receiverAddress) return;
-    setIsLoading(true);
-    setError(null);
+    if (!silent) setIsLoading(true);
+    if (!silent) setError(null);
     try {
       const res = await fetchBucketBalances(receiverAddress);
       if (res) {
@@ -21,7 +21,7 @@ export const useBucketBalances = (receiverAddress: string | null) => {
     } catch {
       setError('Error connecting to Stellar node');
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [receiverAddress]);
 

@@ -8,13 +8,22 @@ import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { useWalletContext } from '@/context/WalletContext';
 import { useDeposit } from '@/hooks/useDeposit';
 import { DepositFormInputs } from '@/types/transaction';
-
+import { toast } from 'sonner';
+ 
 export default function DepositFormContainer() {
   const router = useRouter();
   const { publicKey, isConnected, disconnect } = useWalletContext();
-
+ 
   const { deposit, isSubmitting, errors, txError } = useDeposit(publicKey, (hash) => {
-    router.push(`/sender/confirmation?hash=${hash}`);
+    toast.success('Deposit Split Completed!', {
+      description: `Confirmed on testnet: ${hash.slice(0, 8)}...${hash.slice(-8)}`,
+      action: {
+        label: 'View Tx',
+        onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${hash}`, '_blank')
+      },
+      duration: 10000
+    });
+    router.push('/dashboard');
   });
 
   useEffect(() => {
@@ -31,8 +40,8 @@ export default function DepositFormContainer() {
     );
   }
 
-  const handleDepositSubmit = (inputs: DepositFormInputs) => {
-    deposit(inputs);
+  const handleDepositSubmit = async (inputs: DepositFormInputs): Promise<boolean> => {
+    return await deposit(inputs);
   };
 
   return (

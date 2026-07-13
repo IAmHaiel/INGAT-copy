@@ -1,11 +1,12 @@
-import { supabase } from './client';
 import { TransactionRow, TransactionInsert } from './types';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 const TABLE = 'transactions';
 
 function getClient(client?: SupabaseClient | null): SupabaseClient | null {
-  return client || supabase;
+  // Only use the authenticated client passed explicitly.
+  // Do NOT fall back to the anon client — migration 003's RLS requires JWT claims.
+  return client ?? null;
 }
 
 export async function insertTransaction(
