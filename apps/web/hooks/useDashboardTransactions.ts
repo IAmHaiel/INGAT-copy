@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { DepositAllocation } from '@/types/transaction';
 import { fetchTransactionsByAddress, fetchSentTransactions, fetchReceivedTransactions } from '@/lib/supabase';
 import { TransactionRow } from '@/lib/supabase/types';
+import { useWalletContext } from '@/context/WalletContext';
 
 /**
  * Map a Supabase TransactionRow to the frontend DepositAllocation shape.
@@ -20,6 +21,7 @@ function toDepositAllocation(row: TransactionRow): DepositAllocation {
 }
 
 export const useDashboardTransactions = (address: string | null) => {
+  const { supabaseClient } = useWalletContext();
   const [sentTransactions, setSentTransactions] = useState<DepositAllocation[]>([]);
   const [receivedTransactions, setReceivedTransactions] = useState<DepositAllocation[]>([]);
   const [allTransactions, setAllTransactions] = useState<DepositAllocation[]>([]);
@@ -35,9 +37,9 @@ export const useDashboardTransactions = (address: string | null) => {
     setIsLoading(true);
     try {
       const [allRows, sentRows, receivedRows] = await Promise.all([
-        fetchTransactionsByAddress(address),
-        fetchSentTransactions(address),
-        fetchReceivedTransactions(address),
+        fetchTransactionsByAddress(address, supabaseClient),
+        fetchSentTransactions(address, supabaseClient),
+        fetchReceivedTransactions(address, supabaseClient),
       ]);
 
       const all = allRows.map(toDepositAllocation);
@@ -55,7 +57,7 @@ export const useDashboardTransactions = (address: string | null) => {
     } finally {
       setIsLoading(false);
     }
-  }, [address]);
+  }, [address, supabaseClient]);
 
   useEffect(() => {
     let active = true;

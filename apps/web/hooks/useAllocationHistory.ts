@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { DepositAllocation } from '@/types/transaction';
 import { fetchSentTransactions } from '@/lib/supabase';
 import { TransactionRow } from '@/lib/supabase/types';
+import { useWalletContext } from '@/context/WalletContext';
 
 /**
  * Map a Supabase TransactionRow to the frontend DepositAllocation shape.
@@ -19,6 +20,7 @@ function toDepositAllocation(row: TransactionRow): DepositAllocation {
 }
 
 export const useAllocationHistory = (senderAddress: string | null) => {
+  const { supabaseClient } = useWalletContext();
   const [allocations, setAllocations] = useState<DepositAllocation[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -29,7 +31,7 @@ export const useAllocationHistory = (senderAddress: string | null) => {
     }
     setIsLoading(true);
     try {
-      const rows = await fetchSentTransactions(senderAddress);
+      const rows = await fetchSentTransactions(senderAddress, supabaseClient);
       // Only show deposit-type transactions in allocation history
       const deposits = rows.filter(r => r.type === 'deposit');
       setAllocations(deposits.map(toDepositAllocation));
@@ -39,7 +41,7 @@ export const useAllocationHistory = (senderAddress: string | null) => {
     } finally {
       setIsLoading(false);
     }
-  }, [senderAddress]);
+  }, [senderAddress, supabaseClient]);
 
   useEffect(() => {
     let active = true;

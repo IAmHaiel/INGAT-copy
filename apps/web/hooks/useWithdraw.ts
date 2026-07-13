@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { buildWithdrawSpendingTx, buildWithdrawGoalTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
 import { insertTransaction } from '@/lib/supabase';
+import { useWalletContext } from '@/context/WalletContext';
 
-export const useWithdraw = (receiverAddress: string | null, onSuccess?: () => void) => {
+export const useWithdraw = (receiverAddress: string | null, onSuccess?: (hash: string) => void) => {
+  const { supabaseClient } = useWalletContext();
   const [isWithdrawing, setIsWithdrawing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -47,12 +49,12 @@ export const useWithdraw = (receiverAddress: string | null, onSuccess?: () => vo
         goal_amount: type === 'goal' ? amount : null,
         split_ratio: null,
         unlock_date: null,
-      }).catch((err) => {
+      }, supabaseClient).catch((err) => {
         console.error('[useWithdraw] Supabase persistence failed:', err);
       });
 
       if (onSuccess) {
-        onSuccess();
+        onSuccess(hash);
       }
     } catch (err) {
       console.error(err);

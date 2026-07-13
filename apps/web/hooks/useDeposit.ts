@@ -4,8 +4,10 @@ import { signTxWithFreighter } from '@/lib/stellar/freighter';
 import { validateDeposit, ValidationError } from '@/lib/validation/deposit';
 import { insertTransaction } from '@/lib/supabase';
 import { DepositFormInputs } from '@/types/transaction';
+import { useWalletContext } from '@/context/WalletContext';
 
 export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: string) => void) => {
+  const { supabaseClient } = useWalletContext();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [txError, setTxError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: st
         goal_amount: goalAmount,
         split_ratio: inputs.splitRatio,
         unlock_date: unlockDateEpoch,
-      }).catch((err) => {
+      }, supabaseClient).catch((err) => {
         console.error('[useDeposit] Supabase persistence failed:', err);
       });
 
