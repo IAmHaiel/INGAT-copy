@@ -25,15 +25,35 @@ export const useAllocationHistory = (senderAddress: string | null) => {
 
   useEffect(() => {
     let active = true;
-    fetchHistory().then(() => {
-      if (!active) {
-        // cleanup — avoid state updates after unmount
+
+    const load = async () => {
+      if (!senderAddress) {
+        return;
       }
-    });
+      setIsLoading(true);
+      try {
+        const events = await fetchDepositEvents(senderAddress);
+        if (active) {
+          setAllocations(events);
+        }
+      } catch (err) {
+        console.error('Failed to fetch allocation history from chain:', err);
+        if (active) {
+          setAllocations([]);
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    load();
+
     return () => {
       active = false;
     };
-  }, [fetchHistory]);
+  }, [senderAddress]);
 
   return {
     allocations,
