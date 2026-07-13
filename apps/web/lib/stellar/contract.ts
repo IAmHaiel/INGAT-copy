@@ -191,7 +191,7 @@ export const fetchDepositEvents = async (senderAddress: string): Promise<Deposit
           topics: [
             [depositSymbolXdr],
             [senderScValXdr],
-            '*' as any
+            ['*']
           ],
         },
       ],
@@ -251,7 +251,7 @@ export const fetchReceivedDepositEvents = async (receiverAddress: string): Promi
           contractIds: [CONTRACT_ID],
           topics: [
             [depositSymbolXdr],
-            '*' as any,
+            ['*'],
             [receiverScValXdr]
           ],
         },
