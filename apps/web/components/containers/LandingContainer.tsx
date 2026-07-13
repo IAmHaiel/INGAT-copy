@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWalletContext } from '@/context/WalletContext';
 import Header from '@/components/ui/layout/Header';
@@ -29,11 +29,14 @@ export default function LandingContainer() {
     setIsModalOpen(false);
   };
 
-  // Redirect to dashboard on successful connection
+  const prevConnected = useRef(isConnected);
+
+  // Redirect to dashboard only when transitioning from disconnected to connected
   useEffect(() => {
-    if (isConnected) {
+    if (!prevConnected.current && isConnected) {
       router.push('/dashboard');
     }
+    prevConnected.current = isConnected;
   }, [isConnected, router]);
 
   return (

@@ -32,19 +32,19 @@ export default function Footer() {
         </div>
         <nav className="flex gap-8">
           <a
-            href="#home"
+            href="/#home"
             className="text-xs font-bold text-primary hover:underline transition-all"
           >
             What is INGAT?
           </a>
           <a
-            href="#how-it-works"
+            href="/#how-it-works"
             className="text-xs font-medium text-on-surface-variant hover:text-primary hover:underline transition-all"
           >
             Help Center
           </a>
           <a
-            href="#features"
+            href="/#features"
             className="text-xs font-medium text-on-surface-variant hover:text-primary hover:underline transition-all"
           >
             Privacy Policy
