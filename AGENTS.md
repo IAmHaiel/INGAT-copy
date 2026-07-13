@@ -69,6 +69,7 @@ ingat/
 │   ├── hooks/              # React hooks for wallet, deposit, withdraw, balances
 │   ├── lib/
 │   │   ├── stellar/        # SDK client, contract wrappers, Freighter helpers
+│   │   ├── supabase/       # Supabase client, typed transaction queries
 │   │   ├── validation/     # Form validation (split ratio, dates, addresses)
 │   │   └── utils/          # Formatting, constants
 │   ├── types/              # TypeScript interfaces
@@ -76,6 +77,8 @@ ingat/
 ├── contracts/ingat-vault/  # Soroban smart contract (Rust)
 │   ├── src/                # Contract logic (deposit, withdraw, split)
 │   └── tests/              # Time-manipulation ledger tests
+├── supabase/               # Database layer
+│   └── migrations/         # SQL migrations for transaction persistence
 ├── .agents/skills/         # Agent skill docs — read before implementing
 ├── .kiro/steering/         # Product/tech/structure steering
 └── .artifacts/             # Plans and bug fix logs
@@ -114,8 +117,10 @@ Run **all commands from the repo root** (npm workspace):
 
 ### Data & State
 
-- **Contract is source of truth.** No backend database. No Supabase, Postgres, or off-chain stores.
-- If a caching layer is ever proposed, flag it as a spec deviation.
+- **Contract is source of truth for balances.** On-chain bucket state (spending/goal balances, lock dates) is the authoritative source.
+- **Supabase for transaction history.** All deposit and withdrawal records are persisted to Supabase after blockchain confirmation. This provides cross-device, permanent history that survives RPC event expiration (~24h window).
+- **No localStorage for persistence.** All transaction history reads come from Supabase.
+- **Security model:** Supabase anon key + RLS policies. Frontend filters by wallet address. Acceptable for hackathon/testnet demo; production would add wallet-signature JWT verification.
 
 ### Roles
 
@@ -150,7 +155,6 @@ Do not build unless explicitly asked:
 - ❌ Multi-sig or approver role
 - ❌ Emergency bucket (only Spending + Goal exist)
 - ❌ KYC flows
-- ❌ Off-chain database of any kind
 - ❌ Notifications (email/SMS/push)
 - ❌ Token swap or DEX integration
 

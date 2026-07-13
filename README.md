@@ -150,7 +150,7 @@ sequenceDiagram
 3. **On-Chain Queries (No-Database Architecture)**
    - To show bucket states in real-time, the frontend builds a dummy transaction with a read-only `get_bucket(receiver)` contract invocation.
    - It simulates the call via `server.simulateTransaction(tx)` and decodes the return value via `scValToNative(retval)` to read balances and lock times.
-   - This ensures **100% database-free operation**, where the Stellar ledger serves as the single source of truth.
+   - The Stellar ledger serves as the single source of truth for **balances and lock state**. Transaction history is persisted to Supabase for cross-device, permanent access.
 
 4. **Soroban Smart Contract (Rust)**
    - Built using the `soroban-sdk` and compiles to a secure WASM binary.
@@ -168,6 +168,7 @@ sequenceDiagram
 | **On-Chain Splits** | Instantly partition deposits into Spending & Goal buckets by user-defined percentages |
 | **Goal Lock Protection** | Lock the Goal bucket on-chain until the sender-specified release date |
 | **Freighter Integration** | Seamless wallet connect and transaction signing via Freighter extension |
+| **Supabase Persistence** | Transaction history persisted off-chain for cross-device, permanent access |
 | **Glassmorphic Dashboard** | Responsive, warm-toned UI built with Manrope font and modern design |
 | **Soroban Smart Contract** | Gas-efficient Rust contract with state leases, TTL extensions, and 7-decimal precision |
 
@@ -182,12 +183,15 @@ graph LR
             A1[app/ — Routes]
             A2[components/ — UI + Containers]
             A3[hooks/ — React Hooks]
-            A4[lib/ — Stellar SDK + Validation]
+            A4[lib/ — Stellar SDK + Supabase + Validation]
             A5[types/ — TypeScript Interfaces]
         end
         subgraph Contracts["contracts/ingat-vault/"]
             C1[src/ — Contract Logic]
             C2[tests/ — Ledger Tests]
+        end
+        subgraph Database["supabase/"]
+            E1[migrations/ — SQL Schema]
         end
         subgraph Config["Configuration"]
             D1[.agents/skills/]
@@ -203,12 +207,14 @@ ingat/
 │   ├── app/                    # Route entries (landing, sender, receiver)
 │   ├── components/             # Containers (stateful) + UI (presentational)
 │   ├── hooks/                  # Freighter & Soroban React hooks
-│   ├── lib/                    # Stellar client, Freighter wrappers, validation
+│   ├── lib/                    # Stellar client, Supabase client, Freighter wrappers, validation
 │   ├── context/                # WalletContext provider
 │   └── types/                  # TypeScript interface models
 ├── contracts/ingat-vault/      # Soroban Smart Contract (Rust)
 │   ├── src/                    # Vault split & withdraw logic
 │   └── tests/                  # Time-manipulated simulated ledger tests
+├── supabase/                   # Database layer
+│   └── migrations/             # SQL migrations for transaction persistence
 ├── .agents/                    # AI agent skill documentation
 ├── .kiro/                      # Steering docs (product, tech, structure)
 └── .artifacts/                 # Engineering plans & bug fix logs
@@ -334,7 +340,8 @@ graph LR
 
 ## Design Principles
 
-- **No Backend** — Contract state is the single source of truth. No databases.
+- **Contract is Source of Truth for Balances** — On-chain bucket state (spending/goal balances, lock dates) is the authoritative source.
+- **Supabase for Transaction History** — All deposit and withdrawal records are persisted to Supabase after blockchain confirmation, providing cross-device permanent history.
 - **Two Roles Only** — Sender and Receiver. No admin/approver/auditor.
 - **Warm & Trustworthy** — Banking-app clarity, not crypto-trading neon. Filipino identity in color palette.
 - **7-Decimal Precision** — All Stellar amounts handled with full stroops precision.
