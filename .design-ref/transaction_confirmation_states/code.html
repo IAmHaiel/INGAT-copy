@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>INGAT | Transaction Status</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#86d5c3",
+                    "inverse-on-surface": "#eef1ef",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#0e6a5b",
+                    "on-primary-container": "#99e8d5",
+                    "secondary-container": "#feb64e",
+                    "surface-container-high": "#e6e9e6",
+                    "on-surface-variant": "#3f4946",
+                    "tertiary": "#723525",
+                    "tertiary-container": "#8f4c3a",
+                    "surface-bright": "#f7faf7",
+                    "on-background": "#181c1b",
+                    "inverse-surface": "#2d3130",
+                    "secondary": "#835400",
+                    "primary-container": "#0f6b5c",
+                    "on-tertiary-fixed-variant": "#723525",
+                    "surface-container": "#ebefec",
+                    "primary-fixed-dim": "#86d5c3",
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#e0e3e1",
+                    "primary-fixed": "#a2f2de",
+                    "primary": "#005145",
+                    "on-secondary-container": "#714800",
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#005144",
+                    "surface": "#f7faf7",
+                    "on-secondary-fixed-variant": "#643f00",
+                    "on-surface": "#181c1b",
+                    "tertiary-fixed": "#ffdbd1",
+                    "on-secondary": "#ffffff",
+                    "outline": "#6f7976",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f1f4f2",
+                    "tertiary-fixed-dim": "#ffb5a1",
+                    "surface-variant": "#e0e3e1",
+                    "on-secondary-fixed": "#2a1800",
+                    "background": "#f7faf7",
+                    "surface-dim": "#d7dbd8",
+                    "on-tertiary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#ffddb5",
+                    "on-tertiary-fixed": "#3a0b02",
+                    "on-tertiary-container": "#ffcec1",
+                    "outline-variant": "#bec9c5",
+                    "on-primary-fixed": "#00201a",
+                    "secondary-fixed-dim": "#ffb956"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-margin": "20px",
+                    "gutter": "16px",
+                    "xl": "32px",
+                    "base": "8px",
+                    "sm": "12px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "md": "16px"
+            },
+            "fontFamily": {
+                    "label-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-sm": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "label-sm": ["Manrope"],
+                    "headline-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .spinner {
+            border: 3px solid rgba(14, 106, 91, 0.1);
+            border-top: 3px solid #0e6a5b;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-check {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: dash 0.6s ease-in-out forwards 0.2s;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: 0; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="bg-surface shadow-sm sticky top-0 z-50">
+<div class="flex justify-between items-center w-full px-container-margin md:px-lg py-md max-w-7xl mx-auto">
+<div class="text-headline-lg font-headline-lg text-primary tracking-tighter">INGAT</div>
+<nav class="hidden md:flex gap-lg items-center">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Remittance</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Savings</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">History</a>
+</nav>
+<div class="flex items-center gap-sm">
+<div class="bg-surface-container-low px-sm py-xs rounded-lg font-label-md text-label-md text-primary-container border border-outline-variant flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+                    GABC...4F9K
+                </div>
+</div>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center p-container-margin relative overflow-hidden">
+<!-- Atmospheric Background Element -->
+
+<div class="w-full max-w-md relative z-10">
+<!-- Modal Wrapper with Multi-state Control (Simulated with JS below) -->
+<div class="bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant p-lg md:p-xl transition-all duration-500 transform scale-100" id="transaction-card">
+<!-- STATE 1: PENDING -->
+<div class="flex flex-col items-center text-center space-y-lg" id="state-pending">
+<div class="spinner"></div>
+<div class="space-y-xs">
+<h2 class="font-headline-md text-headline-md text-on-surface">Confirming transaction...</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Securing your deposit on the Stellar network. This usually takes a few seconds.</p>
+</div>
+<div class="w-full bg-surface-container rounded-lg p-md">
+<div class="flex justify-between items-center mb-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Estimated Time</span>
+<span class="font-label-sm text-label-sm text-primary">~3s</span>
+</div>
+<div class="w-full bg-surface-variant h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-2/3 transition-all duration-[3000ms] ease-out"></div>
+</div>
+</div>
+</div>
+<!-- STATE 2: SUCCESS (Hidden by default) -->
+<div class="hidden flex flex-col items-center text-center" id="state-success">
+<div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-lg">
+<svg class="w-12 h-12 text-primary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<polyline class="animate-check" points="20 6 9 17 4 12"></polyline>
+</svg>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Deposit Successful</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-lg">Your funds have been securely added to your INGAT Vault.</p>
+<div class="w-full space-y-md mb-xl">
+<div class="bg-surface-container-low rounded-lg p-md border border-outline-variant flex justify-between items-center">
+<div class="text-left">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Transaction Hash</p>
+<p class="font-label-md text-label-md text-on-surface">5c2b...a9f2</p>
+</div>
+<button class="p-xs hover:bg-surface-variant rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+</button>
+</div>
+<div class="space-y-sm">
+<div class="flex justify-between font-body-sm text-body-sm">
+<span class="text-on-surface-variant">Amount Deposited</span>
+<span class="text-on-surface font-bold">500.00 PHP</span>
+</div>
+<div class="flex justify-between font-body-sm text-body-sm">
+<span class="text-on-surface-variant">Network Fee</span>
+<span class="text-on-surface">0.00001 XLM</span>
+</div>
+<div class="border-t border-outline-variant pt-sm flex justify-between font-label-md text-label-md">
+<span class="text-on-surface-variant">Total Value</span>
+<span class="text-primary">499.98 PHP</span>
+</div>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-md rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity active:scale-95 duration-150 shadow-md">
+                        Back to Dashboard
+                    </button>
+</div>
+<!-- STATE 3: ERROR (Hidden by default) -->
+<div class="hidden flex flex-col items-center text-center" id="state-error">
+<div class="w-20 h-20 bg-error-container rounded-full flex items-center justify-center mb-lg">
+<span class="material-symbols-outlined text-error text-[40px]">warning</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Transaction Failed</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-lg">Something went wrong while processing your request.</p>
+<div class="w-full bg-error-container/20 border border-error/20 rounded-lg p-md text-left mb-xl">
+<div class="flex gap-sm items-start">
+<span class="material-symbols-outlined text-error text-[20px] mt-xs">info</span>
+<div>
+<p class="font-label-md text-label-md text-on-error-container">Signature rejected</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">The wallet provider denied the transaction signature. Please ensure your wallet is unlocked and try again.</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col w-full gap-sm">
+<button class="w-full bg-secondary-container text-on-secondary-container py-md rounded-lg font-label-md text-label-md hover:brightness-95 transition-all active:scale-95 duration-150" onclick="resetDemo()">
+                            Try Again
+                        </button>
+<button class="w-full border border-outline text-on-surface-variant py-md rounded-lg font-label-md text-label-md hover:bg-surface-variant transition-colors">
+                            Contact Support
+                        </button>
+</div>
+</div>
+</div>
+<!-- Demo State Toggles (Purely for reviewer to see all states) -->
+<div class="mt-xl flex justify-center gap-sm">
+<button class="text-label-sm font-label-sm bg-surface-variant px-md py-xs rounded-full hover:bg-outline-variant transition-colors" onclick="showState('pending')">Pending</button>
+<button class="text-label-sm font-label-sm bg-surface-variant px-md py-xs rounded-full hover:bg-outline-variant transition-colors" onclick="showState('success')">Success</button>
+<button class="text-label-sm font-label-sm bg-surface-variant px-md py-xs rounded-full hover:bg-outline-variant transition-colors" onclick="showState('error')">Error</button>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant py-xl">
+<div class="flex flex-col md:flex-row justify-between items-center px-container-margin max-w-7xl mx-auto gap-md">
+<div class="text-headline-md font-headline-md text-primary">INGAT</div>
+<div class="flex gap-lg flex-wrap justify-center">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-all" href="#">What is INGAT?</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-all" href="#">Help Center</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-all" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-all" href="#">Terms of Service</a>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center md:text-right">
+                © 2024 INGAT Remit. Secure Stellar Blockchain Remittance.
+            </p>
+</div>
+</footer>
+<script>
+        function showState(state) {
+            const states = ['pending', 'success', 'error'];
+            const card = document.getElementById('transaction-card');
+            
+            // Add a little exit animation
+            card.classList.add('opacity-0', 'scale-95');
+            
+            setTimeout(() => {
+                states.forEach(s => {
+                    document.getElementById(`state-${s}`).classList.add('hidden');
+                });
+                
+                document.getElementById(`state-${state}`).classList.remove('hidden');
+                
+                // Entrance animation
+                card.classList.remove('opacity-0', 'scale-95');
+            }, 300);
+        }
+
+        function resetDemo() {
+            showState('pending');
+            // Auto-advance to success after 3 seconds for a dynamic feel
+            setTimeout(() => {
+                if(!document.getElementById('state-pending').classList.contains('hidden')) {
+                    showState('success');
+                }
+            }, 3000);
+        }
+
+        // Initial launch behavior
+        window.onload = () => {
+            setTimeout(() => {
+                showState('success');
+            }, 3500);
+        }
+    </script>
+</body></html>

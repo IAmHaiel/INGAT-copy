@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #005145;
+  --color-primary-container: #0f6b5c;
+  --color-on-primary-container: #99e8d5;
+  --color-secondary: #835400;
+  --color-secondary-container: #feb64e;
+  --color-on-secondary-container: #714800;
+  --color-background-warm: #FAF7F2;
+  --color-surface-card: rgba(255, 255, 255, 0.7);
+  --color-surface-container: #ebefec;
+  --color-on-surface-variant: #3f4946;
+  --color-outline-variant: #bec9c5;
+  --color-terracotta: hsl(15, 60%, 45%);
+  --color-sage: hsl(150, 30%, 45%);
+  --color-teal: hsl(175, 50%, 40%);
+  --color-amber: hsl(40, 90%, 50%);
+  --color-gold: hsl(45, 85%, 55%);
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+}
+
+:root {
+  --background: #FAF7F2;
+  --foreground: #181c1b;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.hero-blob {
+  border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
