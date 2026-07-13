@@ -30,7 +30,7 @@ export const useWithdraw = (receiverAddress: string | null, onSuccess?: () => vo
         unsignedXDR = await buildWithdrawGoalTx(receiverAddress, amount);
       }
 
-      const signedXDR = await signTxWithFreighter(unsignedXDR);
+      const signedXDR = await signTxWithFreighter(unsignedXDR, receiverAddress);
       const hash = await submitTransaction(signedXDR);
       setTxHash(hash);
 

@@ -1,17 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getConnectedPublicKey, isFreighterInstalled, getFreighterNetwork } from '@/lib/stellar/freighter';
+import { getConnectedPublicKey, isFreighterInstalled, requestWalletAccess, getFreighterNetwork } from '@/lib/stellar/freighter';
+import { WalletConnectionStatus } from '@/types/wallet';
 
 export const useWallet = () => {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [connectionStatus, setConnectionStatus] = useState<WalletConnectionStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
   const checkWalletConnection = useCallback(async () => {
     try {
       const installed = await isFreighterInstalled();
       if (!installed) {
-        setError('Freighter wallet extension is not installed');
         return;
       }
       const pubKey = await getConnectedPublicKey();
@@ -31,35 +32,49 @@ export const useWallet = () => {
         setIsConnected(false);
       }
     } catch {
-      setError('Failed to check wallet connection');
+      // Silent fail on mount check — don't change connectionStatus
     }
   }, []);
 
   const connect = useCallback(async () => {
     setIsConnecting(true);
+    setConnectionStatus('connecting');
     setError(null);
     try {
       const installed = await isFreighterInstalled();
       if (!installed) {
         setError('Freighter wallet extension is not installed');
+        setConnectionStatus('not-installed');
         setIsConnecting(false);
         return;
       }
-      const pubKey = await getConnectedPublicKey();
-      if (pubKey) {
-        const networkInfo = await getFreighterNetwork();
-        if (networkInfo && networkInfo.network !== 'TESTNET') {
-          setError('Please switch Freighter to Stellar Testnet to use INGAT');
-          setIsConnecting(false);
-          return;
-        }
-        setPublicKey(pubKey);
-        setIsConnected(true);
-      } else {
-        setError('Wallet connection rejected or no account selected');
+
+      // Use requestAccess to explicitly trigger the Freighter popup
+      // This works for first-time auth AND when switching accounts
+      const { address, error: accessError } = await requestWalletAccess();
+
+      if (accessError || !address) {
+        setError(accessError || 'Wallet connection was rejected or no account selected');
+        setConnectionStatus('locked');
+        setIsConnecting(false);
+        return;
       }
+
+      // Verify network
+      const networkInfo = await getFreighterNetwork();
+      if (networkInfo && networkInfo.network !== 'TESTNET') {
+        setError('Please switch Freighter to Stellar Testnet to use INGAT');
+        setConnectionStatus('error');
+        setIsConnecting(false);
+        return;
+      }
+
+      setPublicKey(address);
+      setIsConnected(true);
+      setConnectionStatus('idle');
     } catch {
       setError('Connection request failed');
+      setConnectionStatus('error');
     } finally {
       setIsConnecting(false);
     }
@@ -68,6 +83,7 @@ export const useWallet = () => {
   const disconnect = useCallback(() => {
     setPublicKey(null);
     setIsConnected(false);
+    setConnectionStatus('idle');
     setError(null);
   }, []);
 
@@ -87,6 +103,7 @@ export const useWallet = () => {
     publicKey,
     isConnected,
     isConnecting,
+    connectionStatus,
     error,
     connect,
     disconnect,

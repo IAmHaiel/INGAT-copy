@@ -2,11 +2,13 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useWallet } from '@/hooks/useWallet';
+import { WalletConnectionStatus } from '@/types/wallet';
 
 interface WalletContextType {
   publicKey: string | null;
   isConnected: boolean;
   isConnecting: boolean;
+  connectionStatus: WalletConnectionStatus;
   error: string | null;
   connect: () => Promise<void>;
   disconnect: () => void;

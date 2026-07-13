@@ -1,16 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import ConnectWalletButton from '@/components/ui/wallet/ConnectWalletButton';
+import WalletConnectModal from '@/components/ui/wallet/WalletConnectModal';
 import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { useWalletContext } from '@/context/WalletContext';
 import { ShieldCheck, Send, Handshake, Coins, Zap } from 'lucide-react';
 
 export default function LandingContainer() {
   const router = useRouter();
-  const { publicKey, isConnected, isConnecting, error, connect, disconnect } = useWalletContext();
+  const { publicKey, isConnected, isConnecting, connectionStatus, error, connect, disconnect } = useWalletContext();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleConnect = () => {
+    setIsModalOpen(true);
+    connect();
+  };
+
+  const handleRetry = () => {
+    connect();
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  // Auto-close modal on successful connection
+  useEffect(() => {
+    if (isConnected && isModalOpen) {
+      setIsModalOpen(false);
+    }
+  }, [isConnected, isModalOpen]);
 
   const handleSelectRole = (role: 'sender' | 'receiver') => {
     router.push(`/${role}`);
@@ -53,7 +75,7 @@ export default function LandingContainer() {
           </p>
         </div>
 
-        {error && (
+        {error && !isModalOpen && (
           <div className="bg-red-50 text-red-700 text-xs p-3 rounded-lg border border-red-100 w-full text-center">
             {error}
           </div>
@@ -62,7 +84,7 @@ export default function LandingContainer() {
         <div className="w-full">
           {!isConnected ? (
             <ConnectWalletButton
-              onConnect={connect}
+              onConnect={handleConnect}
               isConnecting={isConnecting}
               isConnected={isConnected}
               publicKey={publicKey}
@@ -119,6 +141,15 @@ export default function LandingContainer() {
           </div>
         </div>
       </div>
+
+      {/* Wallet Connection Modal */}
+      <WalletConnectModal
+        isOpen={isModalOpen}
+        status={connectionStatus}
+        errorMessage={error}
+        onRetry={handleRetry}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }
