@@ -9,6 +9,11 @@ const TABLE = 'transactions';
  * Failures are logged but do not throw — the on-chain tx is already confirmed.
  */
 export async function insertTransaction(data: TransactionInsert): Promise<void> {
+  if (!supabase) {
+    console.warn('[Supabase] Client not configured. Skipping transaction persistence.');
+    return;
+  }
+
   const { error } = await supabase.from(TABLE).insert(data);
 
   if (error) {
@@ -26,6 +31,8 @@ export async function insertTransaction(data: TransactionInsert): Promise<void> 
  * Returns most recent first.
  */
 export async function fetchTransactionsByAddress(address: string): Promise<TransactionRow[]> {
+  if (!supabase) return [];
+
   const { data, error } = await supabase
     .from(TABLE)
     .select('*')
@@ -45,6 +52,8 @@ export async function fetchTransactionsByAddress(address: string): Promise<Trans
  * Returns most recent first.
  */
 export async function fetchSentTransactions(address: string): Promise<TransactionRow[]> {
+  if (!supabase) return [];
+
   const { data, error } = await supabase
     .from(TABLE)
     .select('*')
@@ -65,6 +74,8 @@ export async function fetchSentTransactions(address: string): Promise<Transactio
  * Returns most recent first.
  */
 export async function fetchReceivedTransactions(address: string): Promise<TransactionRow[]> {
+  if (!supabase) return [];
+
   const { data, error } = await supabase
     .from(TABLE)
     .select('*')
