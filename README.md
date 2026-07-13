@@ -1,10 +1,16 @@
 # INGAT — Income Guardianship & Allocation Tool
 
+[![CI](https://github.com/deveramartin/INGAT/actions/workflows/ci.yml/badge.svg)](https://github.com/deveramartin/INGAT/actions/workflows/ci.yml)
+[![Deploy](https://github.com/deveramartin/INGAT/actions/workflows/deploy.yml/badge.svg)](https://github.com/deveramartin/INGAT/actions/workflows/deploy.yml)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel&logoColor=white)](https://ingat-ten.vercel.app)
 [![Built on Stellar](https://img.shields.io/badge/Built%20on-Stellar-blue?logo=stellar&logoColor=white)](https://stellar.org)
 [![Soroban Smart Contract](https://img.shields.io/badge/Smart%20Contract-Soroban-purple)](https://soroban.stellar.org)
+[![Soroban SDK](https://img.shields.io/badge/Soroban%20SDK-22.0.0-purple?logo=rust&logoColor=white)](https://crates.io/crates/soroban-sdk)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind%20CSS-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Rust](https://img.shields.io/badge/Rust-2021-orange?logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE.md)
 [![Network: Testnet](https://img.shields.io/badge/Network-Stellar%20Testnet-yellow)](https://soroban-testnet.stellar.org)
@@ -26,7 +32,7 @@ Because there is no technical boundary separating "money to live on" from "money
 
 ### The Solution: On-Chain Split-Remittances
 **INGAT** ("take care" in Tagalog) solves this by introducing programmable, trustless split-remittances powered by Stellar and Soroban. 
-When a sender initiates a deposit, a Soroban smart contract automatically and instantly partitions the incoming stablecoin funds into two secure on-chain buckets based on the sender's configured ratio:
+When a sender initiates a deposit, a Soroban smart contract automatically and instantly partitions the incoming native XLM funds into two secure on-chain buckets based on the sender's configured ratio:
 - **Spending Bucket**: Readily accessible by the receiver for day-to-day household expenses.
 - **Goal Bucket**: Secured and locked on-chain until a sender-defined future unlock date.
 
@@ -99,8 +105,8 @@ graph TB
 
 INGAT is engineered to run entirely on the **Stellar Testnet** using modern Soroban smart contract patterns and frontend SDKs.
 
-- **Deployed Contract ID**: `CBUTVTFSY7WKHCZAHXOL4DQVK364HRSMTXKAT6DBTOCZGSSRA37OYGQ5`
-- **Native XLM Token ID**: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
+- **Deployed Contract ID**: `CALZQBX7GJIQ6MZC6MIIDEJPDBHPHBDHQTGHSUTOW7A7S7OPS4V4346U` — [View on Stellar Lab](https://lab.stellar.org/r/testnet/contract/CALZQBX7GJIQ6MZC6MIIDEJPDBHPHBDHQTGHSUTOW7A7S7OPS4V4346U)
+- **Native XLM Token (SAC)**: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
 
 ```mermaid
 sequenceDiagram
@@ -122,7 +128,7 @@ sequenceDiagram
     Freighter-->>Frontend: Signed XDR Envelope
     Frontend->>RPC: sendTransaction(Signed XDR)
     RPC->>Contract: Invoke deposit()
-    Contract->>Contract: Split stablecoin & update state
+    Contract->>Contract: Split XLM & update state
 
     Note over Receiver, RPC: Receiver Withdrawal Flow
     Receiver->>Frontend: Connect Freighter & View Buckets
@@ -187,6 +193,7 @@ graph LR
             A3[hooks/ — React Hooks]
             A4[lib/ — Stellar SDK + Supabase + Validation]
             A5[types/ — TypeScript Interfaces]
+            A6[tests/ — Unit + E2E Tests]
         end
         subgraph Contracts["contracts/ingat-vault/"]
             C1[src/ — Contract Logic]
@@ -210,6 +217,9 @@ ingat/
 │   ├── components/             # Containers (stateful) + UI (presentational)
 │   ├── hooks/                  # Freighter & Soroban React hooks
 │   ├── lib/                    # Stellar client, Supabase client, Freighter wrappers, validation
+│   ├── tests/                  # Test suite
+│   │   ├── unit/              # Jest unit tests (components, hooks, lib)
+│   │   └── e2e/               # Playwright end-to-end tests
 │   ├── context/                # WalletContext provider
 │   └── types/                  # TypeScript interface models
 ├── contracts/ingat-vault/      # Soroban Smart Contract (Rust)
@@ -238,8 +248,8 @@ ingat/
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/ingat.git
-cd ingat
+git clone https://github.com/deveramartin/INGAT.git
+cd INGAT
 
 # Install workspace dependencies (from root)
 npm install
@@ -274,6 +284,23 @@ npm run build
 # Lint check
 npm run lint
 ```
+
+### Testing
+
+```bash
+# Run all unit tests (Jest + React Testing Library)
+npm test
+
+# Run unit tests in watch mode
+npm run test --workspace=web -- --watch
+
+# Run E2E tests (Playwright — requires dev server or builds one)
+npm run test:e2e --workspace=web
+```
+
+Unit tests cover: validation logic, formatting utilities, price helpers, React hooks (useDeposit, useWithdraw), and UI components (ConnectWalletButton, ErrorBanner).
+
+E2E tests cover: landing page navigation, sender flow pages, and receiver flow pages.
 
 >  Run all commands from the **repo root**. This is an npm workspace — do not `cd apps/web`.
 

@@ -72,6 +72,9 @@ ingat/
 │   │   ├── supabase/       # Supabase client, typed transaction queries
 │   │   ├── validation/     # Form validation (split ratio, dates, addresses)
 │   │   └── utils/          # Formatting, constants
+│   ├── tests/              # Test suite
+│   │   ├── unit/           # Jest unit tests (components, hooks, lib)
+│   │   └── e2e/            # Playwright end-to-end tests
 │   ├── types/              # TypeScript interfaces
 │   └── context/            # React context providers (WalletContext)
 ├── contracts/ingat-vault/  # Soroban smart contract (Rust)
@@ -96,6 +99,9 @@ Run **all commands from the repo root** (npm workspace):
 | `npm run dev` | Next.js dev server (Turbopack) |
 | `npm run build` | Production build with TypeScript check |
 | `npm run lint` | ESLint check |
+| `npm test` | Run all unit tests (Jest + React Testing Library) |
+| `npm run test --workspace=web -- --watch` | Unit tests in watch mode |
+| `npm run test:e2e --workspace=web` | Run E2E tests (Playwright) |
 | `npm run contract:build` | Compile Soroban contract to WASM |
 | `npm run contract:test` | Run Rust unit tests |
 | `npm run contract:clean` | Clean Rust build artifacts |
