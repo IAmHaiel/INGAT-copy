@@ -176,7 +176,7 @@ export const fetchDepositEvents = async (senderAddress: string): Promise<Deposit
   try {
     const latestLedgerResponse = await server.getLatestLedger();
     const latestLedger = latestLedgerResponse.sequence;
-    const startLedger = Math.max(1, latestLedger - LEDGERS_PER_DAY * 7);
+    const startLedger = Math.max(1, latestLedger - LEDGERS_PER_DAY * 6);
 
     // Build topic filters: deposit events where sender matches
     const depositSymbolXdr = nativeToScVal('deposit', { type: 'symbol' }).toXDR('base64');
@@ -238,7 +238,7 @@ export const fetchReceivedDepositEvents = async (receiverAddress: string): Promi
   try {
     const latestLedgerResponse = await server.getLatestLedger();
     const latestLedger = latestLedgerResponse.sequence;
-    const startLedger = Math.max(1, latestLedger - LEDGERS_PER_DAY * 7);
+    const startLedger = Math.max(1, latestLedger - LEDGERS_PER_DAY * 6);
 
     const depositSymbolXdr = nativeToScVal('deposit', { type: 'symbol' }).toXDR('base64');
     const receiverScValXdr = Address.fromString(receiverAddress).toScVal().toXDR('base64');
