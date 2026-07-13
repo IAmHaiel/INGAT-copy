@@ -1,6 +1,7 @@
 import { Contract, Address, TransactionBuilder, Account, scValToNative, nativeToScVal, rpc, Transaction } from '@stellar/stellar-sdk';
 import { server, CONTRACT_ID, NETWORK_PASSPHRASE } from './client';
 import { BucketState } from '@/types/bucket';
+import { DepositAllocation } from '@/types/transaction';
 
 const contract = new Contract(CONTRACT_ID);
 const DECIMALS = 10_000_000; // 7 decimals for Stellar assets
@@ -163,4 +164,64 @@ export const submitTransaction = async (signedXDR: string): Promise<string> => {
     return hash;
   }
   throw new Error('Transaction submission timeout or failure');
+};
+
+const LEDGERS_PER_DAY = 17_280; // ~24h at 5s/ledger
+
+export const fetchDepositEvents = async (senderAddress: string): Promise<DepositAllocation[]> => {
+  if (!CONTRACT_ID) {
+    return [];
+  }
+
+  try {
+    const latestLedgerResponse = await server.getLatestLedger();
+    const latestLedger = latestLedgerResponse.sequence;
+    const startLedger = Math.max(1, latestLedger - LEDGERS_PER_DAY);
+
+    // Build topic filters: deposit events where sender matches
+    const depositSymbolXdr = nativeToScVal('deposit', { type: 'symbol' }).toXDR('base64');
+    const senderScValXdr = Address.fromString(senderAddress).toScVal().toXDR('base64');
+
+    const response = await server.getEvents({
+      startLedger,
+      filters: [
+        {
+          type: 'contract',
+          contractIds: [CONTRACT_ID],
+          topics: [[depositSymbolXdr, senderScValXdr, '*']],
+        },
+      ],
+      limit: 100,
+    });
+
+    const allocations: DepositAllocation[] = response.events.map((event) => {
+      // Topics: [symbol("deposit"), sender_address, receiver_address]
+      // Value: tuple (amount: i128, split_ratio: u32, unlock_date: u64)
+      const receiverScVal = event.topic[2];
+      const receiver = Address.fromScVal(receiverScVal).toString();
+
+      const valueNative = scValToNative(event.value);
+      const amount = Number(valueNative[0]) / DECIMALS;
+      const splitRatio = Number(valueNative[1]);
+      const unlockDate = Number(valueNative[2]);
+
+      const timestamp = Math.floor(new Date(event.ledgerClosedAt).getTime() / 1000);
+
+      return {
+        id: event.txHash,
+        sender: senderAddress,
+        receiver,
+        amount,
+        splitRatio,
+        unlockDate,
+        timestamp,
+      };
+    });
+
+    // Return most recent first
+    return allocations.reverse();
+  } catch (err) {
+    console.error('Error fetching deposit events:', err);
+    return [];
+  }
 };
