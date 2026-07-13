@@ -1,6 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DepositAllocation } from '@/types/transaction';
-import { fetchDepositEvents } from '@/lib/stellar/contract';
+import { fetchSentTransactions } from '@/lib/supabase';
+import { TransactionRow } from '@/lib/supabase/types';
+
+/**
+ * Map a Supabase TransactionRow to the frontend DepositAllocation shape.
+ */
+function toDepositAllocation(row: TransactionRow): DepositAllocation {
+  return {
+    id: row.tx_hash,
+    sender: row.sender_address,
+    receiver: row.receiver_address,
+    amount: Number(row.amount),
+    splitRatio: row.split_ratio ?? 0,
+    unlockDate: row.unlock_date ?? 0,
+    timestamp: Math.floor(new Date(row.created_at).getTime() / 1000),
+  };
+}
 
 export const useAllocationHistory = (senderAddress: string | null) => {
   const [allocations, setAllocations] = useState<DepositAllocation[]>([]);
@@ -13,24 +29,13 @@ export const useAllocationHistory = (senderAddress: string | null) => {
     }
     setIsLoading(true);
     try {
-      const events = await fetchDepositEvents(senderAddress);
-      
-      const local = localStorage.getItem(`allocations_${senderAddress}`);
-      const localAllocations: DepositAllocation[] = local ? JSON.parse(local) : [];
-      
-      const allAllocationsMap = new Map<string, DepositAllocation>();
-      localAllocations.forEach(a => allAllocationsMap.set(a.id, a));
-      events.forEach(e => allAllocationsMap.set(e.id, e));
-      
-      const merged = Array.from(allAllocationsMap.values())
-        .sort((a, b) => b.timestamp - a.timestamp);
-        
-      setAllocations(merged);
+      const rows = await fetchSentTransactions(senderAddress);
+      // Only show deposit-type transactions in allocation history
+      const deposits = rows.filter(r => r.type === 'deposit');
+      setAllocations(deposits.map(toDepositAllocation));
     } catch (err) {
-      console.error('Failed to fetch allocation history from chain:', err);
-      const local = localStorage.getItem(`allocations_${senderAddress}`);
-      const localAllocations: DepositAllocation[] = local ? JSON.parse(local) : [];
-      setAllocations(localAllocations.sort((a, b) => b.timestamp - a.timestamp));
+      console.error('Failed to fetch allocation history from Supabase:', err);
+      setAllocations([]);
     } finally {
       setIsLoading(false);
     }
