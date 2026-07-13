@@ -15,6 +15,29 @@
 
 ---
 
+### 🏷️ GitHub Repository Topics
+To align this project with the Stellar development and Web3 ecosystems, apply the following topics to the GitHub repository:
+`stellar` • `soroban` • `smart-contracts` • `remittance` • `rust` • `nextjs` • `typescript` • `tailwindcss` • `stablecoin` • `ofw` • `defi` • `web3`
+
+---
+
+## ⚠️ The Problem & 💡 The Solution
+
+### The Problem: Lack of Remittance Guardianship
+Overseas Filipino Workers (OFWs) send remittances back to their families as a single lump-sum transfer. Once the funds arrive, the sender has no control or visibility over how they are allocated. Long-term, high-priority savings goals—such as tuition fees, emergency reserves, or housing payments—frequently get absorbed into immediate, everyday daily spending. 
+
+Because there is no technical boundary separating "money to live on" from "money to protect," families must rely solely on manual budgeting discipline. Due to distance and lack of programmatic enforcement, this trust often breaks down, resulting in financial insecurity and family tension.
+
+### The Solution: On-Chain Split-Remittances
+**INGAT** ("take care" in Tagalog) solves this by introducing programmable, trustless split-remittances powered by Stellar and Soroban. 
+When a sender initiates a deposit, a Soroban smart contract automatically and instantly partitions the incoming stablecoin funds into two secure on-chain buckets based on the sender's configured ratio:
+- 🔀 **Spending Bucket**: Readily accessible by the receiver for day-to-day household expenses.
+- 🔒 **Goal Bucket**: Secured and locked on-chain until a sender-defined future unlock date.
+
+By moving the boundary of custody and lock enforcement directly onto the blockchain, INGAT eliminates the need for interpersonal friction and guarantees that savings goals remain untouched until they are mature.
+
+---
+
 ## How It Works
 
 ```mermaid
@@ -73,6 +96,71 @@ graph TB
     Lib <-->|Sign Tx| Freighter
     Lib <-->|Simulate & Submit| SorobanRPC
 ```
+
+---
+
+## 🚀 Stellar & Soroban Integration
+
+INGAT is engineered to run entirely on the **Stellar Testnet** using modern Soroban smart contract patterns and frontend SDKs.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Sender
+    actor Receiver
+    participant Freighter as Freighter Wallet
+    participant Frontend as Next.js Web App
+    participant RPC as Soroban RPC
+    participant Contract as INGAT Vault (Rust)
+
+    Note over Sender, RPC: Sender Deposit Flow
+    Sender->>Frontend: Connect Freighter
+    Frontend->>Freighter: getAddress()
+    Freighter-->>Frontend: Public Key
+    Sender->>Frontend: Fill Deposit Form (Amount, Split Ratio, Unlock Date)
+    Frontend->>RPC: Fetch Account Sequence & Simulate Tx
+    Frontend->>Freighter: Sign Transaction XDR
+    Freighter-->>Frontend: Signed XDR Envelope
+    Frontend->>RPC: sendTransaction(Signed XDR)
+    RPC->>Contract: Invoke deposit()
+    Contract->>Contract: Split stablecoin & update state
+
+    Note over Receiver, RPC: Receiver Withdrawal Flow
+    Receiver->>Frontend: Connect Freighter & View Buckets
+    Frontend->>RPC: simulateTransaction(get_bucket)
+    RPC-->>Frontend: Bucket Balances & Unlock Date
+    Receiver->>Frontend: Click Withdraw (Spending or Goal)
+    Frontend->>RPC: Fetch Account Sequence & Simulate Tx
+    Frontend->>Freighter: Sign Transaction XDR
+    Freighter-->>Frontend: Signed XDR Envelope
+    Frontend->>RPC: sendTransaction(Signed XDR)
+    RPC->>Contract: Invoke withdraw_spending() / withdraw_goal()
+    Contract->>Contract: Verify Auth & Unlock Time, Transfer Funds
+```
+
+### Integration Details
+
+1. **Freighter Wallet Connect ([@stellar/freighter-api](https://www.npmjs.com/package/@stellar/freighter-api))**
+   - Implements `getAddress()` to retrieve the active user's Stellar public key.
+   - Detects wallet presence via `isConnected()`.
+   - Utilizes `signTransaction(xdr, { networkPassphrase })` to sign transaction envelopes client-side, ensuring user secret keys never leave the wallet extension.
+
+2. **Transaction Building & Simulation ([@stellar/stellar-sdk](https://www.npmjs.com/package/@stellar/stellar-sdk))**
+   - Retrieves the sender/receiver's latest account state (sequence number) from Soroban RPC via `server.getAccount(address)`.
+   - Uses `TransactionBuilder` to construct transaction envelopes calling the smart contract functions (`deposit`, `withdraw_spending`, `withdraw_goal`).
+   - Simulates transactions via `server.simulateTransaction(tx)` to compute precise gas limits, resource footprints, and fee structures, and uses `rpc.assembleTransaction(tx, simulation)` to finalize the envelope before signature request.
+
+3. **On-Chain Queries (No-Database Architecture)**
+   - To show bucket states in real-time, the frontend builds a dummy transaction with a read-only `get_bucket(receiver)` contract invocation.
+   - It simulates the call via `server.simulateTransaction(tx)` and decodes the return value via `scValToNative(retval)` to read balances and lock times.
+   - This ensures **100% database-free operation**, where the Stellar ledger serves as the single source of truth.
+
+4. **Soroban Smart Contract (Rust)**
+   - Built using the `soroban-sdk` and compiles to a secure WASM binary.
+   - Implements `require_auth()` verification to guarantee only the authorized receiver can withdraw funds.
+   - Integrates with Stellar's standard token contract interface (`token::Client`) to execute transfer operations for deposits and withdrawals.
+   - Leverages `env.ledger().timestamp()` to strictly enforce the temporal lock on the Goal Bucket, rejecting any withdrawal attempts prior to the unlock date at the blockchain consensus level.
+   - Emits structured events (`deposit`, `withdraw`) for off-chain indexing and tracking.
 
 ---
 
