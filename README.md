@@ -97,6 +97,9 @@ graph TB
 
 INGAT is engineered to run entirely on the **Stellar Testnet** using modern Soroban smart contract patterns and frontend SDKs.
 
+- **Deployed Contract ID**: `CCIXHEXJULBZSRCB5DOMRFB24F73LVNKEVYNB5SPNFW7HV7EHRGKBHFF`
+- **Stablecoin Token ID**: `CBUG6YFWHLFO72UDOSWNPFXLFOXMHUQLPVLIRL6VNOSA27VHKXPSMOU6`
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -322,10 +325,10 @@ graph LR
 
 | Phase | Description | Status |
 |:-----:|-------------|:------:|
-| 1 | Contract Core — Soroban logic, Cargo workspace, unit tests | 🟡 |
-| 2 | Wallet & Sender Flow — connection, hooks, deposit form | 🔴 |
-| 3 | Receiver Flow — bucket cards, unlock timers, withdrawals | 🔴 |
-| 4 | Polish & Demo — type checks, build validation, clean layouts | 🔴 |
+| 1 | Contract Core — Soroban logic, Cargo workspace, unit tests | ✅ Complete |
+| 2 | Wallet & Sender Flow — connection, hooks, deposit form | ✅ Complete |
+| 3 | Receiver Flow — bucket cards, unlock timers, withdrawals | ✅ Complete |
+| 4 | Polish & Demo — type checks, build validation, clean layouts | ✅ Complete |
 
 ---
 
