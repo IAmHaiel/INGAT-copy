@@ -1,4 +1,4 @@
-import { Contract, Address, TransactionBuilder, Account, scValToNative, nativeToScVal, rpc, Transaction } from '@stellar/stellar-sdk';
+import { Contract, Address, TransactionBuilder, Account, scValToNative, nativeToScVal, rpc } from '@stellar/stellar-sdk';
 import { server, CONTRACT_ID, NETWORK_PASSPHRASE } from './client';
 import { BucketState } from '@/types/bucket';
 import { DepositAllocation } from '@/types/transaction';
@@ -78,7 +78,7 @@ export const buildDepositTx = async (
   const sim = await server.simulateTransaction(tx);
   if (rpc.Api.isSimulationSuccess(sim)) {
     const assembledTx = rpc.assembleTransaction(tx, sim);
-    return (assembledTx as unknown as Transaction).toXDR();
+    return assembledTx.build().toXDR();
   } else {
     throw new Error((sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed for deposit transaction');
   }
@@ -105,7 +105,7 @@ export const buildWithdrawSpendingTx = async (
   const sim = await server.simulateTransaction(tx);
   if (rpc.Api.isSimulationSuccess(sim)) {
     const assembledTx = rpc.assembleTransaction(tx, sim);
-    return (assembledTx as unknown as Transaction).toXDR();
+    return assembledTx.build().toXDR();
   } else {
     throw new Error((sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed for spending withdrawal');
   }
@@ -132,7 +132,7 @@ export const buildWithdrawGoalTx = async (
   const sim = await server.simulateTransaction(tx);
   if (rpc.Api.isSimulationSuccess(sim)) {
     const assembledTx = rpc.assembleTransaction(tx, sim);
-    return (assembledTx as unknown as Transaction).toXDR();
+    return assembledTx.build().toXDR();
   } else {
     throw new Error((sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed for goal withdrawal');
   }
@@ -146,23 +146,23 @@ export const submitTransaction = async (signedXDR: string): Promise<string> => {
     throw new Error((response as { errorResult?: string; errorResultXdr?: string }).errorResult || (response as { errorResult?: string; errorResultXdr?: string }).errorResultXdr || 'Transaction submission failed');
   }
   
-  let status = response.status as string;
   const hash = response.hash;
   
-  while (status === 'PENDING') {
+  let txStatus = await server.getTransaction(hash);
+  let retries = 0;
+  
+  while (txStatus.status === 'NOT_FOUND' && retries < 30) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    const txStatus = await server.getTransaction(hash);
-    status = txStatus.status;
-    if (status === 'SUCCESS') {
-      return hash;
-    } else if (status === 'FAILED') {
-      throw new Error('Transaction execution failed on chain');
-    }
+    txStatus = await server.getTransaction(hash);
+    retries++;
   }
   
-  if (status === 'SUCCESS') {
+  if (txStatus.status === 'SUCCESS') {
     return hash;
+  } else if (txStatus.status === 'FAILED') {
+    throw new Error('Transaction execution failed on chain');
   }
+  
   throw new Error('Transaction submission timeout or failure');
 };
 
