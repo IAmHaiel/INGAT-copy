@@ -42,51 +42,15 @@ The app runs at `http://localhost:3000`.
 
 ### Fund Your Account
 
-Your testnet account needs XLM for transaction fees:
+Your testnet account needs XLM for both transaction fees and deposits:
 
 1. Copy your Freighter public key (starts with `G...`)
-2. Fund it via Friendbot:
+2. Fund it via Friendbot (gives you 10,000 XLM for free):
    ```bash
    curl "https://friendbot.stellar.org/?addr=YOUR_PUBLIC_KEY_HERE"
    ```
 
-### Add PHPC Trustline
-
-To receive the PHPC stablecoin, your account needs a trustline:
-
-```bash
-# Using Stellar CLI — add trustline to PHPC
-stellar contract invoke \
-  --id CBUG6YFWHLFO72UDOSWNPFXLFOXMHUQLPVLIRL6VNOSA27VHKXPSMOU6 \
-  --network testnet \
-  --source YOUR_IDENTITY \
-  -- approve \
-  --from YOUR_PUBLIC_KEY \
-  --spender CCIXHEXJULBZSRCB5DOMRFB24F73LVNKEVYNB5SPNFW7HV7EHRGKBHFF \
-  --amount 99999999999 \
-  --expiration-ledger 99999999
-```
-
-Or set up the trustline via [Stellar Lab](https://lab.stellar.org):
-1. Go to Transaction Builder → Select Testnet
-2. Add operation: `Change Trust` → Asset Code: `PHPC`, Issuer: `GDFZMTSOG5IYX7G4SWHWS3UBF7C3TXLCJFPKCVYREXAHBYB3L6AGK75E`
-3. Sign and submit
-
-### Mint Test PHPC Tokens
-
-If you control the deployer identity, mint PHPC to your sender account:
-
-```bash
-stellar contract invoke \
-  --id CBUG6YFWHLFO72UDOSWNPFXLFOXMHUQLPVLIRL6VNOSA27VHKXPSMOU6 \
-  --network testnet \
-  --source deployer \
-  -- mint \
-  --to YOUR_SENDER_PUBLIC_KEY \
-  --amount 10000000000
-```
-
-This mints 1000 PHPC (7 decimals: 1000 × 10^7 = 10,000,000,000 stroops).
+> **That's it!** Unlike stablecoins, native XLM requires no trustline or minting step. Any funded account can immediately deposit and withdraw.
 
 ---
 
@@ -105,7 +69,7 @@ This mints 1000 PHPC (7 decimals: 1000 × 10^7 = 10,000,000,000 stroops).
 1. On the Sender Dashboard, click **"Create Split Remittance"**
 2. Fill in the form:
    - **Receiver Address:** A valid Stellar public key (the receiver's Freighter address)
-   - **Amount:** e.g., `100` (PHPC)
+   - **Amount:** e.g., `20` (XLM) — the USD equivalent is shown below
    - **Split Ratio:** e.g., `60%` spending / `40%` goal
    - **Unlock Date:** A future date (for testing, pick a date 5 minutes from now)
 3. Click **"Execute Remittance Split"**
@@ -116,7 +80,7 @@ This mints 1000 PHPC (7 decimals: 1000 × 10^7 = 10,000,000,000 stroops).
 
 After depositing, return to the Sender Dashboard. The **Allocation History** section shows your deposit pulled from on-chain events, including:
 - Receiver address
-- Amount
+- Amount in XLM with USD equivalent
 - Split ratio
 - Unlock date
 - Transaction link to Stellar Explorer
@@ -138,12 +102,12 @@ After depositing, return to the Sender Dashboard. The **Allocation History** sec
 ### View Buckets
 
 The Receiver Dashboard shows two cards:
-- **Spending Bucket** — Available balance, withdraw anytime
-- **Goal Bucket** — Locked balance with unlock countdown timer
+- **Spending Bucket** — Available XLM balance (+ USD equivalent), withdraw anytime
+- **Goal Bucket** — Locked XLM balance with unlock countdown timer
 
 ### Withdraw from Spending Bucket
 
-1. On the Spending Bucket card, enter a withdrawal amount
+1. On the Spending Bucket card, enter a withdrawal amount (in XLM)
 2. Click **"Withdraw"**
 3. Approve in Freighter
 4. Balance updates after confirmation
@@ -180,7 +144,7 @@ The Receiver Dashboard shows two cards:
 |------|----------|
 | Withdraw more than bucket balance | Transaction fails: "Insufficient funds" |
 | Withdraw from Goal before unlock | Transaction fails: "Goal bucket locked" |
-| Deposit with insufficient PHPC balance | Transaction fails on-chain |
+| Deposit with insufficient XLM balance | Transaction fails on-chain |
 | Reject transaction in Freighter | Error state shown, no funds moved |
 
 ### Wallet/Network Detection
@@ -205,10 +169,10 @@ stellar keys generate receiver --network testnet
 
 SENDER=$(stellar keys address sender)
 RECEIVER=$(stellar keys address receiver)
-CONTRACT=CCIXHEXJULBZSRCB5DOMRFB24F73LVNKEVYNB5SPNFW7HV7EHRGKBHFF
+CONTRACT=CALZQBX7GJIQ6MZC6MIIDEJPDBHPHBDHQTGHSUTOW7A7S7OPS4V4346U
 
-# Deposit 100 PHPC with 60/40 split, unlock in 5 minutes
-UNLOCK=$(date -d "+5 minutes" +%s)
+# Deposit 20 XLM (7 decimals = 200000000 stroops) with 60/40 split, unlock in 5 minutes
+UNLOCK=$(($(date +%s) + 300))
 
 stellar contract invoke \
   --id $CONTRACT \
@@ -217,7 +181,7 @@ stellar contract invoke \
   -- deposit \
   --sender $SENDER \
   --receiver $RECEIVER \
-  --amount 1000000000 \
+  --amount 200000000 \
   --split_ratio 60 \
   --unlock_date $UNLOCK
 
@@ -229,14 +193,14 @@ stellar contract invoke \
   -- get_bucket \
   --receiver $RECEIVER
 
-# Withdraw 20 PHPC from spending (always works)
+# Withdraw 5 XLM from spending (always works)
 stellar contract invoke \
   --id $CONTRACT \
   --network testnet \
   --source receiver \
   -- withdraw_spending \
   --receiver $RECEIVER \
-  --amount 200000000
+  --amount 50000000
 
 # Withdraw from goal (fails if locked, works after unlock_date)
 stellar contract invoke \
@@ -245,22 +209,22 @@ stellar contract invoke \
   --source receiver \
   -- withdraw_goal \
   --receiver $RECEIVER \
-  --amount 100000000
+  --amount 50000000
 ```
 
 ---
 
 ## 7. Test Accounts (Pre-Configured)
 
-These accounts are already set up on testnet with PHPC trustlines:
+These accounts are already set up on testnet with XLM:
 
 | Role | Address | CLI Identity |
 |------|---------|-------------|
-| Deployer / PHPC Issuer | `GDFZMTSOG5IYX7G4SWHWS3UBF7C3TXLCJFPKCVYREXAHBYB3L6AGK75E` | `deployer` |
+| Deployer | `GDFZMTSOG5IYX7G4SWHWS3UBF7C3TXLCJFPKCVYREXAHBYB3L6AGK75E` | `deployer` |
 | Test Sender (OFW) | `GDP5DTFLCG3ZSXYGSHCVZXIKKVP6MHDY7Z3EYMYEJOKR2KFPNA7A7YXJ` | `sender` |
 | Test Receiver (Family) | `GDXKVV5BGBDRNSJDCZAEX3XMXWD6Z2WBCHBCT55ZFWG6R2RL5MMTZR3Y` | `receiver` |
 
-> **Testnet resets periodically.** If accounts are missing, re-run `npm run contract:deploy` and fund accounts via Friendbot.
+> **Any new account works too!** Just fund via Friendbot and you can deposit/withdraw immediately.
 
 ---
 
@@ -268,12 +232,12 @@ These accounts are already set up on testnet with PHPC trustlines:
 
 | Contract | ID |
 |----------|------|
-| INGAT Vault | `CCIXHEXJULBZSRCB5DOMRFB24F73LVNKEVYNB5SPNFW7HV7EHRGKBHFF` |
-| PHPC Stablecoin (SAC) | `CBUG6YFWHLFO72UDOSWNPFXLFOXMHUQLPVLIRL6VNOSA27VHKXPSMOU6` |
+| INGAT Vault | `CALZQBX7GJIQ6MZC6MIIDEJPDBHPHBDHQTGHSUTOW7A7S7OPS4V4346U` |
+| Native XLM SAC | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
 
 Verify on Stellar Explorer:
-- [Vault Contract](https://stellar.expert/explorer/testnet/contract/CCIXHEXJULBZSRCB5DOMRFB24F73LVNKEVYNB5SPNFW7HV7EHRGKBHFF)
-- [PHPC Token](https://stellar.expert/explorer/testnet/contract/CBUG6YFWHLFO72UDOSWNPFXLFOXMHUQLPVLIRL6VNOSA27VHKXPSMOU6)
+- [Vault Contract](https://stellar.expert/explorer/testnet/contract/CALZQBX7GJIQ6MZC6MIIDEJPDBHPHBDHQTGHSUTOW7A7S7OPS4V4346U)
+- [XLM SAC](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC)
 
 ---
 
@@ -283,11 +247,12 @@ Verify on Stellar Explorer:
 |-------|----------|
 | "Freighter wallet extension is not installed" | Install Freighter from [freighter.app](https://www.freighter.app/) |
 | "Please switch Freighter to Stellar Testnet" | Open Freighter → Settings → Network → Testnet |
-| Transaction simulation fails | Check that sender has sufficient PHPC balance and XLM for fees |
+| Transaction simulation fails | Check that sender has sufficient XLM balance (need amount + ~1 XLM for fees) |
 | Allocation history is empty | History pulls from last 24h of on-chain events. Make a new deposit. |
 | "Contract not initialized" | Redeploy: `npm run contract:deploy` |
 | Account not found | Fund via Friendbot: `curl "https://friendbot.stellar.org/?addr=YOUR_KEY"` |
 | Build fails | Run `npm install` from repo root, ensure Node.js v20+ |
+| USD conversion shows $0.00 | CoinGecko API may be rate-limited; will use fallback price (~$0.14) |
 
 ---
 
@@ -295,13 +260,15 @@ Verify on Stellar Explorer:
 
 For a rapid end-to-end demo in under 5 minutes:
 
-1. **Open the app** → Connect Freighter (Sender account, Testnet)
-2. **Create deposit** → 100 PHPC, 60/40 split, unlock in 2 minutes
-3. **Show confirmation** → Transaction hash visible, links to explorer
-4. **Switch to Receiver** → Open incognito, connect Receiver wallet
-5. **Show buckets** → Spending: 60 PHPC available, Goal: 40 PHPC locked with timer
-6. **Withdraw spending** → Take 20 PHPC, show balance update
-7. **Try Goal withdrawal** → Disabled/rejected (locked)
-8. **Wait for unlock** → Timer hits zero, Goal bucket shows "Unlocked"
-9. **Withdraw Goal** → Take 40 PHPC, show balance update
-10. **Back to Sender** → Allocation history shows the deposit from on-chain events
+1. **Fund accounts** → Friendbot both sender and receiver addresses
+2. **Open the app** → Connect Freighter (Sender account, Testnet)
+3. **Create deposit** → 20 XLM, 60/40 split, unlock in 2 minutes
+4. **Show confirmation** → Transaction hash visible, links to explorer
+5. **Show USD equiv** → All amounts show "≈ $X.XX" from live price feed
+6. **Switch to Receiver** → Open incognito, connect Receiver wallet
+7. **Show buckets** → Spending: 12 XLM available, Goal: 8 XLM locked with timer
+8. **Withdraw spending** → Take 5 XLM, show balance update
+9. **Try Goal withdrawal** → Disabled/rejected (locked)
+10. **Wait for unlock** → Timer hits zero, Goal bucket shows "Unlocked"
+11. **Withdraw Goal** → Take 8 XLM, show balance update
+12. **Back to Sender** → Allocation history shows the deposit from on-chain events
