@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { buildWithdrawSpendingTx, buildWithdrawGoalTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
+import { insertTransaction } from '@/lib/supabase';
 
 export const useWithdraw = (receiverAddress: string | null, onSuccess?: () => void) => {
   const [isWithdrawing, setIsWithdrawing] = useState<boolean>(false);
@@ -33,6 +34,22 @@ export const useWithdraw = (receiverAddress: string | null, onSuccess?: () => vo
       const signedXDR = await signTxWithFreighter(unsignedXDR, receiverAddress);
       const hash = await submitTransaction(signedXDR);
       setTxHash(hash);
+
+      // Persist withdrawal to Supabase (fire-and-forget)
+      const txType = type === 'spending' ? 'withdraw_spending' : 'withdraw_goal';
+      insertTransaction({
+        tx_hash: hash,
+        type: txType,
+        sender_address: receiverAddress,
+        receiver_address: receiverAddress,
+        amount,
+        spending_amount: type === 'spending' ? amount : null,
+        goal_amount: type === 'goal' ? amount : null,
+        split_ratio: null,
+        unlock_date: null,
+      }).catch((err) => {
+        console.error('[useWithdraw] Supabase persistence failed:', err);
+      });
 
       if (onSuccess) {
         onSuccess();
