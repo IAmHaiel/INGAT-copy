@@ -127,15 +127,15 @@ export default function DashboardContainer() {
     return await deposit(inputs);
   };
 
-  const handleWithdrawSpending = (amount: number) => {
-    withdraw('spending', amount);
+  const handleWithdrawSpending = (bucketId: number, amount: number) => {
+    withdraw(bucketId, 'spending', amount);
   };
 
-  const handleWithdrawGoal = (amount: number) => {
-    withdraw('goal', amount);
+  const handleWithdrawGoal = (bucketId: number, amount: number) => {
+    withdraw(bucketId, 'goal', amount);
   };
 
-  const showWithdrawStatus = isWithdrawing || withdrawError;
+  const showWithdrawStatus = isWithdrawing !== null || withdrawError;
 
   // Filter history based on active tab
   const getFilteredAllocations = () => {
@@ -225,7 +225,7 @@ export default function DashboardContainer() {
                 {/* Withdrawal Status Overlay */}
                 {showWithdrawStatus && (
                   <TransactionStatus
-                    status={isWithdrawing ? 'pending' : withdrawError ? 'error' : 'success'}
+                    status={isWithdrawing !== null ? 'pending' : withdrawError ? 'error' : 'success'}
                     hash={withdrawTxHash}
                     errorMsg={withdrawError}
                   />
@@ -239,23 +239,44 @@ export default function DashboardContainer() {
                 )}
 
                 {/* Vaults/Buckets */}
-                {balancesLoading && !balances ? (
+                {balancesLoading && (!balances || balances.length === 0) ? (
                   <div className="flex justify-center items-center py-20 bg-white rounded-xl border border-outline-variant">
                     <span className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin"></span>
                   </div>
+                ) : !balances || balances.length === 0 ? (
+                  <div className="text-center py-16 bg-white rounded-2xl border border-outline-variant shadow-sm p-6">
+                    <p className="text-on-surface-variant font-medium text-lg">No active buckets found</p>
+                    <p className="text-on-surface-variant text-xs mt-1">Once a sender deposits funds for you, they will appear here.</p>
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-[fadeIn_200ms_ease-out]">
-                    <SpendingBucketCard
-                      balance={balances?.spendingBalance ?? 0}
-                      onWithdraw={handleWithdrawSpending}
-                      isWithdrawing={isWithdrawing}
-                    />
-                    <GoalBucketCard
-                      balance={balances?.goalBalance ?? 0}
-                      unlockDate={balances?.unlockDate ?? 0}
-                      onWithdraw={handleWithdrawGoal}
-                      isWithdrawing={isWithdrawing}
-                    />
+                  <div className="space-y-8 animate-[fadeIn_200ms_ease-out]">
+                    {balances.map((bucket) => (
+                      <div key={bucket.id} className="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-outline-variant pb-3 mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-secondary/10 text-secondary text-xs font-semibold px-2.5 py-1 rounded-full">
+                              Bucket #{bucket.id + 1}
+                            </span>
+                            <span className="text-xs text-on-surface-variant font-medium">
+                              Sender: <span className="font-mono bg-surface-container px-2 py-0.5 rounded text-[11px] select-all">{bucket.sender}</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <SpendingBucketCard
+                            balance={bucket.spendingBalance}
+                            onWithdraw={(amount) => handleWithdrawSpending(bucket.id, amount)}
+                            isWithdrawing={isWithdrawing === bucket.id}
+                          />
+                          <GoalBucketCard
+                            balance={bucket.goalBalance}
+                            unlockDate={bucket.unlockDate}
+                            onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
+                            isWithdrawing={isWithdrawing === bucket.id}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </>

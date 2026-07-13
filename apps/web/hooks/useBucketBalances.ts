@@ -3,7 +3,7 @@ import { fetchBucketBalances } from '@/lib/stellar/contract';
 import { BucketState } from '@/types/bucket';
 
 export const useBucketBalances = (receiverAddress: string | null) => {
-  const [balances, setBalances] = useState<BucketState | null>(null);
+  const [balances, setBalances] = useState<BucketState[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,11 +13,7 @@ export const useBucketBalances = (receiverAddress: string | null) => {
     if (!silent) setError(null);
     try {
       const res = await fetchBucketBalances(receiverAddress);
-      if (res) {
-        setBalances(res);
-      } else {
-        setError('Failed to fetch bucket balances');
-      }
+      setBalances(res);
     } catch {
       setError('Error connecting to Stellar node');
     } finally {

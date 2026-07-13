@@ -10,7 +10,7 @@ const getDummyAccount = () => {
   return new Account('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF', '0');
 };
 
-export const fetchBucketBalances = async (receiverAddress: string): Promise<BucketState | null> => {
+export const fetchBucketBalances = async (receiverAddress: string): Promise<BucketState[]> => {
   try {
     const receiverScVal = Address.fromString(receiverAddress).toScVal();
     const dummySource = getDummyAccount();
@@ -19,7 +19,7 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
       fee: '100',
       networkPassphrase: NETWORK_PASSPHRASE,
     })
-      .addOperation(contract.call('get_bucket', receiverScVal))
+      .addOperation(contract.call('get_buckets', receiverScVal))
       .setTimeout(30)
       .build();
 
@@ -27,27 +27,21 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
     
     if (rpc.Api.isSimulationSuccess(sim) && sim.result?.retval) {
       const nativeVal = scValToNative(sim.result.retval);
-      if (!nativeVal) {
-        return {
-          spendingBalance: 0,
-          goalBalance: 0,
-          unlockDate: 0,
-        };
+      if (!nativeVal || !Array.isArray(nativeVal)) {
+        return [];
       }
-      return {
-        spendingBalance: Number(nativeVal.spending_balance) / DECIMALS,
-        goalBalance: Number(nativeVal.goal_balance) / DECIMALS,
-        unlockDate: Number(nativeVal.unlock_date),
-      };
+      return nativeVal.map((item: any) => ({
+        id: Number(item.id),
+        sender: String(item.sender),
+        spendingBalance: Number(item.spending_balance) / DECIMALS,
+        goalBalance: Number(item.goal_balance) / DECIMALS,
+        unlockDate: Number(item.unlock_date),
+      }));
     }
-    return {
-      spendingBalance: 0,
-      goalBalance: 0,
-      unlockDate: 0,
-    };
+    return [];
   } catch (err) {
     console.error('Error fetching bucket balances:', err);
-    return null;
+    return [];
   }
 };
 
@@ -86,9 +80,11 @@ export const buildDepositTx = async (
 
 export const buildWithdrawSpendingTx = async (
   receiverAddress: string,
+  bucketId: number,
   amount: number
 ): Promise<string> => {
   const receiverScVal = Address.fromString(receiverAddress).toScVal();
+  const bucketIdScVal = nativeToScVal(bucketId, { type: 'u32' });
   
   const scaledAmount = BigInt(Math.round(amount * DECIMALS));
   const amountScVal = nativeToScVal(scaledAmount, { type: 'i128' });
@@ -98,7 +94,7 @@ export const buildWithdrawSpendingTx = async (
     fee: '100',
     networkPassphrase: NETWORK_PASSPHRASE,
   })
-    .addOperation(contract.call('withdraw_spending', receiverScVal, amountScVal))
+    .addOperation(contract.call('withdraw_spending', receiverScVal, bucketIdScVal, amountScVal))
     .setTimeout(30)
     .build();
 
@@ -113,9 +109,11 @@ export const buildWithdrawSpendingTx = async (
 
 export const buildWithdrawGoalTx = async (
   receiverAddress: string,
+  bucketId: number,
   amount: number
 ): Promise<string> => {
   const receiverScVal = Address.fromString(receiverAddress).toScVal();
+  const bucketIdScVal = nativeToScVal(bucketId, { type: 'u32' });
   
   const scaledAmount = BigInt(Math.round(amount * DECIMALS));
   const amountScVal = nativeToScVal(scaledAmount, { type: 'i128' });
@@ -125,7 +123,7 @@ export const buildWithdrawGoalTx = async (
     fee: '100',
     networkPassphrase: NETWORK_PASSPHRASE,
   })
-    .addOperation(contract.call('withdraw_goal', receiverScVal, amountScVal))
+    .addOperation(contract.call('withdraw_goal', receiverScVal, bucketIdScVal, amountScVal))
     .setTimeout(30)
     .build();
 

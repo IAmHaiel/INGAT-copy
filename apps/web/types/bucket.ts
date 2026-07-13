@@ -1,4 +1,6 @@
 export interface BucketState {
+  id: number;
+  sender: string;
   spendingBalance: number;
   goalBalance: number;
   unlockDate: number; // unix timestamp in seconds

@@ -11,4 +11,5 @@ pub enum Error {
     InsufficientFunds = 5,
     GoalBucketLocked = 6,
     InvalidAmount = 7,
+    InvalidBucket = 8,
 }

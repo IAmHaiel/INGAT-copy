@@ -6,11 +6,11 @@ import { useWalletContext } from '@/context/WalletContext';
 
 export const useWithdraw = (receiverAddress: string | null, onSuccess?: (hash: string) => void) => {
   const { supabaseClient } = useWalletContext();
-  const [isWithdrawing, setIsWithdrawing] = useState<boolean>(false);
+  const [isWithdrawing, setIsWithdrawing] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
-  const withdraw = async (type: 'spending' | 'goal', amount: number) => {
+  const withdraw = async (bucketId: number, type: 'spending' | 'goal', amount: number) => {
     if (!receiverAddress) {
       setError('Wallet not connected');
       return;
@@ -21,16 +21,16 @@ export const useWithdraw = (receiverAddress: string | null, onSuccess?: (hash: s
       return;
     }
 
-    setIsWithdrawing(true);
+    setIsWithdrawing(bucketId);
     setError(null);
     setTxHash(null);
 
     try {
       let unsignedXDR = '';
       if (type === 'spending') {
-        unsignedXDR = await buildWithdrawSpendingTx(receiverAddress, amount);
+        unsignedXDR = await buildWithdrawSpendingTx(receiverAddress, bucketId, amount);
       } else {
-        unsignedXDR = await buildWithdrawGoalTx(receiverAddress, amount);
+        unsignedXDR = await buildWithdrawGoalTx(receiverAddress, bucketId, amount);
       }
 
       const signedXDR = await signTxWithFreighter(unsignedXDR, receiverAddress);
@@ -61,7 +61,7 @@ export const useWithdraw = (receiverAddress: string | null, onSuccess?: (hash: s
       const errorMessage = err instanceof Error ? err.message : 'Withdrawal failed';
       setError(errorMessage);
     } finally {
-      setIsWithdrawing(false);
+      setIsWithdrawing(null);
     }
   };
 

@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, Address, Env};
+use soroban_sdk::{contract, contractimpl, Address, Env, Vec};
 
 pub mod errors;
 pub mod storage;
@@ -37,21 +37,30 @@ impl IngatVault {
     pub fn withdraw_spending(
         env: Env,
         receiver: Address,
+        bucket_id: u32,
         amount: i128,
     ) -> Result<(), Error> {
-        withdraw::withdraw_spending(env, receiver, amount)
+        withdraw::withdraw_spending(env, receiver, bucket_id, amount)
     }
 
     pub fn withdraw_goal(
         env: Env,
         receiver: Address,
+        bucket_id: u32,
         amount: i128,
     ) -> Result<(), Error> {
-        withdraw::withdraw_goal(env, receiver, amount)
+        withdraw::withdraw_goal(env, receiver, bucket_id, amount)
     }
 
-    pub fn get_bucket(env: Env, receiver: Address) -> Option<BucketState> {
-        storage::get_bucket(&env, &receiver)
+    pub fn get_buckets(env: Env, receiver: Address) -> Vec<BucketState> {
+        let count = storage::get_bucket_count(&env, &receiver);
+        let mut buckets = Vec::new(&env);
+        for i in 0..count {
+            if let Some(state) = storage::get_bucket(&env, &receiver, i) {
+                buckets.push_back(state);
+            }
+        }
+        buckets
     }
 
     pub fn get_token(env: Env) -> Address {

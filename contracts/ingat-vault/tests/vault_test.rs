@@ -45,29 +45,50 @@ fn test_vault_deposit_and_withdraw() {
     assert_eq!(token_client.balance(&sender), 900);
     assert_eq!(token_client.balance(&contract_id), 100);
 
-    let bucket = client.get_bucket(&receiver).unwrap();
+    let buckets = client.get_buckets(&receiver);
+    assert_eq!(buckets.len(), 1);
+    let bucket = buckets.get(0).unwrap();
+    assert_eq!(bucket.id, 0);
+    assert_eq!(bucket.sender, sender);
     assert_eq!(bucket.spending_balance, 60);
     assert_eq!(bucket.goal_balance, 40);
     assert_eq!(bucket.unlock_date, unlock_date);
 
-    // Withdraw 20 from spending bucket (should succeed)
-    client.withdraw_spending(&receiver, &20);
+    // Deposit another 200 tokens with 50% spending split, unlocking in 2000 seconds
+    token_admin_client.mint(&sender, &200);
+    let unlock_date_2 = current_time + 2000;
+    client.deposit(&sender, &receiver, &200, &50, &unlock_date_2);
+
+    let buckets = client.get_buckets(&receiver);
+    assert_eq!(buckets.len(), 2);
+    
+    let bucket2 = buckets.get(1).unwrap();
+    assert_eq!(bucket2.id, 1);
+    assert_eq!(bucket2.sender, sender);
+    assert_eq!(bucket2.spending_balance, 100);
+    assert_eq!(bucket2.goal_balance, 100);
+    assert_eq!(bucket2.unlock_date, unlock_date_2);
+
+    // Withdraw 20 from spending bucket 0 (should succeed)
+    client.withdraw_spending(&receiver, &0, &20);
     assert_eq!(token_client.balance(&receiver), 20);
     
-    let bucket = client.get_bucket(&receiver).unwrap();
+    let buckets = client.get_buckets(&receiver);
+    let bucket = buckets.get(0).unwrap();
     assert_eq!(bucket.spending_balance, 40);
 
-    // Attempt to withdraw 10 from goal bucket before unlock date (should fail)
-    let res = client.try_withdraw_goal(&receiver, &10);
+    // Attempt to withdraw 10 from goal bucket 0 before unlock date (should fail)
+    let res = client.try_withdraw_goal(&receiver, &0, &10);
     assert!(res.is_err());
 
-    // Advance ledger time past unlock date
+    // Advance ledger time past unlock date 0
     env.ledger().set_timestamp(unlock_date + 1);
 
-    // Withdraw 15 from goal bucket (should succeed now)
-    client.withdraw_goal(&receiver, &15);
+    // Withdraw 15 from goal bucket 0 (should succeed now)
+    client.withdraw_goal(&receiver, &0, &15);
     assert_eq!(token_client.balance(&receiver), 35); // 20 spending + 15 goal
 
-    let bucket = client.get_bucket(&receiver).unwrap();
+    let buckets = client.get_buckets(&receiver);
+    let bucket = buckets.get(0).unwrap();
     assert_eq!(bucket.goal_balance, 25);
 }

@@ -38,22 +38,19 @@ pub fn deposit(
     let spending_amount = (amount * split_ratio as i128) / 100;
     let goal_amount = amount - spending_amount;
 
-    // Fetch or create bucket state for receiver
-    let mut state = storage::get_bucket(&env, &receiver).unwrap_or(BucketState {
-        spending_balance: 0,
-        goal_balance: 0,
-        unlock_date: 0,
-    });
+    // Fetch bucket count and store new bucket state
+    let count = storage::get_bucket_count(&env, &receiver);
 
-    state.spending_balance += spending_amount;
-    state.goal_balance += goal_amount;
-    
-    // Always preserve the furthest unlock date to prevent bypassing existing locks
-    if unlock_date > state.unlock_date {
-        state.unlock_date = unlock_date;
-    }
+    let state = BucketState {
+        id: count,
+        sender: sender.clone(),
+        spending_balance: spending_amount,
+        goal_balance: goal_amount,
+        unlock_date,
+    };
 
-    storage::set_bucket(&env, &receiver, &state);
+    storage::set_bucket(&env, &receiver, count, &state);
+    storage::set_bucket_count(&env, &receiver, count + 1);
 
     // Emit deposit event
     env.events().publish(

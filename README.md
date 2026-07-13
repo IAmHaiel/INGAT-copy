@@ -8,10 +8,12 @@
 [![Rust](https://img.shields.io/badge/Rust-2021-orange?logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE.md)
 [![Network: Testnet](https://img.shields.io/badge/Network-Stellar%20Testnet-yellow)](https://soroban-testnet.stellar.org)
+[![Features: Multi-Bucket](https://img.shields.io/badge/Features-Multi--Bucket-teal)](./docs/deployments.md)
+[![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen)](#)
 
 ---
 
-**INGAT** ("Take care" in Filipino, as in *"Ingat sa biyahe, ingat din sa padala"*) is a decentralized split-remittance protocol built on Stellar and Soroban. It empowers Overseas Filipino Workers (OFWs) to send remittances with programmable on-chain constraints — automatically dividing funds between immediately spendable cash and locked savings goals to prevent impulse spending and ensure financial resilience.
+**INGAT** ("Take care" in Filipino, as in *"Ingat sa biyahe, ingat din sa padala"*) is a decentralized split-remittance protocol built on Stellar and Soroban. It empowers Overseas Filipino Workers (OFWs) to send remittances with programmable on-chain constraints — automatically dividing funds between immediately spendable cash and locked savings goals. This project supports **individual multi-bucket tracking**, meaning every transaction forms its own unique set of spending and goal cards, preserving separate unlock times and showing sender details on each card.
 
 ---
 
@@ -97,8 +99,8 @@ graph TB
 
 INGAT is engineered to run entirely on the **Stellar Testnet** using modern Soroban smart contract patterns and frontend SDKs.
 
-- **Deployed Contract ID**: `CCIXHEXJULBZSRCB5DOMRFB24F73LVNKEVYNB5SPNFW7HV7EHRGKBHFF`
-- **Stablecoin Token ID**: `CBUG6YFWHLFO72UDOSWNPFXLFOXMHUQLPVLIRL6VNOSA27VHKXPSMOU6`
+- **Deployed Contract ID**: `CBUTVTFSY7WKHCZAHXOL4DQVK364HRSMTXKAT6DBTOCZGSSRA37OYGQ5`
+- **Native XLM Token ID**: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
 
 ```mermaid
 sequenceDiagram
