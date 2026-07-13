@@ -1,4 +1,4 @@
-import { isConnected, getAddress, requestAccess, signTransaction, getNetworkDetails } from '@stellar/freighter-api';
+import { isConnected, getAddress, requestAccess, signTransaction, getNetworkDetails, signMessage } from '@stellar/freighter-api';
 import { NETWORK_PASSPHRASE } from './client';
 
 export const isFreighterInstalled = async (): Promise<boolean> => {
@@ -83,4 +83,22 @@ export const getFreighterNetwork = async (): Promise<{ network: string; networkP
     console.error('Failed to get Freighter network:', err);
     return null;
   }
+};
+
+/**
+ * Sign an arbitrary message using Freighter (SEP-53).
+ * Used for wallet authentication challenge-response.
+ */
+export const signMessageWithFreighter = async (
+  message: string,
+  address: string
+): Promise<string> => {
+  const result = await signMessage(message, { address });
+  if (result.error) {
+    throw new Error(result.error.message || 'Message signing failed');
+  }
+  if (!result.signedMessage) {
+    throw new Error('No signature returned from Freighter');
+  }
+  return result.signedMessage;
 };
