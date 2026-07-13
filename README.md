@@ -1,4 +1,4 @@
-# INGAT — Stellar/Soroban Split-Remittance Protocol
+# INGAT — Income Guardianship & Allocation Tool
 
 [![Built on Stellar](https://img.shields.io/badge/Built%20on-Stellar-blue?logo=stellar&logoColor=white)](https://stellar.org)
 [![Soroban Smart Contract](https://img.shields.io/badge/Smart%20Contract-Soroban-purple)](https://soroban.stellar.org)
@@ -15,13 +15,7 @@
 
 ---
 
-### 🏷️ GitHub Repository Topics
-To align this project with the Stellar development and Web3 ecosystems, apply the following topics to the GitHub repository:
-`stellar` • `soroban` • `smart-contracts` • `remittance` • `rust` • `nextjs` • `typescript` • `tailwindcss` • `stablecoin` • `ofw` • `defi` • `web3`
-
----
-
-## ⚠️ The Problem & 💡 The Solution
+## The Problem & The Solution
 
 ### The Problem: Lack of Remittance Guardianship
 Overseas Filipino Workers (OFWs) send remittances back to their families as a single lump-sum transfer. Once the funds arrive, the sender has no control or visibility over how they are allocated. Long-term, high-priority savings goals—such as tuition fees, emergency reserves, or housing payments—frequently get absorbed into immediate, everyday daily spending. 
@@ -31,8 +25,8 @@ Because there is no technical boundary separating "money to live on" from "money
 ### The Solution: On-Chain Split-Remittances
 **INGAT** ("take care" in Tagalog) solves this by introducing programmable, trustless split-remittances powered by Stellar and Soroban. 
 When a sender initiates a deposit, a Soroban smart contract automatically and instantly partitions the incoming stablecoin funds into two secure on-chain buckets based on the sender's configured ratio:
-- 🔀 **Spending Bucket**: Readily accessible by the receiver for day-to-day household expenses.
-- 🔒 **Goal Bucket**: Secured and locked on-chain until a sender-defined future unlock date.
+- **Spending Bucket**: Readily accessible by the receiver for day-to-day household expenses.
+- **Goal Bucket**: Secured and locked on-chain until a sender-defined future unlock date.
 
 By moving the boundary of custody and lock enforcement directly onto the blockchain, INGAT eliminates the need for interpersonal friction and guarantees that savings goals remain untouched until they are mature.
 
@@ -99,7 +93,7 @@ graph TB
 
 ---
 
-## 🚀 Stellar & Soroban Integration
+## Stellar & Soroban Integration
 
 INGAT is engineered to run entirely on the **Stellar Testnet** using modern Soroban smart contract patterns and frontend SDKs.
 
@@ -168,11 +162,11 @@ sequenceDiagram
 
 | Feature | Description |
 |---------|-------------|
-| 🔀 **On-Chain Splits** | Instantly partition deposits into Spending & Goal buckets by user-defined percentages |
-| 🔒 **Goal Lock Protection** | Lock the Goal bucket on-chain until the sender-specified release date |
-| 👛 **Freighter Integration** | Seamless wallet connect and transaction signing via Freighter extension |
-| 🎨 **Glassmorphic Dashboard** | Responsive, warm-toned UI built with Manrope font and modern design |
-| ⚡ **Soroban Smart Contract** | Gas-efficient Rust contract with state leases, TTL extensions, and 7-decimal precision |
+| **On-Chain Splits** | Instantly partition deposits into Spending & Goal buckets by user-defined percentages |
+| **Goal Lock Protection** | Lock the Goal bucket on-chain until the sender-specified release date |
+| **Freighter Integration** | Seamless wallet connect and transaction signing via Freighter extension |
+| **Glassmorphic Dashboard** | Responsive, warm-toned UI built with Manrope font and modern design |
+| **Soroban Smart Contract** | Gas-efficient Rust contract with state leases, TTL extensions, and 7-decimal precision |
 
 ---
 
@@ -270,7 +264,7 @@ npm run build
 npm run lint
 ```
 
-> ⚠️ Run all commands from the **repo root**. This is an npm workspace — do not `cd apps/web`.
+>  Run all commands from the **repo root**. This is an npm workspace — do not `cd apps/web`.
 
 ---
 
@@ -328,10 +322,10 @@ graph LR
 
 | Phase | Description | Status |
 |:-----:|-------------|:------:|
-| 1 | Contract Core — Soroban logic, Cargo workspace, unit tests | ✅ |
-| 2 | Wallet & Sender Flow — connection, hooks, deposit form | ✅ |
-| 3 | Receiver Flow — bucket cards, unlock timers, withdrawals | ✅ |
-| 4 | Polish & Demo — type checks, build validation, clean layouts | ✅ |
+| 1 | Contract Core — Soroban logic, Cargo workspace, unit tests | 🟡 |
+| 2 | Wallet & Sender Flow — connection, hooks, deposit form | 🔴 |
+| 3 | Receiver Flow — bucket cards, unlock timers, withdrawals | 🔴 |
+| 4 | Polish & Demo — type checks, build validation, clean layouts | 🔴 |
 
 ---
 
