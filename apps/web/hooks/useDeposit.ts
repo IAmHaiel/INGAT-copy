@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { buildDepositTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
 import { validateDeposit, ValidationError } from '@/lib/validation/deposit';
-import { DepositFormInputs, DepositAllocation } from '@/types/transaction';
+import { DepositFormInputs } from '@/types/transaction';
 
 export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: string) => void) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -43,21 +43,6 @@ export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: st
 
       const hash = await submitTransaction(signedXDR);
       setTxHash(hash);
-
-      const newAllocation: DepositAllocation = {
-        id: hash,
-        sender: senderAddress,
-        receiver: inputs.receiver,
-        amount: amountNum,
-        splitRatio: inputs.splitRatio,
-        unlockDate: unlockDateEpoch,
-        timestamp: Math.floor(Date.now() / 1000)
-      };
-
-      const existingAllocations = localStorage.getItem(`allocations_${senderAddress}`);
-      const allocationsList: DepositAllocation[] = existingAllocations ? JSON.parse(existingAllocations) : [];
-      allocationsList.unshift(newAllocation);
-      localStorage.setItem(`allocations_${senderAddress}`, JSON.stringify(allocationsList));
 
       if (onSuccess) {
         onSuccess(hash);
