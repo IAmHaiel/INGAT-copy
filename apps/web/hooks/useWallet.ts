@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getConnectedPublicKey, isFreighterInstalled } from '@/lib/stellar/freighter';
+import { getConnectedPublicKey, isFreighterInstalled, getFreighterNetwork } from '@/lib/stellar/freighter';
 
 export const useWallet = () => {
   const [publicKey, setPublicKey] = useState<string | null>(null);
@@ -16,6 +16,13 @@ export const useWallet = () => {
       }
       const pubKey = await getConnectedPublicKey();
       if (pubKey) {
+        const networkInfo = await getFreighterNetwork();
+        if (networkInfo && networkInfo.network !== 'TESTNET') {
+          setError('Please switch Freighter to Stellar Testnet to use INGAT');
+          setPublicKey(null);
+          setIsConnected(false);
+          return;
+        }
         setPublicKey(pubKey);
         setIsConnected(true);
         setError(null);
@@ -40,6 +47,12 @@ export const useWallet = () => {
       }
       const pubKey = await getConnectedPublicKey();
       if (pubKey) {
+        const networkInfo = await getFreighterNetwork();
+        if (networkInfo && networkInfo.network !== 'TESTNET') {
+          setError('Please switch Freighter to Stellar Testnet to use INGAT');
+          setIsConnecting(false);
+          return;
+        }
         setPublicKey(pubKey);
         setIsConnected(true);
       } else {
