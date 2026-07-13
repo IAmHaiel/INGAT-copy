@@ -229,3 +229,61 @@ export const fetchDepositEvents = async (senderAddress: string): Promise<Deposit
     return [];
   }
 };
+
+export const fetchReceivedDepositEvents = async (receiverAddress: string): Promise<DepositAllocation[]> => {
+  if (!CONTRACT_ID) {
+    return [];
+  }
+
+  try {
+    const latestLedgerResponse = await server.getLatestLedger();
+    const latestLedger = latestLedgerResponse.sequence;
+    const startLedger = Math.max(1, latestLedger - LEDGERS_PER_DAY);
+
+    const depositSymbolXdr = nativeToScVal('deposit', { type: 'symbol' }).toXDR('base64');
+    const receiverScValXdr = Address.fromString(receiverAddress).toScVal().toXDR('base64');
+
+    const response = await server.getEvents({
+      startLedger,
+      filters: [
+        {
+          type: 'contract',
+          contractIds: [CONTRACT_ID],
+          topics: [
+            [depositSymbolXdr],
+            ['*'],
+            [receiverScValXdr]
+          ],
+        },
+      ],
+      limit: 100,
+    });
+
+    const allocations: DepositAllocation[] = response.events.map((event) => {
+      const senderScVal = event.topic[1];
+      const sender = Address.fromScVal(senderScVal).toString();
+
+      const valueNative = scValToNative(event.value);
+      const amount = Number(valueNative[0]) / DECIMALS;
+      const splitRatio = Number(valueNative[1]);
+      const unlockDate = Number(valueNative[2]);
+
+      const timestamp = Math.floor(new Date(event.ledgerClosedAt).getTime() / 1000);
+
+      return {
+        id: event.txHash,
+        sender,
+        receiver: receiverAddress,
+        amount,
+        splitRatio,
+        unlockDate,
+        timestamp,
+      };
+    });
+
+    return allocations.reverse();
+  } catch (err) {
+    console.error('Error fetching received deposit events:', err);
+    return [];
+  }
+};

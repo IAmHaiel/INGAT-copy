@@ -37,7 +37,15 @@ export const useAllocationHistory = (senderAddress: string | null) => {
   }, [senderAddress]);
 
   useEffect(() => {
-    fetchHistory();
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) {
+        fetchHistory();
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [senderAddress, fetchHistory]);
 
   return {

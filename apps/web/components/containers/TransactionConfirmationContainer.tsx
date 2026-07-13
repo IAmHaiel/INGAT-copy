@@ -15,7 +15,7 @@ function TransactionConfirmationContent({ type }: TransactionConfirmationContain
   const errorParam = searchParams.get('error');
 
   const status: 'success' | 'error' = errorParam ? 'error' : 'success';
-  const dashboardPath = type === 'deposit' ? '/sender' : '/receiver';
+  const dashboardPath = '/dashboard';
 
   return (
     <div className="max-w-md mx-auto px-4 py-16 space-y-6 flex-grow flex flex-col justify-center w-full">
