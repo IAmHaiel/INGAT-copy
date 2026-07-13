@@ -8,4 +8,6 @@ export const server = new rpc.Server(RPC_URL);
 // Contract IDs — set via environment variables (.env.local)
 // Run `npm run contract:deploy` to deploy and get these values.
 export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || '';
-export const STABLECOIN_TOKEN_ID = process.env.NEXT_PUBLIC_STABLECOIN_TOKEN_ID || '';
+
+// Token: Native XLM SAC (Stellar Asset Contract) — no trustline needed
+export const TOKEN_ID = process.env.NEXT_PUBLIC_TOKEN_ID || '';
