@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { formatAmount, formatDate, formatDistanceToNow } from '@/lib/utils/format';
 import { Lock, Unlock, Calendar } from 'lucide-react';
+import { useXlmPrice } from '@/hooks/useXlmPrice';
+import { formatXlmWithUsd } from '@/lib/utils/price';
 
 interface GoalBucketCardProps {
   balance: number;
@@ -19,7 +21,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(true);
   const [timeLeftStr, setTimeLeftStr] = useState('');
-
+  const { priceUsd } = useXlmPrice();
   useEffect(() => {
     const checkLock = () => {
       const now = Math.floor(Date.now() / 1000);
@@ -54,8 +56,11 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
           <div>
             <h3 className="text-sm font-semibold text-on-surface-variant">Goal Bucket</h3>
             <p className={`text-2xl font-black ${isLocked ? 'text-secondary' : 'text-green-600'}`}>
-              ${formatAmount(balance)}
+              {formatAmount(balance)} XLM
             </p>
+            {priceUsd > 0 && balance > 0 && (
+              <p className="text-xs text-on-surface-variant">{formatXlmWithUsd(balance, priceUsd)}</p>
+            )}
           </div>
         </div>
 

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { formatAmount } from '@/lib/utils/format';
 import { Coins } from 'lucide-react';
+import { useXlmPrice } from '@/hooks/useXlmPrice';
+import { formatXlmWithUsd } from '@/lib/utils/price';
 
 interface SpendingBucketCardProps {
   balance: number;
@@ -15,6 +17,7 @@ const SpendingBucketCard: React.FC<SpendingBucketCardProps> = ({
 }) => {
   const [amount, setAmount] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const { priceUsd } = useXlmPrice();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +37,10 @@ const SpendingBucketCard: React.FC<SpendingBucketCardProps> = ({
         </div>
         <div>
           <h3 className="text-sm font-semibold text-on-surface-variant">Spending Bucket</h3>
-          <p className="text-2xl font-black text-primary">${formatAmount(balance)}</p>
+          <p className="text-2xl font-black text-primary">{formatAmount(balance)} XLM</p>
+          {priceUsd > 0 && balance > 0 && (
+            <p className="text-xs text-on-surface-variant">{formatXlmWithUsd(balance, priceUsd)}</p>
+          )}
         </div>
       </div>
 

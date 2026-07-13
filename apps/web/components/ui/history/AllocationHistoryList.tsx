@@ -2,6 +2,8 @@ import React from 'react';
 import { DepositAllocation } from '@/types/transaction';
 import { formatAddress, formatAmount, formatDate } from '@/lib/utils/format';
 import { History, ExternalLink } from 'lucide-react';
+import { useXlmPrice } from '@/hooks/useXlmPrice';
+import { formatXlmWithUsd } from '@/lib/utils/price';
 
 interface AllocationHistoryListProps {
   allocations: DepositAllocation[];
@@ -9,6 +11,8 @@ interface AllocationHistoryListProps {
 }
 
 const AllocationHistoryList: React.FC<AllocationHistoryListProps> = ({ allocations, isLoading }) => {
+  const { priceUsd } = useXlmPrice();
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-10">
@@ -54,7 +58,10 @@ const AllocationHistoryList: React.FC<AllocationHistoryListProps> = ({ allocatio
               </div>
             </div>
             <div className="text-right">
-              <span className="text-base font-black text-primary block">${formatAmount(alloc.amount)}</span>
+              <span className="text-base font-black text-primary block">{formatAmount(alloc.amount)} XLM</span>
+              {priceUsd > 0 && (
+                <span className="text-[10px] text-on-surface-variant block">{formatXlmWithUsd(alloc.amount, priceUsd)}</span>
+              )}
               <span className="text-[9px] text-on-surface-variant">Lock ends: {formatDate(alloc.unlockDate)}</span>
             </div>
           </div>

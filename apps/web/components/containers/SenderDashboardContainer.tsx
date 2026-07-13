@@ -8,11 +8,14 @@ import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { SummaryCard } from '@/components/ui/dashboard/SummaryCard';
 import { useWalletContext } from '@/context/WalletContext';
 import { useAllocationHistory } from '@/hooks/useAllocationHistory';
+import { useXlmPrice } from '@/hooks/useXlmPrice';
+import { formatXlmWithUsd } from '@/lib/utils/price';
 
 export default function SenderDashboardContainer() {
   const router = useRouter();
   const { publicKey, isConnected, disconnect } = useWalletContext();
   const { allocations, isLoading: historyLoading } = useAllocationHistory(publicKey);
+  const { priceUsd } = useXlmPrice();
   const [currentTime, setCurrentTime] = useState<number>(0);
 
   useEffect(() => {
@@ -66,8 +69,8 @@ export default function SenderDashboardContainer() {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SummaryCard
           title="Total Remitted"
-          value={`$${totalRemitted.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-          subtitle="Across all allocations"
+          value={`${totalRemitted.toLocaleString(undefined, { minimumFractionDigits: 2 })} XLM`}
+          subtitle={priceUsd > 0 ? formatXlmWithUsd(totalRemitted, priceUsd) : 'Loading price...'}
         />
         <SummaryCard
           title="Active Locked Goals"

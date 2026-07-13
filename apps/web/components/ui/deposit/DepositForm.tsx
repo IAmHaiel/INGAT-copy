@@ -4,6 +4,8 @@ import UnlockDatePicker from './UnlockDatePicker';
 import { DepositFormInputs } from '@/types/transaction';
 import { ValidationError } from '@/lib/validation/deposit';
 import { Send } from 'lucide-react';
+import { useXlmPrice } from '@/hooks/useXlmPrice';
+import { formatXlmWithUsd } from '@/lib/utils/price';
 
 interface DepositFormProps {
   onDeposit: (inputs: DepositFormInputs) => void;
@@ -22,7 +24,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
   const [amount, setAmount] = useState('');
   const [splitRatio, setSplitRatio] = useState(60); // default 60% spending
   const [unlockDate, setUnlockDate] = useState('');
-
+  const { priceUsd } = useXlmPrice();
   const getErrorForField = (field: keyof DepositFormInputs) => {
     return validationErrors.find((e) => e.field === field)?.message;
   };
@@ -65,18 +67,22 @@ const DepositForm: React.FC<DepositFormProps> = ({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-semibold text-on-surface">Deposit Amount (USD Stablecoin)</label>
+        <label className="block text-sm font-semibold text-on-surface">Deposit Amount (XLM)</label>
         <div className="relative">
-          <span className="absolute left-3 top-2.5 text-on-surface-variant text-sm">$</span>
           <input
             type="number"
             step="0.01"
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full bg-white border border-outline-variant rounded-lg pl-7 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-on-surface"
+            className="w-full bg-white border border-outline-variant rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-on-surface"
           />
         </div>
+        {amount && parseFloat(amount) > 0 && priceUsd > 0 && (
+          <p className="text-xs text-on-surface-variant mt-1">
+            {formatXlmWithUsd(parseFloat(amount), priceUsd)}
+          </p>
+        )}
         {getErrorForField('amount') && (
           <p className="text-xs text-red-600 mt-1">{getErrorForField('amount')}</p>
         )}

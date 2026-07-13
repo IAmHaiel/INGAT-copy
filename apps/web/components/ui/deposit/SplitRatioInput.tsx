@@ -32,12 +32,12 @@ const SplitRatioInput: React.FC<SplitRatioInputProps> = ({ value, onChange, amou
         <div className="grid grid-cols-2 gap-4 text-xs font-medium">
           <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
             <span className="text-on-surface-variant block">Spending Bucket (Receiver)</span>
-            <span className="text-lg font-bold text-primary">${spendingSplit.toFixed(2)}</span>
+            <span className="text-lg font-bold text-primary">{spendingSplit.toFixed(2)} XLM</span>
             <span className="text-[10px] text-on-surface-variant block">Withdrawable anytime</span>
           </div>
           <div className="bg-secondary/5 p-3 rounded-lg border border-secondary/10">
             <span className="text-on-surface-variant block">Goal Bucket (Savings)</span>
-            <span className="text-lg font-bold text-secondary">${goalSplit.toFixed(2)}</span>
+            <span className="text-lg font-bold text-secondary">{goalSplit.toFixed(2)} XLM</span>
             <span className="text-[10px] text-on-surface-variant block">Locked until release date</span>
           </div>
         </div>
