@@ -188,7 +188,11 @@ export const fetchDepositEvents = async (senderAddress: string): Promise<Deposit
         {
           type: 'contract',
           contractIds: [CONTRACT_ID],
-          topics: [[depositSymbolXdr, senderScValXdr, '*']],
+          topics: [
+            [depositSymbolXdr],
+            [senderScValXdr],
+            ['*']
+          ],
         },
       ],
       limit: 100,
