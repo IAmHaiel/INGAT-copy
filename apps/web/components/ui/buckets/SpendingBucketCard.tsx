@@ -49,32 +49,66 @@ const SpendingBucketCard: React.FC<SpendingBucketCardProps> = ({
       </p>
 
       {isOpen ? (
-        <form onSubmit={handleSubmit} className="space-y-3 pt-2 border-t border-outline-variant">
-          <div className="flex gap-2">
-            <input
-              type="number"
-              step="0.01"
-              max={balance}
-              placeholder="Amount to withdraw"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="flex-grow bg-white border border-outline-variant rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-on-surface"
-            />
+        <form onSubmit={handleSubmit} className="space-y-3 pt-3 border-t border-outline-variant animate-[fadeIn_150ms_ease-out]">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-grow">
+              <input
+                type="number"
+                step="0.01"
+                max={balance}
+                placeholder="Amount to withdraw"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full bg-white border border-outline-variant rounded-lg pl-3 pr-14 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-on-surface"
+              />
+              <button
+                type="button"
+                onClick={() => setAmount(balance.toFixed(2))}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-primary hover:text-primary/80 bg-transparent border-0 cursor-pointer"
+              >
+                MAX
+              </button>
+            </div>
             <button
               type="submit"
               disabled={isWithdrawing || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > balance}
-              className="bg-primary text-white font-bold text-sm px-4 py-2 rounded-lg cursor-pointer disabled:opacity-50 border-0"
+              className="bg-primary text-white font-bold text-sm px-5 py-2 rounded-lg cursor-pointer disabled:opacity-50 border-0 transition-opacity hover:opacity-90 w-full sm:w-auto flex items-center justify-center min-w-[90px]"
             >
               Withdraw
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            className="text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer border-0 bg-transparent"
-          >
-            Cancel
-          </button>
+
+          {/* Interactive Hints */}
+          <div className="space-y-1 min-h-[16px]">
+            {amount && parseFloat(amount) > 0 && priceUsd > 0 && (
+              <p className="text-[11px] text-on-surface-variant">
+                USD Value: {formatXlmWithUsd(parseFloat(amount), priceUsd)}
+              </p>
+            )}
+            {amount && parseFloat(amount) > 0 && parseFloat(amount) <= balance && (
+              <p className="text-[11px] text-green-600 font-medium">
+                Remaining: {formatAmount(balance - parseFloat(amount))} XLM
+              </p>
+            )}
+            {amount && parseFloat(amount) > balance && (
+              <p className="text-[11px] text-red-600 font-medium">
+                Exceeds available balance of {formatAmount(balance)} XLM
+              </p>
+            )}
+          </div>
+
+          <div className="flex justify-start">
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                setAmount('');
+              }}
+              className="text-xs font-semibold text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer border-0 bg-transparent py-1"
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       ) : (
         <button

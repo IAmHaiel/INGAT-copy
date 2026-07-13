@@ -36,7 +36,8 @@ const AllocationHistoryList: React.FC<AllocationHistoryListProps> = ({ allocatio
       <div className="p-4 border-b border-outline-variant bg-surface-container/30">
         <h3 className="font-bold text-sm text-primary">Allocation History</h3>
       </div>
-      <div className="divide-y divide-outline-variant">
+      <div className="overflow-x-auto">
+        <div className="min-w-[480px] divide-y divide-outline-variant">
         {allocations.map((alloc) => (
           <div key={alloc.id} className="p-4 flex justify-between items-center hover:bg-surface/50 transition-colors">
             <div className="space-y-1">
@@ -66,6 +67,7 @@ const AllocationHistoryList: React.FC<AllocationHistoryListProps> = ({ allocatio
             </div>
           </div>
         ))}
+        </div>
       </div>
     </div>
   );

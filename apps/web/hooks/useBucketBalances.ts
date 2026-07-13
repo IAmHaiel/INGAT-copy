@@ -13,7 +13,8 @@ export const useBucketBalances = (receiverAddress: string | null) => {
     if (!silent) setError(null);
     try {
       const res = await fetchBucketBalances(receiverAddress);
-      setBalances(res);
+      const activeBuckets = res.filter(b => b.spendingBalance > 0 || b.goalBalance > 0);
+      setBalances(activeBuckets);
     } catch {
       setError('Error connecting to Stellar node');
     } finally {

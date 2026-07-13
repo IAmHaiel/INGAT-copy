@@ -41,7 +41,8 @@ const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({
       <div className="p-4 border-b border-outline-variant bg-surface-container/30">
         <h3 className="font-bold text-sm text-primary">Transaction History</h3>
       </div>
-      <div className="divide-y divide-outline-variant">
+      <div className="max-h-[480px] overflow-y-auto overflow-x-auto">
+        <div className="min-w-[480px] divide-y divide-outline-variant">
         {allocations.map((alloc) => {
           const isSent = alloc.sender === currentUserAddress;
           
@@ -97,6 +98,7 @@ const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );
