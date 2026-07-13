@@ -32,22 +32,40 @@ export const useDashboardTransactions = (address: string | null) => {
       sent.forEach(e => sentMap.set(e.id, e));
       const finalSent = Array.from(sentMap.values()).sort((a, b) => b.timestamp - a.timestamp);
 
+      // Merge local storage for received if it exists
+      const localRecStr = localStorage.getItem(`received_${address}`);
+      const localRec: DepositAllocation[] = localRecStr ? JSON.parse(localRecStr) : [];
+
+      const recMap = new Map<string, DepositAllocation>();
+      localRec.forEach(a => recMap.set(a.id, a));
+      received.forEach(e => recMap.set(e.id, e));
+      const finalReceived = Array.from(recMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+
+      // Cache received transactions locally
+      localStorage.setItem(`received_${address}`, JSON.stringify(finalReceived));
+
       // Save to local state
       setSentTransactions(finalSent);
-      setReceivedTransactions(received);
+      setReceivedTransactions(finalReceived);
 
       // Merge and sort all transactions
-      const merged = [...finalSent, ...received].sort((a, b) => b.timestamp - a.timestamp);
+      const merged = [...finalSent, ...finalReceived].sort((a, b) => b.timestamp - a.timestamp);
       setAllTransactions(merged);
     } catch (err) {
       console.error('Failed to fetch dashboard transactions:', err);
-      // Fallback to local storage for sent
+      // Fallback to local storage for both sent and received
       const localSentStr = localStorage.getItem(`allocations_${address}`);
       const localSent: DepositAllocation[] = localSentStr ? JSON.parse(localSentStr) : [];
       const finalSent = localSent.sort((a, b) => b.timestamp - a.timestamp);
+
+      const localRecStr = localStorage.getItem(`received_${address}`);
+      const localRec: DepositAllocation[] = localRecStr ? JSON.parse(localRecStr) : [];
+      const finalReceived = localRec.sort((a, b) => b.timestamp - a.timestamp);
+
       setSentTransactions(finalSent);
+      setReceivedTransactions(finalReceived);
       
-      const merged = [...finalSent].sort((a, b) => b.timestamp - a.timestamp);
+      const merged = [...finalSent, ...finalReceived].sort((a, b) => b.timestamp - a.timestamp);
       setAllTransactions(merged);
     } finally {
       setIsLoading(false);
