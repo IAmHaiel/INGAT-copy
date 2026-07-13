@@ -1,6 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DepositAllocation } from '@/types/transaction';
-import { fetchDepositEvents, fetchReceivedDepositEvents } from '@/lib/stellar/contract';
+import { fetchTransactionsByAddress, fetchSentTransactions, fetchReceivedTransactions } from '@/lib/supabase';
+import { TransactionRow } from '@/lib/supabase/types';
+
+/**
+ * Map a Supabase TransactionRow to the frontend DepositAllocation shape.
+ * This keeps all downstream components (DashboardHistoryList, etc.) unchanged.
+ */
+function toDepositAllocation(row: TransactionRow): DepositAllocation {
+  return {
+    id: row.tx_hash,
+    sender: row.sender_address,
+    receiver: row.receiver_address,
+    amount: Number(row.amount),
+    splitRatio: row.split_ratio ?? 0,
+    unlockDate: row.unlock_date ?? 0,
+    timestamp: Math.floor(new Date(row.created_at).getTime() / 1000),
+  };
+}
 
 export const useDashboardTransactions = (address: string | null) => {
   const [sentTransactions, setSentTransactions] = useState<DepositAllocation[]>([]);
@@ -17,56 +34,24 @@ export const useDashboardTransactions = (address: string | null) => {
     }
     setIsLoading(true);
     try {
-      // Fetch both in parallel
-      const [sent, received] = await Promise.all([
-        fetchDepositEvents(address),
-        fetchReceivedDepositEvents(address),
+      const [allRows, sentRows, receivedRows] = await Promise.all([
+        fetchTransactionsByAddress(address),
+        fetchSentTransactions(address),
+        fetchReceivedTransactions(address),
       ]);
 
-      // Merge local storage for sent if it exists (for optimistic UI / fast updates)
-      const localSentStr = localStorage.getItem(`allocations_${address}`);
-      const localSent: DepositAllocation[] = localSentStr ? JSON.parse(localSentStr) : [];
-      
-      const sentMap = new Map<string, DepositAllocation>();
-      localSent.forEach(a => sentMap.set(a.id, a));
-      sent.forEach(e => sentMap.set(e.id, e));
-      const finalSent = Array.from(sentMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+      const all = allRows.map(toDepositAllocation);
+      const sent = sentRows.map(toDepositAllocation);
+      const received = receivedRows.map(toDepositAllocation);
 
-      // Merge local storage for received if it exists
-      const localRecStr = localStorage.getItem(`received_${address}`);
-      const localRec: DepositAllocation[] = localRecStr ? JSON.parse(localRecStr) : [];
-
-      const recMap = new Map<string, DepositAllocation>();
-      localRec.forEach(a => recMap.set(a.id, a));
-      received.forEach(e => recMap.set(e.id, e));
-      const finalReceived = Array.from(recMap.values()).sort((a, b) => b.timestamp - a.timestamp);
-
-      // Cache received transactions locally
-      localStorage.setItem(`received_${address}`, JSON.stringify(finalReceived));
-
-      // Save to local state
-      setSentTransactions(finalSent);
-      setReceivedTransactions(finalReceived);
-
-      // Merge and sort all transactions
-      const merged = [...finalSent, ...finalReceived].sort((a, b) => b.timestamp - a.timestamp);
-      setAllTransactions(merged);
+      setAllTransactions(all);
+      setSentTransactions(sent);
+      setReceivedTransactions(received);
     } catch (err) {
-      console.error('Failed to fetch dashboard transactions:', err);
-      // Fallback to local storage for both sent and received
-      const localSentStr = localStorage.getItem(`allocations_${address}`);
-      const localSent: DepositAllocation[] = localSentStr ? JSON.parse(localSentStr) : [];
-      const finalSent = localSent.sort((a, b) => b.timestamp - a.timestamp);
-
-      const localRecStr = localStorage.getItem(`received_${address}`);
-      const localRec: DepositAllocation[] = localRecStr ? JSON.parse(localRecStr) : [];
-      const finalReceived = localRec.sort((a, b) => b.timestamp - a.timestamp);
-
-      setSentTransactions(finalSent);
-      setReceivedTransactions(finalReceived);
-      
-      const merged = [...finalSent, ...finalReceived].sort((a, b) => b.timestamp - a.timestamp);
-      setAllTransactions(merged);
+      console.error('Failed to fetch dashboard transactions from Supabase:', err);
+      setAllTransactions([]);
+      setSentTransactions([]);
+      setReceivedTransactions([]);
     } finally {
       setIsLoading(false);
     }
