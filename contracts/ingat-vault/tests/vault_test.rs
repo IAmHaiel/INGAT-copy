@@ -12,12 +12,12 @@ fn test_vault_deposit_and_withdraw() {
     env.mock_all_auths();
 
     // Register IngatVault contract
-    let contract_id = env.register_contract(None, IngatVault);
+    let contract_id = env.register(IngatVault, ());
     let client = IngatVaultClient::new(&env, &contract_id);
 
     // Register a mock token (Stellar Asset Contract)
     let token_admin = Address::generate(&env);
-    let token_address = env.register_stellar_asset_contract(token_admin.clone());
+    let token_address = env.register_stellar_asset_contract_v2(token_admin.clone()).address();
     let token_client = token::Client::new(&env, &token_address);
     let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
 

@@ -28,38 +28,28 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const auth = useAuth();
   const hasTriggeredAuth = useRef(false);
 
-  // On mount, attempt to restore session from the HttpOnly cookie.
-  // This runs once and does NOT trigger a Freighter popup.
   useEffect(() => {
     auth.restoreSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When publicKey becomes available and session restoration is complete,
-  // only trigger Freighter authentication if no valid session was restored.
   useEffect(() => {
-    if (!auth.isSessionRestored) return; // Wait for session check to finish
+    if (!auth.isSessionRestored) return;
     if (!wallet.publicKey) {
-      // Wallet disconnected — reset auth flag
       hasTriggeredAuth.current = false;
       return;
     }
-    if (auth.supabaseClient) return; // Already authenticated (restored from cookie)
-    if (auth.isAuthenticating) return; // Already in progress
-    if (hasTriggeredAuth.current) return; // Already attempted this session
+    if (auth.supabaseClient) return;
+    if (auth.isAuthenticating) return; 
+    if (hasTriggeredAuth.current) return; 
 
-    // No valid session exists — trigger Freighter sign message (one time only)
     hasTriggeredAuth.current = true;
     auth.authenticate(wallet.publicKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.publicKey, auth.isSessionRestored, auth.supabaseClient, auth.isAuthenticating, auth.authenticate]);
 
-  // When wallet disconnects, clear the cookie and auth state
   useEffect(() => {
     if (!wallet.publicKey && auth.supabaseClient) {
       auth.logout();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.publicKey]);
 
   const value: WalletContextType = {
