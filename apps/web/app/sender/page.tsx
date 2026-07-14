@@ -1,5 +1,5 @@
-import SenderDashboardContainer from '@/components/containers/SenderDashboardContainer';
+import SenderFormPageContainer from '@/components/containers/SenderFormPageContainer';
 
-export default function SenderDashboardPage() {
-  return <SenderDashboardContainer />;
+export default function SenderPage() {
+  return <SenderFormPageContainer />;
 }

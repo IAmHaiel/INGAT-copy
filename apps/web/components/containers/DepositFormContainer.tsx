@@ -53,7 +53,7 @@ export default function DepositFormContainer() {
       <header className="flex justify-between items-center bg-white p-4 rounded-2xl border border-outline-variant shadow-sm">
         <div className="flex items-center gap-2">
           <button
-            onClick={() => router.push('/sender')}
+            onClick={() => router.push('/dashboard')}
             className="p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer border-0 text-on-surface-variant flex items-center justify-center"
           >
             <ArrowLeft size={20} />
