@@ -1,132 +1,117 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Handshake } from 'lucide-react';
+import { Coins, Send, RefreshCw, ArrowRight } from 'lucide-react';
 import { useWalletContext } from '@/context/WalletContext';
-import { useDashboardTransactions } from '@/hooks/useDashboardTransactions';
+import { useAllocationHistory } from '@/hooks/useAllocationHistory';
+import { useXlmPrice } from '@/hooks/useXlmPrice';
+import { formatXlmWithUsd } from '@/lib/utils/price';
+import { useSenderBuckets } from '@/hooks/useSenderBuckets';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
-import { useXlmPrice } from '@/hooks/useXlmPrice';
-import { useDeposit } from '@/hooks/useDeposit';
-import { useKnownAddresses } from '@/hooks/useKnownAddresses';
-import Header from '@/components/ui/layout/Header';
-import Footer from '@/components/ui/layout/Footer';
-import DepositForm from '@/components/ui/deposit/DepositForm';
+import { useDashboardTransactions } from '@/hooks/useDashboardTransactions';
+
+// UI components
+import Header from '../ui/layout/Header';
+import Footer from '../ui/layout/Footer';
+import { SummaryCard } from '@/components/ui/dashboard/SummaryCard';
+import SenderBucketCard from '@/components/ui/dashboard/SenderBucketCard';
 import SpendingBucketCard from '@/components/ui/buckets/SpendingBucketCard';
 import GoalBucketCard from '@/components/ui/buckets/GoalBucketCard';
+import AllocationHistoryList from '@/components/ui/history/AllocationHistoryList';
 import DashboardHistoryList from '@/components/ui/history/DashboardHistoryList';
-import { SummaryCard } from '@/components/ui/dashboard/SummaryCard';
 import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
-import { formatXlmWithUsd } from '@/lib/utils/price';
-import { DepositFormInputs } from '@/types/transaction';
-import { toast } from 'sonner';
 
 export default function DashboardContainer() {
   const router = useRouter();
-  const { 
-    publicKey, 
-    isConnected, 
-    isConnecting, 
+  const {
+    publicKey,
+    isConnected,
+    isConnecting,
     isInitializing,
-    disconnect, 
-    connect, 
-    isAuthenticating, 
-    authError, 
+    connect,
+    disconnect,
+    isAuthenticating,
+    authError,
     authenticate,
-    supabaseClient
+    supabaseClient,
   } = useWalletContext();
-  
-  // Custom states for navigation and tabs
-  const [activeMode, setActiveMode] = useState<'sender' | 'receiver'>('sender');
-  const [activeTab, setActiveTab] = useState<'all' | 'received' | 'sent'>('all');
+
+  const [tab, setTab] = useState<'sent' | 'received'>('sent');
   const [currentTime, setCurrentTime] = useState<number>(0);
 
-  // Load XLM Price
+  // Sender data hooks
+  const { allocations: sentAllocations, isLoading: sentHistoryLoading, refreshHistory: refreshSentHistory } = useAllocationHistory(publicKey);
+  const {
+    buckets: sentBuckets,
+    isLoading: sentBucketsLoading,
+    error: sentBucketsError,
+    withdrawSenderGoal,
+    isWithdrawing: isSenderWithdrawing,
+    withdrawError: senderWithdrawError,
+    txHash: senderTxHash,
+  } = useSenderBuckets(publicKey);
+
+  // Receiver data hooks
+  const { balances: receivedBalances, isLoading: receivedBalancesLoading, error: receivedBalancesError, refreshBalances } = useBucketBalances(publicKey);
+  const { receivedTransactions, isLoading: receivedHistoryLoading, refreshTransactions } = useDashboardTransactions(publicKey);
+  const { withdraw: withdrawReceived, isWithdrawing: isReceiverWithdrawing, error: receiverWithdrawError, txHash: receiverTxHash } = useWithdraw(publicKey, () => {
+    refreshBalances();
+    refreshTransactions(true);
+  });
+
   const { priceUsd } = useXlmPrice();
 
-  // Load Transactions (both Sent and Received)
-  const { 
-    allTransactions, 
-    sentTransactions, 
-    receivedTransactions, 
-    isLoading: txLoading,
-    refreshTransactions 
-  } = useDashboardTransactions(publicKey);
-
-  // Load Bucket Balances (for Receiver Mode)
-  const { knownAddresses, isLoading: isAddressesLoading } = useKnownAddresses(publicKey);
-  const { 
-    balances, 
-    isLoading: balancesLoading, 
-    error: fetchError, 
-    refreshBalances 
-  } = useBucketBalances(publicKey);
-
-  // Withdrawal hook
-  const { 
-    withdraw, 
-    isWithdrawing, 
-    error: withdrawError, 
-    txHash: withdrawTxHash 
-  } = useWithdraw(publicKey, (hash) => {
-    refreshBalances();
-    refreshTransactions();
-    toast.success('Withdrawal Successful!', {
-      description: `Confirmed on testnet: ${hash.slice(0, 8)}...${hash.slice(-8)}`,
-      action: {
-        label: 'View Tx',
-        onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${hash}`, '_blank')
-      },
-      duration: 10000
-    });
-  });
- 
-  // Deposit hook
-  const { 
-    deposit, 
-    isSubmitting: isDepositing, 
-    errors: depositErrors, 
-    txError: depositTxError 
-  } = useDeposit(publicKey, (hash) => {
-    refreshTransactions();
-    toast.success('Deposit Split Completed!', {
-      description: `Confirmed on testnet: ${hash.slice(0, 8)}...${hash.slice(-8)}`,
-      action: {
-        label: 'View Tx',
-        onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${hash}`, '_blank')
-      },
-      duration: 10000
-    });
-  });
-
-  // Real-time polling for transactions, balances, and current time
   useEffect(() => {
-    // Initial time set
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCurrentTime(Math.floor(Date.now() / 1000));
-
-    // Poll every 5 seconds for real-time background updates
-    const interval = setInterval(() => {
+    Promise.resolve().then(() => {
       setCurrentTime(Math.floor(Date.now() / 1000));
-      if (isConnected) {
-        refreshBalances(true); // silent refresh
-        refreshTransactions(true); // silent refresh
-      }
-    }, 5000);
+    });
+  }, []);
 
-    return () => clearInterval(interval);
-  }, [isConnected, refreshBalances, refreshTransactions]);
-
-  // Redirect if wallet gets disconnected (only after initialization is complete)
+  // Synchronize active tab with URL query parameter
   useEffect(() => {
-    if (isInitializing) return; // Wait for wallet state to be restored
-    if (!isConnected && !isConnecting) {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('tab');
+    if (t === 'received' || t === 'sent') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTab(t);
+    }
+  }, []);
+
+  const handleTabChange = (newTab: 'sent' | 'received') => {
+    setTab(newTab);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', newTab);
+    window.history.pushState({}, '', url.pathname + url.search);
+  };
+
+  const handleWithdrawSenderGoal = async (receiverAddress: string, bucketId: number, amount: number) => {
+    const bucket = sentBuckets.find(b => b.id === bucketId && b.receiverAddress === receiverAddress);
+    const success = await withdrawSenderGoal(receiverAddress, bucketId, amount, bucket?.unlockDate);
+    if (success) {
+      refreshSentHistory();
+    }
+  };
+
+  const handleWithdrawSpending = (bucketId: number, amount: number) => {
+    const bucket = receivedBalances.find(b => b.id === bucketId);
+    withdrawReceived(bucketId, 'spending', amount, bucket?.unlockDate);
+  };
+
+  const handleWithdrawGoal = (bucketId: number, amount: number) => {
+    const bucket = receivedBalances.find(b => b.id === bucketId);
+    withdrawReceived(bucketId, 'goal', amount, bucket?.unlockDate);
+  };
+
+  useEffect(() => {
+    if (isInitializing) return;
+    if (!isConnected) {
       router.push('/');
     }
-  }, [isConnected, isConnecting, isInitializing, router]);
+  }, [isConnected, isInitializing, router]);
 
-  if (!isConnected || (isAuthenticating && !supabaseClient)) {
+  if (!isConnected) {
     return (
       <div className="flex justify-center items-center h-screen bg-background-warm">
         <span className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></span>
@@ -134,71 +119,19 @@ export default function DashboardContainer() {
     );
   }
 
-  if (authError) {
-    return (
-      <div className="flex flex-col justify-center items-center h-screen bg-background-warm px-4">
-        <div className="bg-white p-8 rounded-2xl border border-outline-variant shadow-lg max-w-md w-full text-center space-y-6 animate-[fadeIn_200ms_ease-out]">
-          <div className="bg-amber-50 text-amber-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto border border-amber-100">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-            </svg>
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-xl font-bold text-primary">Signature Required</h2>
-            <p className="text-sm text-on-surface-variant leading-relaxed">
-              We need your secure signature to authenticate and load your protected vault buckets and history.
-            </p>
-            {authError !== 'The user rejected this request.' && (
-              <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 mt-2 font-mono break-words">
-                {authError}
-              </p>
-            )}
-          </div>
-          <button
-            onClick={() => publicKey && authenticate(publicKey)}
-            disabled={isAuthenticating}
-            className="w-full bg-primary text-white py-3 rounded-lg font-bold transition-all active:scale-95 cursor-pointer shadow-md hover:shadow-lg border-0 disabled:opacity-50"
-          >
-            {isAuthenticating ? 'Waiting for signature...' : 'Sign Authentication Message'}
-          </button>
-          <button
-            onClick={disconnect}
-            className="text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer border-0 bg-transparent"
-          >
-            Disconnect Wallet
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Sent calculations
+  const totalSent = sentAllocations.reduce((acc, curr) => acc + curr.amount, 0);
+  const activeSentLocks = sentAllocations.filter((a) => a.unlockDate > currentTime).length;
 
-  // Sender Metrics
-  const totalRemitted = sentTransactions.reduce((acc, curr) => acc + curr.amount, 0);
-  const activeLocks = sentTransactions.filter((a) => a.unlockDate > currentTime).length;
+  // Received calculations
+  const totalReceived = receivedTransactions.reduce((acc, curr) => acc + curr.amount, 0);
+  const activeReceivedLocks = receivedBalances.filter((b) => b.goalBalance > 0 && b.unlockDate > currentTime).length;
 
-  const handleDepositSubmit = async (inputs: DepositFormInputs): Promise<boolean> => {
-    return await deposit(inputs);
-  };
-
-  const handleWithdrawSpending = (bucketId: number, amount: number) => {
-    withdraw(bucketId, 'spending', amount);
-  };
-
-  const handleWithdrawGoal = (bucketId: number, amount: number) => {
-    withdraw(bucketId, 'goal', amount);
-  };
-
-  const showWithdrawStatus = isWithdrawing !== null || withdrawError;
-
-  // Filter history based on active tab
-  const getFilteredAllocations = () => {
-    if (activeTab === 'sent') return sentTransactions;
-    if (activeTab === 'received') return receivedTransactions;
-    return allTransactions;
-  };
+  const showSenderFeedback = isSenderWithdrawing !== null || senderTxHash || senderWithdrawError;
+  const showReceiverFeedback = isReceiverWithdrawing !== null || receiverTxHash || receiverWithdrawError;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background-warm text-on-surface">
+    <>
       <Header
         publicKey={publicKey}
         isConnected={isConnected}
@@ -206,188 +139,295 @@ export default function DashboardContainer() {
         onConnect={connect}
         onDisconnect={disconnect}
       />
-
-      <main className="flex-grow max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
-        
-        {/* Toggle Mode Buttons */}
-        <div className="flex justify-center">
-          <div className="bg-surface-container p-1 rounded-2xl flex gap-1 border border-outline-variant/60 shadow-sm">
-            <button
-              onClick={() => setActiveMode('sender')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border-0 cursor-pointer ${
-                activeMode === 'sender'
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-on-surface-variant hover:text-primary hover:bg-white/50'
-              }`}
-            >
-              <Send size={16} />
-              Send Money (Sender)
-            </button>
-            <button
-              onClick={() => setActiveMode('receiver')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border-0 cursor-pointer ${
-                activeMode === 'receiver'
-                  ? 'bg-secondary text-white shadow-md'
-                  : 'text-on-surface-variant hover:text-secondary hover:bg-white/50'
-              }`}
-            >
-              <Handshake size={16} />
-              Receive Money (Receiver)
-            </button>
-          </div>
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full">
+        {/* Tab Toggle Navigation */}
+        <div className="border-b border-outline-variant flex gap-4">
+          <button
+            onClick={() => handleTabChange('sent')}
+            className={`pb-3 font-bold text-sm border-b-2 transition-all cursor-pointer bg-transparent border-0 flex items-center gap-2 ${
+              tab === 'sent'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <Send size={16} />
+            Sent / Deposit
+          </button>
+          <button
+            onClick={() => handleTabChange('received')}
+            className={`pb-3 font-bold text-sm border-b-2 transition-all cursor-pointer bg-transparent border-0 flex items-center gap-2 ${
+              tab === 'received'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <Coins size={16} />
+            Received
+          </button>
         </div>
 
-        {/* Dashboard Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left Column: Form or Vaults */}
-          <div className="lg:col-span-7 space-y-6">
-            {activeMode === 'sender' ? (
-              <>
-                {/* Metrics Row */}
-                <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <SummaryCard
-                    title="Total Remitted"
-                    value={`${totalRemitted.toLocaleString(undefined, { minimumFractionDigits: 2 })} XLM`}
-                    subtitle={priceUsd > 0 ? formatXlmWithUsd(totalRemitted, priceUsd) : 'Loading price...'}
-                  />
-                  <SummaryCard
-                    title="Active Locked Goals"
-                    value={`${activeLocks} Goals`}
-                    subtitle="Locked on-chain"
-                  />
-                  <SummaryCard
-                    title="Total Deposits"
-                    value={`${sentTransactions.length}`}
-                    subtitle="Historical split deposits"
-                  />
-                </section>
+        {tab === 'sent' ? (
+          /* Sent Flow */
+          <div className="space-y-6 animate-[fadeIn_150ms_ease-out]">
+            {/* Feedback message */}
+            {showSenderFeedback && (
+              <TransactionStatus
+                status={isSenderWithdrawing !== null ? 'pending' : senderWithdrawError ? 'error' : 'success'}
+                hash={senderTxHash}
+                errorMsg={senderWithdrawError}
+              />
+            )}
 
-                {/* XLM Send Form */}
-                <section className="animate-[fadeIn_200ms_ease-out]">
-                  <DepositForm
-                    onDeposit={handleDepositSubmit}
-                    isSubmitting={isDepositing}
-                    validationErrors={depositErrors}
-                    txError={depositTxError}
-                    knownAddresses={knownAddresses}
-                    isAddressesLoading={isAddressesLoading}
-                  />
-                </section>
-              </>
+            {/* Metrics */}
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <SummaryCard
+                title="Total Remitted"
+                value={`${totalSent.toLocaleString(undefined, { minimumFractionDigits: 2 })} XLM`}
+                subtitle={priceUsd > 0 ? formatXlmWithUsd(totalSent, priceUsd) : 'Loading price...'}
+              />
+              <SummaryCard
+                title="Active Locked Goals"
+                value={`${activeSentLocks} Goals`}
+                subtitle="Currently locked on-chain"
+              />
+              <SummaryCard
+                title="Total Allocations"
+                value={`${sentAllocations.length}`}
+                subtitle="Historical deposits"
+              />
+            </section>
+
+            {/* CTA Banner */}
+            <section className="bg-primary p-6 rounded-2xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-md border-0">
+              <div className="space-y-1">
+                <h2 className="text-lg font-bold">Need to send a new remittance?</h2>
+                <p className="text-xs text-on-primary-container/85">Configure split percentages and protect emergency/tuition savings immediately.</p>
+              </div>
+              <button
+                onClick={() => router.push('/sender')}
+                className="bg-secondary-container text-on-secondary-container font-black py-3 px-6 rounded-xl transition-all hover:brightness-110 active:scale-95 cursor-pointer shadow-md text-sm border-0 flex items-center gap-1.5"
+              >
+                Create Split Remittance
+                <ArrowRight size={14} />
+              </button>
+            </section>
+
+            {/* Active Buckets */}
+            <section className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-on-surface">Your Deposited Vault Buckets</h2>
+                  {sentBuckets.length > 0 && (
+                    <span className="text-[11px] bg-primary/10 text-primary font-semibold px-2 py-0.5 rounded-full">
+                      {sentBuckets.length} Active
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => router.push('/dashboard/buckets?tab=sent')}
+                  className="text-xs font-bold text-secondary hover:text-secondary-dark hover:underline bg-transparent border-0 cursor-pointer flex items-center gap-0.5"
+                >
+                  View Full History →
+                </button>
+              </div>
+
+              {sentBucketsLoading && sentBuckets.length === 0 ? (
+                <div className="flex justify-center items-center py-8">
+                  <span className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+                </div>
+              ) : sentBucketsError ? (
+                <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-xs">
+                  Error fetching bucket balances: {sentBucketsError}
+                </div>
+              ) : sentBuckets.length === 0 ? (
+                <div className="text-center py-10 bg-white rounded-2xl border border-outline-variant shadow-sm p-5">
+                  <p className="text-on-surface-variant font-semibold text-sm">No active vault buckets found</p>
+                  <p className="text-on-surface-variant text-[11px] mt-0.5">Deposits you send will show live on-chain balances here.</p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[500px] overflow-y-auto p-2 border border-outline-variant rounded-2xl bg-surface-container/20">
+                  {sentBuckets.map((bucket) => (
+                    <SenderBucketCard
+                      key={`${bucket.receiverAddress}-${bucket.id}`}
+                      id={bucket.id}
+                      receiverAddress={bucket.receiverAddress}
+                      spendingBalance={bucket.spendingBalance}
+                      goalBalance={bucket.goalBalance}
+                      unlockDate={bucket.unlockDate}
+                      onWithdrawGoal={handleWithdrawSenderGoal}
+                      isWithdrawing={isSenderWithdrawing === bucket.id}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* History */}
+            <section className="space-y-4">
+              <AllocationHistoryList allocations={sentAllocations} isLoading={sentHistoryLoading} />
+            </section>
+          </div>
+        ) : (
+          /* Received Flow */
+          <div className="space-y-6 animate-[fadeIn_150ms_ease-out]">
+            {isAuthenticating && !supabaseClient ? (
+              /* Inline Authentication Guard for Received Section */
+              <div className="bg-white p-8 rounded-2xl border border-outline-variant shadow-lg max-w-md mx-auto text-center space-y-6">
+                <div className="bg-amber-50 text-amber-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto border border-amber-100">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                  </svg>
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-xl font-bold text-secondary">Signature Required</h2>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">
+                    We need your secure signature to authenticate and load your protected vault buckets.
+                  </p>
+                  {authError && authError !== 'The user rejected this request.' && (
+                    <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 mt-2 font-mono break-words">
+                      {authError}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => publicKey && authenticate(publicKey)}
+                  disabled={isAuthenticating}
+                  className="w-full bg-secondary text-white py-3 rounded-lg font-bold transition-all active:scale-95 cursor-pointer shadow-md hover:shadow-lg border-0 disabled:opacity-50"
+                >
+                  {isAuthenticating ? 'Waiting for signature...' : 'Sign Authentication Message'}
+                </button>
+              </div>
             ) : (
               <>
-                {/* Withdrawal Status Overlay */}
-                {showWithdrawStatus && (
+                {/* Feedback message */}
+                {showReceiverFeedback && (
                   <TransactionStatus
-                    status={isWithdrawing !== null ? 'pending' : withdrawError ? 'error' : 'success'}
-                    hash={withdrawTxHash}
-                    errorMsg={withdrawError}
+                    status={isReceiverWithdrawing !== null ? 'pending' : receiverWithdrawError ? 'error' : 'success'}
+                    hash={receiverTxHash}
+                    errorMsg={receiverWithdrawError}
                   />
                 )}
 
-                {/* Error Loading Balances */}
-                {fetchError && (
-                  <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-sm">
-                    <strong>Error loading bucket balances:</strong> {fetchError}. Please ensure you are on the Stellar Testnet.
-                  </div>
-                )}
+                {/* Metrics */}
+                <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <SummaryCard
+                    title="Total Received"
+                    value={`${totalReceived.toLocaleString(undefined, { minimumFractionDigits: 2 })} XLM`}
+                    subtitle={priceUsd > 0 ? formatXlmWithUsd(totalReceived, priceUsd) : 'Loading price...'}
+                  />
+                  <SummaryCard
+                    title="Active Timelock Buckets"
+                    value={`${activeReceivedLocks} Buckets`}
+                    subtitle="Funds currently locked on-chain"
+                  />
+                  <SummaryCard
+                    title="Total Received Splits"
+                    value={`${receivedTransactions.length}`}
+                    subtitle="Historical split remittances"
+                  />
+                </section>
 
-                {/* Vaults/Buckets */}
-                {balancesLoading && (!balances || balances.length === 0) ? (
-                  <div className="flex justify-center items-center py-20 bg-white rounded-xl border border-outline-variant">
-                    <span className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin"></span>
+                {/* CTA Banner */}
+                <section className="bg-secondary p-6 rounded-2xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-md border-0">
+                  <div className="space-y-1">
+                    <h2 className="text-lg font-bold">Expecting a remittance?</h2>
+                    <p className="text-xs text-on-secondary-container/85">Refresh your wallet balance to query the smart contract for new incoming split remittances.</p>
                   </div>
-                ) : !balances || balances.length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-outline-variant shadow-sm p-6">
-                    <p className="text-on-surface-variant font-medium text-lg">No active buckets found</p>
-                    <p className="text-on-surface-variant text-xs mt-1">Once a sender deposits funds for you, they will appear here.</p>
+                  <button
+                    onClick={() => refreshBalances(false)}
+                    disabled={receivedBalancesLoading}
+                    className="bg-secondary-container text-on-secondary-container font-black py-3 px-6 rounded-xl transition-all hover:brightness-110 active:scale-95 cursor-pointer shadow-md text-sm border-0 flex items-center gap-1.5"
+                  >
+                    <RefreshCw size={14} className={receivedBalancesLoading ? 'animate-spin' : ''} />
+                    Refresh Buckets
+                  </button>
+                </section>
+
+                {/* Active Buckets */}
+                <section className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-bold text-on-surface">Your Received Vault Buckets</h2>
+                      {receivedBalances.length > 0 && (
+                        <span className="text-[11px] bg-secondary/10 text-secondary font-semibold px-2 py-0.5 rounded-full">
+                          {receivedBalances.length} Active
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => router.push('/dashboard/buckets?tab=received')}
+                      className="text-xs font-bold text-secondary hover:text-secondary-dark hover:underline bg-transparent border-0 cursor-pointer flex items-center gap-0.5"
+                    >
+                      View Full History →
+                    </button>
                   </div>
-                ) : (
-                  <div className="space-y-6 max-h-[550px] overflow-y-auto p-4 border border-outline-variant rounded-2xl bg-surface-container/20 animate-[fadeIn_200ms_ease-out]">
-                    {balances.map((bucket) => (
-                      <div key={bucket.id} className="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4">
-                        <div className="flex items-center justify-between border-b border-outline-variant pb-3 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="bg-secondary/10 text-secondary text-xs font-semibold px-2.5 py-1 rounded-full">
-                              Bucket #{bucket.id + 1}
-                            </span>
-                            <span className="text-xs text-on-surface-variant font-medium">
-                              Sender: <span className="inline-block max-w-[150px] sm:max-w-none truncate font-mono bg-surface-container px-2 py-0.5 rounded text-[11px] select-all align-middle" title={bucket.sender}>{bucket.sender}</span>
-                            </span>
+
+                  {receivedBalancesLoading && receivedBalances.length === 0 ? (
+                    <div className="flex justify-center items-center py-8">
+                      <span className="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full animate-spin"></span>
+                    </div>
+                  ) : receivedBalancesError ? (
+                    <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-xs">
+                      Error fetching bucket balances: {receivedBalancesError}
+                    </div>
+                  ) : receivedBalances.length === 0 ? (
+                    <div className="text-center py-10 bg-white rounded-2xl border border-outline-variant shadow-sm p-5">
+                      <p className="text-on-surface-variant font-semibold text-sm">No active received buckets found</p>
+                      <p className="text-on-surface-variant text-[11px] mt-0.5">When someone remits funds to your address, they will show up here.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6 max-h-[550px] overflow-y-auto p-4 border border-outline-variant rounded-2xl bg-surface-container/20">
+                      {receivedBalances.map((bucket) => (
+                        <div key={bucket.id} className="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4">
+                          <div className="flex items-center justify-between border-b border-outline-variant pb-3 mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="bg-secondary/10 text-secondary text-xs font-semibold px-2.5 py-1 rounded-full">
+                                Bucket #{bucket.id + 1}
+                              </span>
+                              <span className="text-xs text-on-surface-variant font-medium">
+                                Sender:{' '}
+                                <span
+                                  className="inline-block max-w-[150px] sm:max-w-none truncate font-mono bg-surface-container px-2 py-0.5 rounded text-[11px] select-all align-middle"
+                                  title={bucket.sender}
+                                >
+                                  {bucket.sender}
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <SpendingBucketCard
+                              balance={bucket.spendingBalance}
+                              onWithdraw={(amount) => handleWithdrawSpending(bucket.id, amount)}
+                              isWithdrawing={isReceiverWithdrawing === bucket.id}
+                            />
+                            <GoalBucketCard
+                              balance={bucket.goalBalance}
+                              unlockDate={bucket.unlockDate}
+                              onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
+                              isWithdrawing={isReceiverWithdrawing === bucket.id}
+                            />
                           </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <SpendingBucketCard
-                            balance={bucket.spendingBalance}
-                            onWithdraw={(amount) => handleWithdrawSpending(bucket.id, amount)}
-                            isWithdrawing={isWithdrawing === bucket.id}
-                          />
-                          <GoalBucketCard
-                            balance={bucket.goalBalance}
-                            unlockDate={bucket.unlockDate}
-                            onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
-                            isWithdrawing={isWithdrawing === bucket.id}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                {/* History */}
+                <section className="space-y-4">
+                  <DashboardHistoryList
+                    allocations={receivedTransactions}
+                    isLoading={receivedHistoryLoading}
+                    currentUserAddress={publicKey}
+                  />
+                </section>
               </>
             )}
           </div>
-
-          {/* Right Column: Transaction History with Filter Tabs */}
-          <div className="lg:col-span-5 space-y-4">
-            
-            {/* Centered Filter Tabs */}
-            <div className="flex justify-center bg-surface-container/60 p-1 rounded-xl border border-outline-variant/60">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all border-0 cursor-pointer ${
-                  activeTab === 'all'
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'text-on-surface-variant hover:text-primary'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setActiveTab('received')}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all border-0 cursor-pointer ${
-                  activeTab === 'received'
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'text-on-surface-variant hover:text-primary'
-                }`}
-              >
-                Received
-              </button>
-              <button
-                onClick={() => setActiveTab('sent')}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all border-0 cursor-pointer ${
-                  activeTab === 'sent'
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'text-on-surface-variant hover:text-primary'
-                }`}
-              >
-                Sent/Deposit
-              </button>
-            </div>
-
-            {/* List */}
-            <DashboardHistoryList
-              allocations={getFilteredAllocations()}
-              isLoading={txLoading}
-              currentUserAddress={publicKey}
-            />
-          </div>
-
-        </div>
-
-      </main>
-
+        )}
+      </div>
       <Footer />
-    </div>
+    </>
   );
 }
