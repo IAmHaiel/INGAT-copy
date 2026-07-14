@@ -23,8 +23,8 @@ describe('formatAddress', () => {
   });
 
   it('preserves first 6 and last 4 characters', () => {
-    const address = 'CCQGNVUCCAO6WNBXEHT3ZMPB5L57HZJLBIGPY27VSLJMTLVTZJUUINEQ';
-    expect(formatAddress(address)).toBe('CCQGNV...INEQ');
+    const address = 'CDHP4KWHKFOODLUSR4B4KWFIPXCI3NAUGIBENSISTWZS4TU7O3NGHBKL';
+    expect(formatAddress(address)).toBe('CDHP4K...HBKL');
   });
 });
 
