@@ -35,20 +35,20 @@ This document tracks feature gaps, acceptance criteria, and build priority for I
 
 ### 1.1 Receiver Address Book
 - [x] Sender can save a `name + wallet address` pair before sending (contacts list) — *(Saved/updated in the history drawer)*
-- [ ] Sender can select a saved contact by name instead of pasting a raw address on every send
+- [x] Sender can select a saved contact by name instead of pasting a raw address on every send
 - [x] Form validates Stellar address checksum/format before allowing submission
 - [x] UI shows both truncated (`GABC...XYZ4`) and full address for visual confirmation before signing
 - [x] Sender cannot submit a deposit with a malformed or invalid address
 
 ### 1.2 Confirmation Step Before Execution
-- [ ] After filling the deposit form, sender sees a review screen before signing: amount, receiver (name + address), split breakdown (Spending vs Goal), unlock date
-- [ ] Review screen explicitly states the transaction is irreversible once signed
-- [ ] Sender must tap explicit "Confirm & Send" (not the same tap as form submit) to proceed to wallet signature
+- [x] After filling the deposit form, sender sees a review screen before signing: amount, receiver (name + address), split breakdown (Spending vs Goal), unlock date
+- [x] Review screen explicitly states the transaction is irreversible once signed
+- [x] Sender must tap explicit "Confirm & Send" (not the same tap as form submit) to proceed to wallet signature
 
 ### 1.3 Unlock Date Validation
 - [x] Form rejects unlock dates in the past
-- [ ] Form enforces a minimum lock duration (e.g., unlock date must be ≥ 24 hours from now)
-- [ ] Decision documented: what happens if minimum isn't met (hard block vs warning)
+- [x] Form enforces a minimum lock duration (e.g., unlock date must be ≥ 24 hours from now)
+- [x] Decision documented: what happens if minimum isn't met (hard block vs warning)
 
 ### 1.4 Partial Withdrawals
 - [x] Receiver can withdraw a partial amount from the Spending bucket, leaving the remainder

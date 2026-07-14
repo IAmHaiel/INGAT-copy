@@ -34,8 +34,20 @@ export const validateDeposit = (inputs: DepositFormInputs): ValidationError[] =>
     const now = new Date();
     if (isNaN(selectedDate.getTime())) {
       errors.push({ field: 'unlockDate', message: 'Invalid date format' });
-    } else if (selectedDate <= now) {
-      errors.push({ field: 'unlockDate', message: 'Unlock date must be in the future' });
+    } else {
+      const diffMs = selectedDate.getTime() - now.getTime();
+      if (diffMs <= 0) {
+        errors.push({ field: 'unlockDate', message: 'Unlock date must be in the future' });
+      } else {
+        const tenMinutesMs = 10 * 60 * 1000;
+        const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+        if (diffMs > tenMinutesMs && diffMs < twentyFourHoursMs) {
+          errors.push({
+            field: 'unlockDate',
+            message: 'Goal release date must be at least 24 hours from now (or use Demo preset)',
+          });
+        }
+      }
     }
   }
 
@@ -61,8 +73,17 @@ export function validateUnlockDate(date: string): {
   if (isNaN(parsed.getTime())) {
     return { valid: false, error: 'Invalid date format' };
   }
-  if (parsed.getTime() <= Date.now()) {
+  const diffMs = parsed.getTime() - Date.now();
+  if (diffMs <= 0) {
     return { valid: false, error: 'Unlock date must be in the future' };
+  }
+  const tenMinutesMs = 10 * 60 * 1000;
+  const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+  if (diffMs > tenMinutesMs && diffMs < twentyFourHoursMs) {
+    return {
+      valid: false,
+      error: 'Goal release date must be at least 24 hours from now (or use Demo preset)',
+    };
   }
   return { valid: true };
 }
