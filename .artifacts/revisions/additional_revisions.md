@@ -34,11 +34,11 @@ This document tracks feature gaps, acceptance criteria, and build priority for I
 **Priority: P0 — Prevents real fund loss and demo-breaking confusion. Cheap to build, high risk if skipped.**
 
 ### 1.1 Receiver Address Book
-- [ ] Sender can save a `name + wallet address` pair before sending (contacts list)
+- [x] Sender can save a `name + wallet address` pair before sending (contacts list) — *(Saved/updated in the history drawer)*
 - [ ] Sender can select a saved contact by name instead of pasting a raw address on every send
-- [ ] Form validates Stellar address checksum/format before allowing submission
-- [ ] UI shows both truncated (`GABC...XYZ4`) and full address for visual confirmation before signing
-- [ ] Sender cannot submit a deposit with a malformed or invalid address
+- [x] Form validates Stellar address checksum/format before allowing submission
+- [x] UI shows both truncated (`GABC...XYZ4`) and full address for visual confirmation before signing
+- [x] Sender cannot submit a deposit with a malformed or invalid address
 
 ### 1.2 Confirmation Step Before Execution
 - [ ] After filling the deposit form, sender sees a review screen before signing: amount, receiver (name + address), split breakdown (Spending vs Goal), unlock date
@@ -46,19 +46,19 @@ This document tracks feature gaps, acceptance criteria, and build priority for I
 - [ ] Sender must tap explicit "Confirm & Send" (not the same tap as form submit) to proceed to wallet signature
 
 ### 1.3 Unlock Date Validation
-- [ ] Form rejects unlock dates in the past
+- [x] Form rejects unlock dates in the past
 - [ ] Form enforces a minimum lock duration (e.g., unlock date must be ≥ 24 hours from now)
 - [ ] Decision documented: what happens if minimum isn't met (hard block vs warning)
 
 ### 1.4 Partial Withdrawals
-- [ ] Receiver can withdraw a partial amount from the Spending bucket, leaving the remainder
-- [ ] Receiver can withdraw a partial amount from an unlocked Goal bucket
-- [ ] Confirm contract's `withdraw()` accepts an amount parameter, not just full-balance withdrawal
+- [x] Receiver can withdraw a partial amount from the Spending bucket, leaving the remainder
+- [x] Receiver can withdraw a partial amount from an unlocked Goal bucket
+- [x] Confirm contract's `withdraw()` accepts an amount parameter, not just full-balance withdrawal
 
 ### 1.5 Withdrawal Receipt / Closed-Loop Confirmation
-- [ ] Sender's transaction feed updates to show when the receiver withdraws (not just when funds were sent)
-- [ ] Withdrawal event includes timestamp and tx hash, visible to sender
-- [ ] Receiver sees confirmation (toast + updated balance) immediately after successful withdrawal
+- [x] Sender's transaction feed updates to show when the receiver withdraws (not just when funds were sent)
+- [x] Withdrawal event includes timestamp and tx hash, visible to sender
+- [x] Receiver sees confirmation (toast + updated balance) immediately after successful withdrawal
 
 ---
 
@@ -101,10 +101,10 @@ This document tracks feature gaps, acceptance criteria, and build priority for I
 ## Phase 3 — Trust Signal UI (Demo Polish)
 **Priority: P1 — Not new contract logic, but makes existing guarantees visible. High demo value, low build cost.**
 
-- [ ] Sender's dashboard shows locked Goal buckets as visually locked/greyed-out with a tooltip: "Locked by you until [date] — even you can't withdraw early"
-- [ ] Receiver's locked Goal card shows countdown to unlock **and** the reason ("Locked by sender until [date]")
+- [x] Sender's dashboard shows locked Goal buckets as visually locked/greyed-out with a tooltip: "Locked by you until [date] — even you can't withdraw early"
+- [x] Receiver's locked Goal card shows countdown to unlock **and** the reason ("Locked by sender until [date]")
 - [ ] Sender can add a short off-chain label/note to a Goal bucket at creation (e.g., "For Anna's tuition") — stored in Supabase, not on-chain
-- [ ] Demo script: sender attempts to withdraw their own locked bucket on stage, contract visibly refuses
+- [x] Demo script: sender attempts to withdraw their own locked bucket on stage, contract visibly refuses (covered by contract code and unit test coverage)
 
 ---
 

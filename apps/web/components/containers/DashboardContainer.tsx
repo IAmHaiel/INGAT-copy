@@ -316,29 +316,27 @@ export default function DashboardContainer() {
                 </div>
               ) : (
                 <div className="space-y-4 flex flex-col">
-                  {totalSentBucketsPages > 1 && (
-                    <div className="md:hidden flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold mb-2">
-                      <button
-                        onClick={() => setSentBucketsPage(prev => Math.max(prev - 1, 1))}
-                        disabled={sentBucketsPage === 1}
-                        className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        Previous
-                      </button>
-                      <span className="text-on-surface-variant">
-                        Page {sentBucketsPage} of {totalSentBucketsPages}
-                      </span>
-                      <button
-                        onClick={() => setSentBucketsPage(prev => Math.min(prev + 1, totalSentBucketsPages))}
-                        disabled={sentBucketsPage === totalSentBucketsPages}
-                        className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  )}
+                  <div className="md:hidden flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold mb-2">
+                    <button
+                      onClick={() => setSentBucketsPage(prev => Math.max(prev - 1, 1))}
+                      disabled={sentBucketsPage === 1}
+                      className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-on-surface-variant">
+                      Page {sentBucketsPage} of {totalSentBucketsPages}
+                    </span>
+                    <button
+                      onClick={() => setSentBucketsPage(prev => Math.min(prev + 1, totalSentBucketsPages))}
+                      disabled={sentBucketsPage === totalSentBucketsPages || totalSentBucketsPages <= 1}
+                      className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      Next
+                    </button>
+                  </div>
 
-                  <div className="space-y-4 max-h-[500px] overflow-y-auto p-2 border border-outline-variant rounded-2xl bg-surface-container/20">
+                  <div className="space-y-4 h-[480px] overflow-y-auto p-2 border border-outline-variant rounded-2xl bg-surface-container/20">
                     {paginatedSentBuckets.map((bucket) => (
                       <SenderBucketCard
                         key={`${bucket.receiverAddress}-${bucket.id}`}
@@ -353,27 +351,25 @@ export default function DashboardContainer() {
                     ))}
                   </div>
 
-                  {totalSentBucketsPages > 1 && (
-                    <div className="hidden md:flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold">
-                      <button
-                        onClick={() => setSentBucketsPage(prev => Math.max(prev - 1, 1))}
-                        disabled={sentBucketsPage === 1}
-                        className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        Previous
-                      </button>
-                      <span className="text-on-surface-variant">
-                        Page {sentBucketsPage} of {totalSentBucketsPages}
-                      </span>
-                      <button
-                        onClick={() => setSentBucketsPage(prev => Math.min(prev + 1, totalSentBucketsPages))}
-                        disabled={sentBucketsPage === totalSentBucketsPages}
-                        className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  )}
+                  <div className="hidden md:flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold">
+                    <button
+                      onClick={() => setSentBucketsPage(prev => Math.max(prev - 1, 1))}
+                      disabled={sentBucketsPage === 1}
+                      className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-on-surface-variant">
+                      Page {sentBucketsPage} of {totalSentBucketsPages}
+                    </span>
+                    <button
+                      onClick={() => setSentBucketsPage(prev => Math.min(prev + 1, totalSentBucketsPages))}
+                      disabled={sentBucketsPage === totalSentBucketsPages || totalSentBucketsPages <= 1}
+                      className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               )}
             </section>
@@ -498,29 +494,27 @@ export default function DashboardContainer() {
                     </div>
                   ) : (
                     <div className="space-y-4 flex flex-col">
-                      {totalReceivedBucketsPages > 1 && (
-                        <div className="md:hidden flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold mb-2">
-                          <button
-                            onClick={() => setReceivedBucketsPage(prev => Math.max(prev - 1, 1))}
-                            disabled={receivedBucketsPage === 1}
-                            className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                          >
-                            Previous
-                          </button>
-                          <span className="text-on-surface-variant">
-                            Page {receivedBucketsPage} of {totalReceivedBucketsPages}
-                          </span>
-                          <button
-                            onClick={() => setReceivedBucketsPage(prev => Math.min(prev + 1, totalReceivedBucketsPages))}
-                            disabled={receivedBucketsPage === totalReceivedBucketsPages}
-                            className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      )}
+                      <div className="md:hidden flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold mb-2">
+                        <button
+                          onClick={() => setReceivedBucketsPage(prev => Math.max(prev - 1, 1))}
+                          disabled={receivedBucketsPage === 1}
+                          className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-on-surface-variant">
+                          Page {receivedBucketsPage} of {totalReceivedBucketsPages}
+                        </span>
+                        <button
+                          onClick={() => setReceivedBucketsPage(prev => Math.min(prev + 1, totalReceivedBucketsPages))}
+                          disabled={receivedBucketsPage === totalReceivedBucketsPages || totalReceivedBucketsPages <= 1}
+                          className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Next
+                        </button>
+                      </div>
 
-                      <div className="space-y-6 max-h-[550px] overflow-y-auto p-4 border border-outline-variant rounded-2xl bg-surface-container/20">
+                      <div className="space-y-6 h-[550px] overflow-y-auto p-4 border border-outline-variant rounded-2xl bg-surface-container/20">
                         {paginatedReceivedBalances.map((bucket) => (
                           <div key={bucket.id} className="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4">
                             <div className="flex items-center justify-between border-b border-outline-variant pb-3 mb-2">
@@ -556,27 +550,25 @@ export default function DashboardContainer() {
                         ))}
                       </div>
 
-                      {totalReceivedBucketsPages > 1 && (
-                        <div className="hidden md:flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold">
-                          <button
-                            onClick={() => setReceivedBucketsPage(prev => Math.max(prev - 1, 1))}
-                            disabled={receivedBucketsPage === 1}
-                            className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                          >
-                            Previous
-                          </button>
-                          <span className="text-on-surface-variant">
-                            Page {receivedBucketsPage} of {totalReceivedBucketsPages}
-                          </span>
-                          <button
-                            onClick={() => setReceivedBucketsPage(prev => Math.min(prev + 1, totalReceivedBucketsPages))}
-                            disabled={receivedBucketsPage === totalReceivedBucketsPages}
-                            className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      )}
+                      <div className="hidden md:flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold">
+                        <button
+                          onClick={() => setReceivedBucketsPage(prev => Math.max(prev - 1, 1))}
+                          disabled={receivedBucketsPage === 1}
+                          className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-on-surface-variant">
+                          Page {receivedBucketsPage} of {totalReceivedBucketsPages}
+                        </span>
+                        <button
+                          onClick={() => setReceivedBucketsPage(prev => Math.min(prev + 1, totalReceivedBucketsPages))}
+                          disabled={receivedBucketsPage === totalReceivedBucketsPages || totalReceivedBucketsPages <= 1}
+                          className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Next
+                        </button>
+                      </div>
                     </div>
                   )}
                 </section>
