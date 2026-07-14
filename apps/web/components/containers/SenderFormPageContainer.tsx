@@ -65,7 +65,7 @@ export default function SenderFormPageContainer() {
           {/* Right Column: Transaction History (Desktop Only) */}
           <div className="hidden lg:block lg:col-span-5 xl:col-span-5 w-full sticky top-8 space-y-4">
             {/* Header matches DepositFormContainer header */}
-            <header className="flex justify-between items-center bg-white p-4 rounded-2xl border border-outline-variant shadow-sm">
+            <header className="h-16 flex justify-between items-center bg-white px-4 rounded-2xl border border-outline-variant shadow-sm">
               <div className="flex items-center gap-2">
                 <History size={20} className="text-primary" />
                 <h1 className="text-base font-bold text-primary">Live Transactions</h1>
@@ -110,15 +110,13 @@ export default function SenderFormPageContainer() {
             
             {/* Body Card matches DepositForm container card */}
             <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-md">
-              <div className="max-h-[480px] overflow-y-auto overflow-x-auto">
-                <div className="min-w-[480px]">
-                  <DashboardHistoryList
-                    allocations={activeTransactions}
-                    isLoading={isHistoryLoading}
-                    currentUserAddress={publicKey}
-                    variant="plain"
-                  />
-                </div>
+              <div className="max-h-[480px] overflow-y-auto pr-1">
+                <DashboardHistoryList
+                  allocations={activeTransactions}
+                  isLoading={isHistoryLoading}
+                  currentUserAddress={publicKey}
+                  variant="plain"
+                />
               </div>
             </div>
           </div>

@@ -49,7 +49,7 @@ export default function DepositFormContainer() {
   return (
     <div className="space-y-4 flex-grow w-full">
       {/* Header */}
-      <header className="flex justify-between items-center bg-white p-4 rounded-2xl border border-outline-variant shadow-sm">
+      <header className="h-16 flex justify-between items-center bg-white px-4 rounded-2xl border border-outline-variant shadow-sm">
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.push('/dashboard')}

@@ -159,7 +159,6 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
                     </span>
                   </th>
                   <th className="p-4">Status</th>
-                  <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/60 text-xs">
@@ -208,18 +207,6 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
                     </td>
                     <td className="p-4">
                       <BucketStatusBadge status={entry.status} />
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectEntry(entry);
-                        }}
-                        className="p-1.5 hover:bg-surface-container rounded-lg transition-colors cursor-pointer text-on-surface-variant hover:text-primary border-0 bg-transparent flex items-center justify-center ml-auto"
-                        title="View details"
-                      >
-                        <Eye size={16} />
-                      </button>
                     </td>
                   </tr>
                 ))}
