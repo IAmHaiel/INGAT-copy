@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Copy, ExternalLink, Calendar, Coins, Check, User, Save } from 'lucide-react';
 import { EnrichedBucketEntry } from '@/hooks/useBucketHistory';
 import { formatAmount, formatDate } from '@/lib/utils/format';
-import { saveContact } from '@/lib/utils/contacts';
+import { saveContact, getContacts } from '@/lib/utils/contacts';
 import BucketStatusBadge from './BucketStatusBadge';
 
 interface BucketDetailDrawerProps {
@@ -25,7 +25,19 @@ export const BucketDetailDrawer: React.FC<BucketDetailDrawerProps> = ({
   const [copiedWithdrawTx, setCopiedWithdrawTx] = useState(false);
   
   const [isEditingContact, setIsEditingContact] = useState(false);
-  const [contactName, setContactName] = useState(entry?.receiverName || '');
+  const [contactName, setContactName] = useState('');
+  const [displayedName, setDisplayedName] = useState('');
+
+  // Sync state whenever entry changes or component mounts
+  React.useEffect(() => {
+    if (entry) {
+      const contacts = getContacts();
+      const contact = contacts.find((c) => c.address === entry.receiverAddress);
+      const name = contact?.name || entry.receiverName || '';
+      setContactName(name);
+      setDisplayedName(name);
+    }
+  }, [entry]);
 
   if (!entry || !isOpen) return null;
 
@@ -38,6 +50,7 @@ export const BucketDetailDrawer: React.FC<BucketDetailDrawerProps> = ({
   const handleSaveContact = () => {
     if (contactName.trim()) {
       saveContact(contactName.trim(), entry.receiverAddress);
+      setDisplayedName(contactName.trim());
       setIsEditingContact(false);
       if (onContactSaved) onContactSaved();
     }
@@ -107,14 +120,14 @@ export const BucketDetailDrawer: React.FC<BucketDetailDrawerProps> = ({
                   <div className="flex items-center gap-1.5">
                     <User size={14} className="text-on-surface-variant" />
                     <span className="text-xs font-semibold text-on-surface">
-                      {entry.receiverName || 'No contact saved'}
+                      {displayedName || 'No contact saved'}
                     </span>
                   </div>
                   <button
                     onClick={() => setIsEditingContact(true)}
                     className="text-[10px] text-secondary font-bold hover:underline cursor-pointer border-0 bg-transparent"
                   >
-                    {entry.receiverName ? 'Rename' : 'Save Name'}
+                    {displayedName ? 'Rename' : 'Save Name'}
                   </button>
                 </div>
               )}
