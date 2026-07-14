@@ -12,7 +12,6 @@
     "test:e2e": "playwright test --config=playwright.config.ts"
   },
   "dependencies": {
-    "@ingat/ai": "*",
     "@stellar/freighter-api": "^3.1.0",
     "@stellar/stellar-sdk": "^13.1.0",
     "@supabase/supabase-js": "2.49.1",
@@ -22,8 +21,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "sonner": "^1.7.0",
-    "tweetnacl": "1.0.3",
-    "zod": "^3.25.76"
+    "tweetnacl": "1.0.3"
   },
   "devDependencies": {
     "@jest/globals": "^30.4.1",
