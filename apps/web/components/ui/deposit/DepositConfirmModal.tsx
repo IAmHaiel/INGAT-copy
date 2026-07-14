@@ -11,6 +11,7 @@ interface DepositConfirmModalProps {
   amount: string;
   splitRatio: number;
   unlockDate: string;
+  goalLabel: string;
   priceUsd: number;
   isSubmitting: boolean;
 }
@@ -24,6 +25,7 @@ const DepositConfirmModal: React.FC<DepositConfirmModalProps> = ({
   amount,
   splitRatio,
   unlockDate,
+  goalLabel,
   priceUsd,
   isSubmitting,
 }) => {
@@ -32,9 +34,6 @@ const DepositConfirmModal: React.FC<DepositConfirmModalProps> = ({
   const amountNum = parseFloat(amount) || 0;
   const spendingAmount = amountNum * (splitRatio / 100);
   const goalAmount = amountNum - spendingAmount;
-
-  const truncateAddress = (addr: string) => 
-    addr.length > 12 ? `${addr.slice(0, 6)}...${addr.slice(-6)}` : addr;
 
   return (
     <>
@@ -129,6 +128,12 @@ const DepositConfirmModal: React.FC<DepositConfirmModalProps> = ({
                 <Calendar size={14} className="text-secondary shrink-0" />
                 <span>{new Date(unlockDate).toLocaleString()}</span>
               </div>
+              {goalLabel && (
+                <div className="mt-1.5 pt-1.5 border-t border-amber-200/40">
+                  <span className="text-[10px] text-secondary font-bold uppercase tracking-wider block">Goal Note</span>
+                  <p className="text-xs text-on-surface font-medium mt-0.5">&ldquo;{goalLabel}&rdquo;</p>
+                </div>
+              )}
             </div>
           )}
 

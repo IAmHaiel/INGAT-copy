@@ -62,6 +62,7 @@ export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: st
         goal_amount: goalAmount,
         split_ratio: inputs.splitRatio,
         unlock_date: unlockDateEpoch,
+        goal_label: inputs.goalLabel?.trim() || null,
       }, supabaseClient).catch((err) => {
         console.error('[useDeposit] Supabase persistence failed:', err);
       });

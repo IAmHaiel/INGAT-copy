@@ -28,7 +28,7 @@ export function checkAddressSafety(
     if (!StrKey.isValidEd25519PublicKey(address)) {
       return { state: 'malformed' };
     }
-  } catch (err) {
+  } catch {
     return { state: 'malformed' };
   }
 

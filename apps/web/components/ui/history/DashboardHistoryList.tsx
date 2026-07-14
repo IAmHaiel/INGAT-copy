@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DepositAllocation } from '@/types/transaction';
 import { formatAddress, formatAmount, formatDate } from '@/lib/utils/format';
 import { History, ExternalLink, ArrowDownRight, ArrowUpRight } from 'lucide-react';
@@ -24,10 +24,12 @@ const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({
 }) => {
   const { priceUsd } = useXlmPrice();
   const [currentPage, setCurrentPage] = useState(1);
+  const [prevAllocations, setPrevAllocations] = useState(allocations);
 
-  useEffect(() => {
+  if (allocations !== prevAllocations) {
+    setPrevAllocations(allocations);
     setCurrentPage(1);
-  }, [allocations]);
+  }
 
   if (isLoading) {
     return (

@@ -7,6 +7,7 @@ import { formatXlmWithUsd } from '@/lib/utils/price';
 interface GoalBucketCardProps {
   balance: number;
   unlockDate: number; // unix timestamp in seconds
+  goalLabel?: string | null;
   onWithdraw: (amount: number) => void;
   isWithdrawing: boolean;
 }
@@ -14,6 +15,7 @@ interface GoalBucketCardProps {
 const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   balance,
   unlockDate,
+  goalLabel,
   onWithdraw,
   isWithdrawing,
 }) => {
@@ -73,6 +75,11 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
       </div>
 
       <div className="space-y-1">
+        {goalLabel && (
+          <p className="text-xs font-semibold text-secondary italic">
+            &ldquo;{goalLabel}&rdquo;
+          </p>
+        )}
         <p className="text-xs text-on-surface-variant">
           Funds are protected from impulse spending and locked on-chain.
         </p>

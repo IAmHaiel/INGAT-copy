@@ -253,6 +253,7 @@ export const fetchDepositEvents = async (senderAddress: string): Promise<Deposit
         splitRatio,
         unlockDate,
         timestamp,
+        goalLabel: null,
       };
     });
 
@@ -316,6 +317,7 @@ export const fetchReceivedDepositEvents = async (receiverAddress: string): Promi
         splitRatio,
         unlockDate,
         timestamp,
+        goalLabel: null,
       };
     });
 
@@ -377,6 +379,7 @@ export const fetchTransactionByHash = async (txHash: string): Promise<DepositAll
           splitRatio,
           unlockDate,
           timestamp: createdAt,
+          goalLabel: null,
         };
       }
     }

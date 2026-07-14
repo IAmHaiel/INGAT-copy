@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, ArrowUpDown, Filter, ChevronRight, Info } from 'lucide-react';
 import { EnrichedBucketEntry } from '@/hooks/useBucketHistory';
 import { formatAmount, formatDate } from '@/lib/utils/format';
@@ -60,10 +60,30 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
     }
   });
 
-  // Reset pagination to page 1 when filter/search/sort change
-  useEffect(() => {
+  const [prevFilters, setPrevFilters] = useState({
+    searchTerm,
+    statusFilter,
+    sortField,
+    sortOrder,
+    length: entries.length,
+  });
+
+  if (
+    searchTerm !== prevFilters.searchTerm ||
+    statusFilter !== prevFilters.statusFilter ||
+    sortField !== prevFilters.sortField ||
+    sortOrder !== prevFilters.sortOrder ||
+    entries.length !== prevFilters.length
+  ) {
+    setPrevFilters({
+      searchTerm,
+      statusFilter,
+      sortField,
+      sortOrder,
+      length: entries.length,
+    });
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, sortField, sortOrder, entries.length]);
+  }
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {

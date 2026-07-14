@@ -179,6 +179,7 @@ export default function SenderDashboardContainer() {
                 spendingBalance={bucket.spendingBalance}
                 goalBalance={bucket.goalBalance}
                 unlockDate={bucket.unlockDate}
+                goalLabel={bucket.goalLabel}
                 onWithdrawGoal={handleWithdrawSenderGoal}
                 isWithdrawing={isWithdrawing === bucket.id}
               />

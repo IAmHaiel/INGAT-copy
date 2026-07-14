@@ -54,6 +54,11 @@ const AllocationHistoryList: React.FC<AllocationHistoryListProps> = ({ allocatio
                   view tx <ExternalLink size={10} className="ml-0.5" />
                 </a>
               </div>
+              {alloc.goalLabel && (
+                <p className="text-[11px] text-secondary font-medium italic">
+                  &ldquo;{alloc.goalLabel}&rdquo;
+                </p>
+              )}
               <div className="text-[10px] text-on-surface-variant flex items-center gap-2">
                 <span>{formatDate(alloc.timestamp)}</span>
                 <span>•</span>

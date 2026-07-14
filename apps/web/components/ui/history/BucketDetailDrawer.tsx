@@ -28,16 +28,21 @@ export const BucketDetailDrawer: React.FC<BucketDetailDrawerProps> = ({
   const [contactName, setContactName] = useState('');
   const [displayedName, setDisplayedName] = useState('');
 
-  // Sync state whenever entry changes or component mounts
-  React.useEffect(() => {
+  const [prevEntry, setPrevEntry] = useState<EnrichedBucketEntry | null>(null);
+
+  if (entry !== prevEntry) {
+    setPrevEntry(entry);
     if (entry) {
       const contacts = getContacts();
       const contact = contacts.find((c) => c.address === entry.receiverAddress);
       const name = contact?.name || entry.receiverName || '';
       setContactName(name);
       setDisplayedName(name);
+    } else {
+      setContactName('');
+      setDisplayedName('');
     }
-  }, [entry]);
+  }
 
   if (!entry || !isOpen) return null;
 
@@ -90,6 +95,13 @@ export const BucketDetailDrawer: React.FC<BucketDetailDrawerProps> = ({
               <span className="text-xs text-on-surface-variant font-medium">Goal Status</span>
               <BucketStatusBadge status={entry.status} />
             </div>
+
+            {entry.goalLabel && (
+              <div className="flex items-center justify-between border-t border-outline-variant/50 pt-3">
+                <span className="text-xs text-on-surface-variant font-medium">Goal Label</span>
+                <span className="text-xs font-bold text-secondary italic">&ldquo;{entry.goalLabel}&rdquo;</span>
+              </div>
+            )}
 
             {/* Receiver / Address Book Section */}
             <div className="space-y-2 border-t border-outline-variant/50 pt-3">

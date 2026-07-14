@@ -25,39 +25,47 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const wallet = useWallet();
-  const auth = useAuth();
+  const {
+    restoreSession,
+    isSessionRestored,
+    supabaseClient,
+    isAuthenticating,
+    authenticate,
+    logout,
+    authError,
+  } = useAuth();
   const hasTriggeredAuth = useRef(false);
 
   useEffect(() => {
-    auth.restoreSession();
-  }, []);
+    restoreSession();
+  }, [restoreSession]);
 
   useEffect(() => {
-    if (!auth.isSessionRestored) return;
+    if (!isSessionRestored) return;
     if (!wallet.publicKey) {
       hasTriggeredAuth.current = false;
       return;
     }
-    if (auth.supabaseClient) return;
-    if (auth.isAuthenticating) return; 
+    if (supabaseClient) return;
+    if (isAuthenticating) return; 
     if (hasTriggeredAuth.current) return; 
 
     hasTriggeredAuth.current = true;
-    auth.authenticate(wallet.publicKey);
-  }, [wallet.publicKey, auth.isSessionRestored, auth.supabaseClient, auth.isAuthenticating, auth.authenticate]);
+    authenticate(wallet.publicKey);
+  }, [wallet.publicKey, isSessionRestored, supabaseClient, isAuthenticating, authenticate]);
 
   useEffect(() => {
-    if (!wallet.publicKey && auth.supabaseClient) {
-      auth.logout();
+    if (!wallet.publicKey && supabaseClient) {
+      logout();
     }
-  }, [wallet.publicKey]);
+  }, [wallet.publicKey, supabaseClient, logout]);
 
   const value: WalletContextType = {
     ...wallet,
-    supabaseClient: auth.supabaseClient,
-    isAuthenticating: auth.isAuthenticating,
-    authError: auth.authError,
-    authenticate: auth.authenticate,
+    supabaseClient,
+    isAuthenticating,
+    authError,
+    authenticate,
   };
 
   return (

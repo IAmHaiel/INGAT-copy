@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Handshake } from 'lucide-react';
 import SpendingBucketCard from '@/components/ui/buckets/SpendingBucketCard';
@@ -10,6 +10,8 @@ import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 import { useWalletContext } from '@/context/WalletContext';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
+import { fetchReceivedTransactions } from '@/lib/supabase';
+import { TransactionRow } from '@/lib/supabase/types';
 import { toast } from 'sonner';
 
 export default function ReceiverDashboardContainer() {
@@ -28,6 +30,34 @@ export default function ReceiverDashboardContainer() {
   const { withdraw, isWithdrawing, error: withdrawError, txHash } = useWithdraw(publicKey, () => {
     refreshBalances();
   });
+  const [depositRecords, setDepositRecords] = useState<TransactionRow[]>([]);
+
+  const fetchDeposits = useCallback(async () => {
+    if (!supabaseClient || !publicKey) return;
+    try {
+      const rows = await fetchReceivedTransactions(publicKey, supabaseClient);
+      setDepositRecords(rows.filter(r => r.type === 'deposit'));
+    } catch (err) {
+      console.error('Failed to fetch deposit records for goal labels:', err);
+    }
+  }, [publicKey, supabaseClient]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchDeposits();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchDeposits]);
+
+  /**
+   * Look up the goal label for a bucket by matching sender address and unlock date.
+   */
+  const getGoalLabel = (senderAddress: string, unlockDate: number): string | null => {
+    const match = depositRecords.find(
+      r => r.sender_address === senderAddress && r.unlock_date === unlockDate
+    );
+    return match?.goal_label ?? null;
+  };
 
   useEffect(() => {
     if (isInitializing) return;
@@ -189,6 +219,7 @@ export default function ReceiverDashboardContainer() {
                 <GoalBucketCard
                   balance={bucket.goalBalance}
                   unlockDate={bucket.unlockDate}
+                  goalLabel={getGoalLabel(bucket.sender, bucket.unlockDate)}
                   onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
                   isWithdrawing={isWithdrawing === bucket.id}
                 />

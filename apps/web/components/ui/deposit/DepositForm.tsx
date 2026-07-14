@@ -33,6 +33,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
   const [amount, setAmount] = useState('');
   const [splitRatio, setSplitRatio] = useState(60); // default 60% spending
   const [unlockDate, setUnlockDate] = useState('');
+  const [goalLabel, setGoalLabel] = useState('');
   const [safetyState, setSafetyState] = useState<AddressSafetyState>('unknown');
   const [similarAddress, setSimilarAddress] = useState<string | undefined>(undefined);
   const [isNearMissConfirmed, setIsNearMissConfirmed] = useState(false);
@@ -46,7 +47,10 @@ const DepositForm: React.FC<DepositFormProps> = ({
   const { priceUsd } = useXlmPrice();
 
   useEffect(() => {
-    setContacts(getContacts());
+    const timer = setTimeout(() => {
+      setContacts(getContacts());
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const getErrorForField = (field: keyof DepositFormInputs) => {
@@ -81,6 +85,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
       amount,
       splitRatio,
       unlockDate,
+      goalLabel,
     });
 
     setLocalErrors(errors);
@@ -96,12 +101,14 @@ const DepositForm: React.FC<DepositFormProps> = ({
       amount,
       splitRatio,
       unlockDate,
+      goalLabel,
     });
     if (success) {
       setReceiver('');
       setAmount('');
       setSplitRatio(60);
       setUnlockDate('');
+      setGoalLabel('');
       setSafetyState('unknown');
       setSimilarAddress(undefined);
       setIsNearMissConfirmed(false);
@@ -207,6 +214,22 @@ const DepositForm: React.FC<DepositFormProps> = ({
           error={getErrorForField('unlockDate')}
         />
 
+        {/* Goal Label / Note */}
+        <div className="space-y-1">
+          <label className="block text-sm font-semibold text-on-surface">Goal Label <span className="text-on-surface-variant font-normal">(optional)</span></label>
+          <input
+            type="text"
+            placeholder="e.g., For Anna's tuition"
+            maxLength={100}
+            value={goalLabel}
+            onChange={(e) => setGoalLabel(e.target.value)}
+            className="w-full bg-white border border-outline-variant rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-on-surface"
+          />
+          <p className="text-[10px] text-on-surface-variant">
+            Short note visible to the receiver describing the goal purpose. {goalLabel.length}/100
+          </p>
+        </div>
+
         <button
           type="submit"
           disabled={isSubmitDisabled}
@@ -235,6 +258,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
         amount={amount}
         splitRatio={splitRatio}
         unlockDate={unlockDate}
+        goalLabel={goalLabel}
         priceUsd={priceUsd}
         isSubmitting={isSubmitting}
       />

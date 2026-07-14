@@ -6,6 +6,7 @@ export interface DepositAllocation {
   splitRatio: number; // percentage of spending
   unlockDate: number;
   timestamp: number;
+  goalLabel: string | null;
 }
 
 export interface DepositFormInputs {
@@ -13,6 +14,7 @@ export interface DepositFormInputs {
   amount: string;
   splitRatio: number;
   unlockDate: string;
+  goalLabel: string;
 }
 
 // Keep old interfaces for backward compatibility

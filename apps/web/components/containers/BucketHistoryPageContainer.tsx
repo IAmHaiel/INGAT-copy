@@ -4,8 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  History,
-  RefreshCw,
   Layers,
   Send,
   Coins,
@@ -108,8 +106,7 @@ export default function BucketHistoryPageContainer() {
   const activeEntries = tab === "sent" ? sentEntries : receivedEntries;
   const isLoading = tab === "sent" ? sentLoading : receivedLoading;
   const error = tab === "sent" ? sentError : receivedError;
-  const refreshHistory =
-    tab === "sent" ? refreshSentHistory : refreshReceivedHistory;
+
 
   // Metrics derivation
   const totalEntries = activeEntries.length;

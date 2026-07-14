@@ -10,6 +10,7 @@ interface SenderBucketCardProps {
   spendingBalance: number;
   goalBalance: number;
   unlockDate: number;
+  goalLabel?: string | null;
   onWithdrawGoal: (receiverAddress: string, bucketId: number, amount: number) => void;
   isWithdrawing: boolean;
 }
@@ -20,6 +21,7 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
   spendingBalance,
   goalBalance,
   unlockDate,
+  goalLabel,
   onWithdrawGoal,
   isWithdrawing,
 }) => {
@@ -75,6 +77,13 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
           </div>
         )}
       </div>
+
+      {goalLabel && (
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/60 border border-amber-200/40 rounded-lg">
+          <span className="text-xs text-secondary font-semibold">Goal:</span>
+          <span className="text-xs text-on-surface italic">&ldquo;{goalLabel}&rdquo;</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Spending Split */}

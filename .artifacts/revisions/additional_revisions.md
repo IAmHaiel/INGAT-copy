@@ -103,7 +103,7 @@ This document tracks feature gaps, acceptance criteria, and build priority for I
 
 - [x] Sender's dashboard shows locked Goal buckets as visually locked/greyed-out with a tooltip: "Locked by you until [date] — even you can't withdraw early"
 - [x] Receiver's locked Goal card shows countdown to unlock **and** the reason ("Locked by sender until [date]")
-- [ ] Sender can add a short off-chain label/note to a Goal bucket at creation (e.g., "For Anna's tuition") — stored in Supabase, not on-chain
+- [x] Sender can add a short off-chain label/note to a Goal bucket at creation (e.g., "For Anna's tuition") — stored in Supabase, not on-chain
 - [x] Demo script: sender attempts to withdraw their own locked bucket on stage, contract visibly refuses (covered by contract code and unit test coverage)
 
 ---
@@ -130,7 +130,7 @@ This document tracks feature gaps, acceptance criteria, and build priority for I
 
 ---
 
-## Phase 5 — Deferred / Explicitly Out of Scope
+## Phase 5 — Deferred / Explicitly Out of Scope (Do not build)
 
 Documented here so they aren't accidentally built or promised during demo Q&A.
 

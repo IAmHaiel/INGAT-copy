@@ -16,6 +16,7 @@ function toDepositAllocation(row: TransactionRow): DepositAllocation {
     splitRatio: row.split_ratio ?? 0,
     unlockDate: row.unlock_date ?? 0,
     timestamp: Math.floor(new Date(row.created_at).getTime() / 1000),
+    goalLabel: row.goal_label ?? null,
   };
 }
 

@@ -34,6 +34,7 @@ export interface EnrichedBucketEntry {
 
   // Computed status
   status: BucketGoalStatus;
+  goalLabel?: string | null;
 }
 
 export const useBucketHistory = (senderAddress: string | null) => {
@@ -154,6 +155,7 @@ export const useBucketHistory = (senderAddress: string | null) => {
           spendingWithdrawalDate: spendingWithdrawal ? Math.floor(new Date(spendingWithdrawal.created_at).getTime() / 1000) : null,
 
           status,
+          goalLabel: deposit.goal_label ?? null,
         };
       });
 

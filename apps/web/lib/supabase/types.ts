@@ -16,6 +16,7 @@ export interface TransactionRow {
   goal_amount: number | null;
   split_ratio: number | null;
   unlock_date: number | null;
+  goal_label: string | null;
   created_at: string;
 }
 
@@ -30,4 +31,5 @@ export interface TransactionInsert {
   goal_amount?: number | null;
   split_ratio?: number | null;
   unlock_date?: number | null;
+  goal_label?: string | null;
 }

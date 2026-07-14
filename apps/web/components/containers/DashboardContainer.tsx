@@ -68,13 +68,17 @@ export default function DashboardContainer() {
 
   const { priceUsd } = useXlmPrice();
 
-  useEffect(() => {
+  const [prevSentLength, setPrevSentLength] = useState(sentBuckets.length);
+  if (sentBuckets.length !== prevSentLength) {
+    setPrevSentLength(sentBuckets.length);
     setSentBucketsPage(1);
-  }, [sentBuckets.length]);
+  }
 
-  useEffect(() => {
+  const [prevReceivedLength, setPrevReceivedLength] = useState(receivedBalances.length);
+  if (receivedBalances.length !== prevReceivedLength) {
+    setPrevReceivedLength(receivedBalances.length);
     setReceivedBucketsPage(1);
-  }, [receivedBalances.length]);
+  }
 
   // Paginated buckets calculations
   const totalSentBucketsPages = Math.ceil(sentBuckets.length / bucketsPerPage);
@@ -128,6 +132,13 @@ export default function DashboardContainer() {
   const handleWithdrawGoal = (bucketId: number, amount: number) => {
     const bucket = receivedBalances.find(b => b.id === bucketId);
     withdrawReceived(bucketId, 'goal', amount, bucket?.unlockDate);
+  };
+
+  const getGoalLabel = (senderAddress: string, unlockDate: number): string | null => {
+    const match = receivedTransactions.find(
+      r => r.sender === senderAddress && r.unlockDate === unlockDate
+    );
+    return match?.goalLabel ?? null;
   };
 
   useEffect(() => {
@@ -345,6 +356,7 @@ export default function DashboardContainer() {
                         spendingBalance={bucket.spendingBalance}
                         goalBalance={bucket.goalBalance}
                         unlockDate={bucket.unlockDate}
+                        goalLabel={bucket.goalLabel}
                         onWithdrawGoal={handleWithdrawSenderGoal}
                         isWithdrawing={isSenderWithdrawing === bucket.id}
                       />
@@ -542,6 +554,7 @@ export default function DashboardContainer() {
                               <GoalBucketCard
                                 balance={bucket.goalBalance}
                                 unlockDate={bucket.unlockDate}
+                                goalLabel={getGoalLabel(bucket.sender, bucket.unlockDate)}
                                 onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
                                 isWithdrawing={isReceiverWithdrawing === bucket.id}
                               />

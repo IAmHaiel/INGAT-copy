@@ -8,6 +8,7 @@ import { BucketState } from '@/types/bucket';
 
 export interface SenderBucketState extends BucketState {
   receiverAddress: string;
+  goalLabel: string | null;
 }
 
 export const useSenderBuckets = (senderAddress: string | null) => {
@@ -45,10 +46,17 @@ export const useSenderBuckets = (senderAddress: string | null) => {
             // 3. Filter for buckets created by this sender with positive balance
             const senderMatches = receiverBuckets
               .filter((b) => b.sender === senderAddress && (b.spendingBalance > 0 || b.goalBalance > 0))
-              .map((b) => ({
-                ...b,
-                receiverAddress: receiver,
-              }));
+              .map((b) => {
+                // Match deposit record to get goal_label
+                const depositRecord = deposits.find(
+                  (d) => d.receiver_address === receiver && d.unlock_date === b.unlockDate
+                );
+                return {
+                  ...b,
+                  receiverAddress: receiver,
+                  goalLabel: depositRecord?.goal_label ?? null,
+                };
+              });
             allSenderBuckets.push(...senderMatches);
           } catch (err) {
             console.error(`Failed to fetch bucket balances for receiver ${receiver}:`, err);
