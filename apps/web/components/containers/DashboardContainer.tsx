@@ -9,6 +9,7 @@ import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { useDeposit } from '@/hooks/useDeposit';
+import { useKnownAddresses } from '@/hooks/useKnownAddresses';
 import Header from '@/components/ui/layout/Header';
 import Footer from '@/components/ui/layout/Footer';
 import DepositForm from '@/components/ui/deposit/DepositForm';
@@ -54,6 +55,7 @@ export default function DashboardContainer() {
   } = useDashboardTransactions(publicKey);
 
   // Load Bucket Balances (for Receiver Mode)
+  const { knownAddresses, isLoading: isAddressesLoading } = useKnownAddresses(publicKey);
   const { 
     balances, 
     isLoading: balancesLoading, 
@@ -267,6 +269,8 @@ export default function DashboardContainer() {
                     isSubmitting={isDepositing}
                     validationErrors={depositErrors}
                     txError={depositTxError}
+                    knownAddresses={knownAddresses}
+                    isAddressesLoading={isAddressesLoading}
                   />
                 </section>
               </>
