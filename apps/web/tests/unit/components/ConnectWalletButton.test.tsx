@@ -3,11 +3,11 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import ConnectWalletButton from '@/components/ui/wallet/ConnectWalletButton';
 
 jest.mock('lucide-react', () => ({
-  ShieldCheck: ({ size }: { size: number }) => <span data-testid="shield-icon" />,
-  Wallet: ({ size }: { size: number }) => <span data-testid="wallet-icon" />,
-  AlertCircle: ({ className }: { className: string }) => <span data-testid="alert-icon" />,
-  X: ({ className }: { className: string }) => <span data-testid="x-icon" />,
-  Send: ({ size }: { size: number }) => <span data-testid="send-icon" />,
+  ShieldCheck: () => <span data-testid="shield-icon" />,
+  Wallet: () => <span data-testid="wallet-icon" />,
+  AlertCircle: () => <span data-testid="alert-icon" />,
+  X: () => <span data-testid="x-icon" />,
+  Send: () => <span data-testid="send-icon" />,
 }));
 
 describe('ConnectWalletButton', () => {

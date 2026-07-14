@@ -32,6 +32,7 @@ export default function LandingContainer() {
   // Redirect to dashboard only when actively connecting through the modal
   useEffect(() => {
     if (isConnected && isModalOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsModalOpen(false);
       router.push('/dashboard');
     }

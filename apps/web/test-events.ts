@@ -1,4 +1,4 @@
-import { rpc, nativeToScVal, Address } from '@stellar/stellar-sdk';
+import { rpc, nativeToScVal } from '@stellar/stellar-sdk';
 
 async function main() {
   const server = new rpc.Server('https://soroban-testnet.stellar.org');

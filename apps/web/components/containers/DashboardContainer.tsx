@@ -103,6 +103,7 @@ export default function DashboardContainer() {
   // Real-time polling for transactions, balances, and current time
   useEffect(() => {
     // Initial time set
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentTime(Math.floor(Date.now() / 1000));
 
     // Poll every 5 seconds for real-time background updates

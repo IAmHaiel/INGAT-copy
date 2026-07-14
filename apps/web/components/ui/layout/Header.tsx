@@ -27,6 +27,7 @@ export default function Header({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
  
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
  
@@ -49,24 +50,24 @@ export default function Header({
  
         {/* Center: Navigation Links */}
         <nav className="hidden md:flex items-center gap-8">
-          <a
+          <Link
             href="/#home"
             className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors"
           >
             Home
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#how-it-works"
             className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors"
           >
             How it works
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#features"
             className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors"
           >
             Features
-          </a>
+          </Link>
         </nav>
  
         {/* Right Side: Wallet Connection (Desktop) */}
@@ -117,27 +118,27 @@ export default function Header({
         }`}
       >
         <nav className="flex flex-col gap-2">
-          <a
+          <Link
             href="/#home"
             onClick={() => setIsMobileMenuOpen(false)}
             className="text-base font-semibold text-on-surface-variant hover:text-primary transition-colors py-2 border-b border-outline-variant/30"
           >
             Home
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#how-it-works"
             onClick={() => setIsMobileMenuOpen(false)}
             className="text-base font-semibold text-on-surface-variant hover:text-primary transition-colors py-2 border-b border-outline-variant/30"
           >
             How it works
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#features"
             onClick={() => setIsMobileMenuOpen(false)}
             className="text-base font-semibold text-on-surface-variant hover:text-primary transition-colors py-2 border-b border-outline-variant/30"
           >
             Features
-          </a>
+          </Link>
         </nav>
  
         <div className="pt-2 flex flex-col gap-4">

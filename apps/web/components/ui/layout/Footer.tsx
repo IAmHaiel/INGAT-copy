@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 export default function Footer() {
   return (
@@ -31,24 +32,24 @@ export default function Footer() {
           </p>
         </div>
         <nav className="flex gap-8">
-          <a
+          <Link
             href="/#home"
             className="text-xs font-bold text-primary hover:underline transition-all"
           >
             What is INGAT?
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#how-it-works"
             className="text-xs font-medium text-on-surface-variant hover:text-primary hover:underline transition-all"
           >
             Help Center
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#features"
             className="text-xs font-medium text-on-surface-variant hover:text-primary hover:underline transition-all"
           >
             Privacy Policy
-          </a>
+          </Link>
         </nav>
       </div>
     </footer>

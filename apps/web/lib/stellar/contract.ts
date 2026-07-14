@@ -1,4 +1,4 @@
-import { Contract, Address, TransactionBuilder, Account, scValToNative, nativeToScVal, rpc, xdr } from '@stellar/stellar-sdk';
+import { Contract, Address, TransactionBuilder, Account, scValToNative, nativeToScVal, rpc } from '@stellar/stellar-sdk';
 import { server, CONTRACT_ID, NETWORK_PASSPHRASE } from './client';
 import { BucketState } from '@/types/bucket';
 import { DepositAllocation } from '@/types/transaction';
@@ -33,6 +33,7 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
       if (!nativeVal || !Array.isArray(nativeVal)) {
         return [];
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return nativeVal.map((item: any) => ({
         id: Number(item.id),
         sender: String(item.sender),
@@ -243,7 +244,6 @@ export const fetchReceivedDepositEvents = async (receiverAddress: string): Promi
     const startLedger = Math.max(1, latestLedger - LEDGERS_PER_DAY);
 
     const depositSymbolXdr = nativeToScVal('deposit', { type: 'symbol' }).toXDR('base64');
-    const receiverScValXdr = Address.fromString(receiverAddress).toScVal().toXDR('base64');
 
     const response = await server.getEvents({
       startLedger,

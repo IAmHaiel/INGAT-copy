@@ -12,6 +12,7 @@ export default function Hero({ onConnect, isConnected, isConnecting }: HeroProps
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

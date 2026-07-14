@@ -107,6 +107,7 @@ export const signMessageWithFreighter = async (
   }
 
   // Safe base64 conversion in browser for Buffer / Uint8Array
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bytes = new Uint8Array(signed as any);
   let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
