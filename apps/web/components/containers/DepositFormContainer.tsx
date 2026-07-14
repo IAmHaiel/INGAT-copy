@@ -8,24 +8,33 @@ import { useWalletContext } from '@/context/WalletContext';
 import { useDeposit } from '@/hooks/useDeposit';
 import { useKnownAddresses } from '@/hooks/useKnownAddresses';
 import { DepositFormInputs } from '@/types/transaction';
-import { toast } from 'sonner';
+import { useToast } from '@/context/ToastContext';
  
 export default function DepositFormContainer() {
   const router = useRouter();
   const { publicKey, isConnected, isInitializing } = useWalletContext();
   const { knownAddresses, isLoading: isAddressesLoading } = useKnownAddresses(publicKey);
+  const { showToast } = useToast();
  
   const { deposit, isSubmitting, errors, txError } = useDeposit(publicKey, (hash) => {
-    toast.success('Deposit Split Completed!', {
-      description: `Confirmed on testnet: ${hash.slice(0, 8)}...${hash.slice(-8)}`,
-      action: {
-        label: 'View Tx',
-        onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${hash}`, '_blank')
-      },
-      duration: 10000
+    showToast({
+      type: 'success',
+      title: 'Deposit Split Completed!',
+      message: `Confirmed on testnet: ${hash.slice(0, 8)}...${hash.slice(-8)}`,
+      txHash: hash,
     });
     router.push('/dashboard');
   });
+
+  useEffect(() => {
+    if (txError) {
+      showToast({
+        type: 'error',
+        title: 'Deposit Failed',
+        message: txError,
+      });
+    }
+  }, [txError, showToast]);
 
   useEffect(() => {
     if (isInitializing) return;

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/context/WalletContext";
+import { ToastProvider } from "@/context/ToastContext";
+import ToastContainer from "@/components/ui/feedback/ToastContainer";
 import { Toaster } from "sonner";
  
 const manrope = Manrope({
@@ -25,21 +27,24 @@ export default function RootLayout({
     <html lang="en" className={`${manrope.variable} h-full`}>
       <body className="font-sans flex flex-col min-h-screen bg-background-warm text-on-surface antialiased">
         <WalletProvider>
-          {children}
-          <Toaster 
-            position="top-right"
-            richColors
-            toastOptions={{
-              classNames: {
-                toast: "font-sans shadow-xl rounded-xl border border-outline-variant p-4",
-                title: "text-sm font-bold text-on-surface",
-                description: "text-xs font-medium text-on-surface-variant",
-                actionButton: "bg-[#005145] hover:bg-[#0f6b5c] text-white font-bold rounded-lg px-3 py-1.5 transition-colors cursor-pointer border-0",
-                success: "bg-[#FAF7F2] text-[#005145] border-[#005145]/20",
-                error: "bg-[#faf2f2] text-red-800 border-red-200"
-              }
-            }}
-          />
+          <ToastProvider>
+            {children}
+            <ToastContainer />
+            <Toaster 
+              position="top-right"
+              richColors
+              toastOptions={{
+                classNames: {
+                  toast: "font-sans shadow-xl rounded-xl border border-outline-variant p-4",
+                  title: "text-sm font-bold text-on-surface",
+                  description: "text-xs font-medium text-on-surface-variant",
+                  actionButton: "bg-[#005145] hover:bg-[#0f6b5c] text-white font-bold rounded-lg px-3 py-1.5 transition-colors cursor-pointer border-0",
+                  success: "bg-[#FAF7F2] text-[#005145] border-[#005145]/20",
+                  error: "bg-[#faf2f2] text-red-800 border-red-200"
+                }
+              }}
+            />
+          </ToastProvider>
         </WalletProvider>
       </body>
     </html>

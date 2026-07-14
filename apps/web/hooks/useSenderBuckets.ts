@@ -120,8 +120,16 @@ export const useSenderBuckets = (senderAddress: string | null) => {
         fetchBuckets();
       }
     });
+
+    const interval = setInterval(() => {
+      if (active) {
+        fetchBuckets(true);
+      }
+    }, 5000);
+
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, [senderAddress, fetchBuckets]);
 

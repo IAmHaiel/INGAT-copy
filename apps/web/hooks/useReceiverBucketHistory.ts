@@ -10,13 +10,13 @@ export const useReceiverBucketHistory = (receiverAddress: string | null) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (silent = false) => {
     if (!receiverAddress || !supabaseClient) {
       setEntries([]);
       return;
     }
 
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     setError(null);
 
     try {
@@ -114,7 +114,7 @@ export const useReceiverBucketHistory = (receiverAddress: string | null) => {
       console.error('Error fetching receiver bucket history:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch received bucket history');
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [receiverAddress, supabaseClient]);
 
@@ -125,8 +125,16 @@ export const useReceiverBucketHistory = (receiverAddress: string | null) => {
         fetchHistory();
       }
     });
+
+    const interval = setInterval(() => {
+      if (active) {
+        fetchHistory(true);
+      }
+    }, 5000);
+
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, [receiverAddress, fetchHistory]);
 

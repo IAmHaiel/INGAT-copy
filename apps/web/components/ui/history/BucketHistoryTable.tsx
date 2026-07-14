@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, ArrowUpDown, Filter, Eye, ChevronRight, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, ArrowUpDown, Filter, ChevronRight, Info } from 'lucide-react';
 import { EnrichedBucketEntry } from '@/hooks/useBucketHistory';
 import { formatAmount, formatDate } from '@/lib/utils/format';
 import { truncateAddress } from '@/lib/utils/format';
@@ -23,6 +23,8 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('depositDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Filter entries
   const filtered = entries.filter((entry) => {
@@ -58,6 +60,11 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
     }
   });
 
+  // Reset pagination to page 1 when filter/search/sort change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortField, sortOrder, entries.length]);
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -66,6 +73,10 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
       setSortOrder('desc');
     }
   };
+
+  const totalPages = Math.ceil(sorted.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedSorted = sorted.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="space-y-4">
@@ -122,11 +133,13 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
       </div>
 
       {/* Stats summary */}
-      <div className="flex justify-between items-center text-xs text-on-surface-variant font-medium px-1">
-        <span>Showing {sorted.length} of {entries.length} buckets</span>
+      <div className="flex justify-between items-center text-xs text-on-surface-variant font-semibold px-1">
+        <span>
+          Showing {Math.min(startIndex + 1, sorted.length)}-{Math.min(startIndex + itemsPerPage, sorted.length)} of {sorted.length} buckets ({entries.length} total)
+        </span>
         {sorted.length > 0 && (
           <span className="flex items-center gap-1">
-            <Info size={12} /> Click any entry to view full transaction receipt
+            <Info size={12} /> Click any entry to view receipt
           </span>
         )}
       </div>
@@ -139,84 +152,109 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
         </div>
       ) : (
         <>
+          {/* Pagination Controls - Mobile Only (Top) */}
+          {totalPages > 1 && (
+            <div className="md:hidden flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold mb-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Previous
+              </button>
+              <span className="text-on-surface-variant font-semibold">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Next
+              </button>
+            </div>
+          )}
+
           {/* Desktop Table View */}
-          <div className="hidden md:block bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-surface-container-lowest border-b border-outline-variant text-xs font-bold text-on-surface uppercase tracking-wider select-none">
-                  <th className="p-4">{mode === 'received' ? 'Sender' : 'Receiver'}</th>
-                  <th className="p-4 cursor-pointer hover:bg-surface-container transition-colors" onClick={() => toggleSort('amount')}>
-                    <span className="flex items-center gap-1">
-                      Allocated Amount
-                      <ArrowUpDown size={12} />
-                    </span>
-                  </th>
-                  <th className="p-4">Split (Spend/Goal)</th>
-                  <th className="p-4 cursor-pointer hover:bg-surface-container transition-colors" onClick={() => toggleSort('unlockDate')}>
-                    <span className="flex items-center gap-1">
-                      Unlock Date
-                      <ArrowUpDown size={12} />
-                    </span>
-                  </th>
-                  <th className="p-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/60 text-xs">
-                {sorted.map((entry) => (
-                  <tr
-                    key={entry.depositTxHash}
-                    onClick={() => onSelectEntry(entry)}
-                    className="hover:bg-surface-container/30 transition-colors cursor-pointer group"
-                  >
-                    <td className="p-4">
-                      <div>
-                        <p className="font-bold text-on-surface">
-                          {entry.receiverName || truncateAddress(entry.receiverAddress)}
-                        </p>
-                        {entry.receiverName && (
-                          <p className="text-[10px] text-on-surface-variant font-mono mt-0.5">
-                            {truncateAddress(entry.receiverAddress)}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-black text-on-surface">{formatAmount(entry.depositAmount)} XLM</p>
-                        <p className="text-[10px] text-on-surface-variant mt-0.5">
-                          Dep. {formatDate(entry.depositDate)}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="space-y-0.5">
-                        <p className="font-medium text-on-surface">
-                          {entry.splitRatio}% / {100 - entry.splitRatio}%
-                        </p>
-                        <p className="text-[10px] text-on-surface-variant">
-                          Goal: {formatAmount(entry.goalAmount)} XLM
-                        </p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      {entry.goalAmount > 0 ? (
-                        <p className="font-semibold text-on-surface">{formatDate(entry.unlockDate)}</p>
-                      ) : (
-                        <p className="text-on-surface-variant font-medium">None (Spending Only)</p>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <BucketStatusBadge status={entry.status} />
-                    </td>
+          <div className="hidden md:block bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+            <div className="max-h-[480px] overflow-y-auto overflow-x-auto pr-1">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="sticky top-0 z-10 bg-white border-b border-outline-variant text-xs font-bold text-on-surface uppercase tracking-wider select-none">
+                    <th className="p-4 bg-white">{mode === 'received' ? 'Sender' : 'Receiver'}</th>
+                    <th className="p-4 cursor-pointer hover:bg-surface-container transition-colors bg-white" onClick={() => toggleSort('amount')}>
+                      <span className="flex items-center gap-1">
+                        Allocated Amount
+                        <ArrowUpDown size={12} />
+                      </span>
+                    </th>
+                    <th className="p-4 bg-white">Split (Spend/Goal)</th>
+                    <th className="p-4 cursor-pointer hover:bg-surface-container transition-colors bg-white" onClick={() => toggleSort('unlockDate')}>
+                      <span className="flex items-center gap-1">
+                        Unlock Date
+                        <ArrowUpDown size={12} />
+                      </span>
+                    </th>
+                    <th className="p-4 bg-white">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/60 text-xs">
+                  {paginatedSorted.map((entry) => (
+                    <tr
+                      key={entry.depositTxHash}
+                      onClick={() => onSelectEntry(entry)}
+                      className="hover:bg-surface-container/30 transition-colors cursor-pointer group"
+                    >
+                      <td className="p-4">
+                        <div>
+                          <p className="font-bold text-on-surface">
+                            {entry.receiverName || truncateAddress(entry.receiverAddress)}
+                          </p>
+                          {entry.receiverName && (
+                            <p className="text-[10px] text-on-surface-variant font-mono mt-0.5">
+                              {truncateAddress(entry.receiverAddress)}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div>
+                          <p className="font-black text-on-surface">{formatAmount(entry.depositAmount)} XLM</p>
+                          <p className="text-[10px] text-on-surface-variant mt-0.5">
+                            Dep. {formatDate(entry.depositDate)}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="space-y-0.5">
+                          <p className="font-medium text-on-surface">
+                            {entry.splitRatio}% / {100 - entry.splitRatio}%
+                          </p>
+                          <p className="text-[10px] text-on-surface-variant">
+                            Goal: {formatAmount(entry.goalAmount)} XLM
+                          </p>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        {entry.goalAmount > 0 ? (
+                          <p className="font-semibold text-on-surface">{formatDate(entry.unlockDate)}</p>
+                        ) : (
+                          <p className="text-on-surface-variant font-medium">None (Spending Only)</p>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <BucketStatusBadge status={entry.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Mobile Card List View */}
           <div className="block md:hidden space-y-3">
-            {sorted.map((entry) => (
+            {paginatedSorted.map((entry) => (
               <div
                 key={entry.depositTxHash}
                 onClick={() => onSelectEntry(entry)}
@@ -264,6 +302,29 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
               </div>
             ))}
           </div>
+
+          {/* Pagination Controls - Desktop Only (Bottom) */}
+          {totalPages > 1 && (
+            <div className="hidden md:flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Previous
+              </button>
+              <span className="text-on-surface-variant font-semibold">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -73,8 +73,16 @@ export const useDashboardTransactions = (address: string | null) => {
         fetchTransactions();
       }
     });
+
+    const interval = setInterval(() => {
+      if (active) {
+        fetchTransactions(true);
+      }
+    }, 5000);
+
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, [address, fetchTransactions]);
 

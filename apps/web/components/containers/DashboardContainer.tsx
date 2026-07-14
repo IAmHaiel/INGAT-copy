@@ -11,6 +11,7 @@ import { useSenderBuckets } from '@/hooks/useSenderBuckets';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
 import { useDashboardTransactions } from '@/hooks/useDashboardTransactions';
+import { useToast } from '@/context/ToastContext';
 
 // UI components
 import Header from '../ui/layout/Header';
@@ -19,12 +20,12 @@ import { SummaryCard } from '@/components/ui/dashboard/SummaryCard';
 import SenderBucketCard from '@/components/ui/dashboard/SenderBucketCard';
 import SpendingBucketCard from '@/components/ui/buckets/SpendingBucketCard';
 import GoalBucketCard from '@/components/ui/buckets/GoalBucketCard';
-import AllocationHistoryList from '@/components/ui/history/AllocationHistoryList';
 import DashboardHistoryList from '@/components/ui/history/DashboardHistoryList';
 import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 
 export default function DashboardContainer() {
   const router = useRouter();
+  const { showToast } = useToast();
   const {
     publicKey,
     isConnected,
@@ -40,6 +41,11 @@ export default function DashboardContainer() {
 
   const [tab, setTab] = useState<'sent' | 'received'>('sent');
   const [currentTime, setCurrentTime] = useState<number>(0);
+
+  // Pagination states for buckets
+  const [sentBucketsPage, setSentBucketsPage] = useState(1);
+  const [receivedBucketsPage, setReceivedBucketsPage] = useState(1);
+  const bucketsPerPage = 5;
 
   // Sender data hooks
   const { allocations: sentAllocations, isLoading: sentHistoryLoading, refreshHistory: refreshSentHistory } = useAllocationHistory(publicKey);
@@ -62,6 +68,27 @@ export default function DashboardContainer() {
   });
 
   const { priceUsd } = useXlmPrice();
+
+  useEffect(() => {
+    setSentBucketsPage(1);
+  }, [sentBuckets.length]);
+
+  useEffect(() => {
+    setReceivedBucketsPage(1);
+  }, [receivedBalances.length]);
+
+  // Paginated buckets calculations
+  const totalSentBucketsPages = Math.ceil(sentBuckets.length / bucketsPerPage);
+  const paginatedSentBuckets = sentBuckets.slice(
+    (sentBucketsPage - 1) * bucketsPerPage,
+    sentBucketsPage * bucketsPerPage
+  );
+
+  const totalReceivedBucketsPages = Math.ceil(receivedBalances.length / bucketsPerPage);
+  const paginatedReceivedBalances = receivedBalances.slice(
+    (receivedBucketsPage - 1) * bucketsPerPage,
+    receivedBucketsPage * bucketsPerPage
+  );
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -103,6 +130,48 @@ export default function DashboardContainer() {
     const bucket = receivedBalances.find(b => b.id === bucketId);
     withdrawReceived(bucketId, 'goal', amount, bucket?.unlockDate);
   };
+
+  useEffect(() => {
+    if (senderTxHash) {
+      showToast({
+        type: 'success',
+        title: 'Withdrawal Completed',
+        message: 'Successfully withdrew goal amount to wallet.',
+        txHash: senderTxHash,
+      });
+    }
+  }, [senderTxHash, showToast]);
+
+  useEffect(() => {
+    if (senderWithdrawError) {
+      showToast({
+        type: 'error',
+        title: 'Withdrawal Failed',
+        message: senderWithdrawError,
+      });
+    }
+  }, [senderWithdrawError, showToast]);
+
+  useEffect(() => {
+    if (receiverTxHash) {
+      showToast({
+        type: 'success',
+        title: 'Withdrawal Completed',
+        message: 'Successfully withdrew from receiver bucket.',
+        txHash: receiverTxHash,
+      });
+    }
+  }, [receiverTxHash, showToast]);
+
+  useEffect(() => {
+    if (receiverWithdrawError) {
+      showToast({
+        type: 'error',
+        title: 'Withdrawal Failed',
+        message: receiverWithdrawError,
+      });
+    }
+  }, [receiverWithdrawError, showToast]);
 
   useEffect(() => {
     if (isInitializing) return;
@@ -245,26 +314,77 @@ export default function DashboardContainer() {
                   <p className="text-on-surface-variant text-[11px] mt-0.5">Deposits you send will show live on-chain balances here.</p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-[500px] overflow-y-auto p-2 border border-outline-variant rounded-2xl bg-surface-container/20">
-                  {sentBuckets.map((bucket) => (
-                    <SenderBucketCard
-                      key={`${bucket.receiverAddress}-${bucket.id}`}
-                      id={bucket.id}
-                      receiverAddress={bucket.receiverAddress}
-                      spendingBalance={bucket.spendingBalance}
-                      goalBalance={bucket.goalBalance}
-                      unlockDate={bucket.unlockDate}
-                      onWithdrawGoal={handleWithdrawSenderGoal}
-                      isWithdrawing={isSenderWithdrawing === bucket.id}
-                    />
-                  ))}
+                <div className="space-y-4 flex flex-col">
+                  {totalSentBucketsPages > 1 && (
+                    <div className="md:hidden flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold mb-2">
+                      <button
+                        onClick={() => setSentBucketsPage(prev => Math.max(prev - 1, 1))}
+                        disabled={sentBucketsPage === 1}
+                        className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-on-surface-variant">
+                        Page {sentBucketsPage} of {totalSentBucketsPages}
+                      </span>
+                      <button
+                        onClick={() => setSentBucketsPage(prev => Math.min(prev + 1, totalSentBucketsPages))}
+                        disabled={sentBucketsPage === totalSentBucketsPages}
+                        className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto p-2 border border-outline-variant rounded-2xl bg-surface-container/20">
+                    {paginatedSentBuckets.map((bucket) => (
+                      <SenderBucketCard
+                        key={`${bucket.receiverAddress}-${bucket.id}`}
+                        id={bucket.id}
+                        receiverAddress={bucket.receiverAddress}
+                        spendingBalance={bucket.spendingBalance}
+                        goalBalance={bucket.goalBalance}
+                        unlockDate={bucket.unlockDate}
+                        onWithdrawGoal={handleWithdrawSenderGoal}
+                        isWithdrawing={isSenderWithdrawing === bucket.id}
+                      />
+                    ))}
+                  </div>
+
+                  {totalSentBucketsPages > 1 && (
+                    <div className="hidden md:flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold">
+                      <button
+                        onClick={() => setSentBucketsPage(prev => Math.max(prev - 1, 1))}
+                        disabled={sentBucketsPage === 1}
+                        className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-on-surface-variant">
+                        Page {sentBucketsPage} of {totalSentBucketsPages}
+                      </span>
+                      <button
+                        onClick={() => setSentBucketsPage(prev => Math.min(prev + 1, totalSentBucketsPages))}
+                        disabled={sentBucketsPage === totalSentBucketsPages}
+                        className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </section>
 
             {/* History */}
             <section className="space-y-4">
-              <AllocationHistoryList allocations={sentAllocations} isLoading={sentHistoryLoading} />
+              <DashboardHistoryList
+                allocations={sentAllocations}
+                isLoading={sentHistoryLoading}
+                currentUserAddress={publicKey}
+                title="Allocation History"
+              />
             </section>
           </div>
         ) : (
@@ -376,40 +496,86 @@ export default function DashboardContainer() {
                       <p className="text-on-surface-variant text-[11px] mt-0.5">When someone remits funds to your address, they will show up here.</p>
                     </div>
                   ) : (
-                    <div className="space-y-6 max-h-[550px] overflow-y-auto p-4 border border-outline-variant rounded-2xl bg-surface-container/20">
-                      {receivedBalances.map((bucket) => (
-                        <div key={bucket.id} className="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4">
-                          <div className="flex items-center justify-between border-b border-outline-variant pb-3 mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="bg-secondary/10 text-secondary text-xs font-semibold px-2.5 py-1 rounded-full">
-                                Bucket #{bucket.id + 1}
-                              </span>
-                              <span className="text-xs text-on-surface-variant font-medium">
-                                Sender:{' '}
-                                <span
-                                  className="inline-block max-w-[150px] sm:max-w-none truncate font-mono bg-surface-container px-2 py-0.5 rounded text-[11px] select-all align-middle"
-                                  title={bucket.sender}
-                                >
-                                  {bucket.sender}
+                    <div className="space-y-4 flex flex-col">
+                      {totalReceivedBucketsPages > 1 && (
+                        <div className="md:hidden flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold mb-2">
+                          <button
+                            onClick={() => setReceivedBucketsPage(prev => Math.max(prev - 1, 1))}
+                            disabled={receivedBucketsPage === 1}
+                            className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          >
+                            Previous
+                          </button>
+                          <span className="text-on-surface-variant">
+                            Page {receivedBucketsPage} of {totalReceivedBucketsPages}
+                          </span>
+                          <button
+                            onClick={() => setReceivedBucketsPage(prev => Math.min(prev + 1, totalReceivedBucketsPages))}
+                            disabled={receivedBucketsPage === totalReceivedBucketsPages}
+                            className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="space-y-6 max-h-[550px] overflow-y-auto p-4 border border-outline-variant rounded-2xl bg-surface-container/20">
+                        {paginatedReceivedBalances.map((bucket) => (
+                          <div key={bucket.id} className="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4">
+                            <div className="flex items-center justify-between border-b border-outline-variant pb-3 mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="bg-secondary/10 text-secondary text-xs font-semibold px-2.5 py-1 rounded-full">
+                                  Bucket #{bucket.id + 1}
                                 </span>
-                              </span>
+                                <span className="text-xs text-on-surface-variant font-medium">
+                                  Sender:{' '}
+                                  <span
+                                    className="inline-block max-w-[150px] sm:max-w-none truncate font-mono bg-surface-container px-2 py-0.5 rounded text-[11px] select-all align-middle"
+                                    title={bucket.sender}
+                                  >
+                                    {bucket.sender}
+                                  </span>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <SpendingBucketCard
+                                balance={bucket.spendingBalance}
+                                onWithdraw={(amount) => handleWithdrawSpending(bucket.id, amount)}
+                                isWithdrawing={isReceiverWithdrawing === bucket.id}
+                              />
+                              <GoalBucketCard
+                                balance={bucket.goalBalance}
+                                unlockDate={bucket.unlockDate}
+                                onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
+                                isWithdrawing={isReceiverWithdrawing === bucket.id}
+                              />
                             </div>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <SpendingBucketCard
-                              balance={bucket.spendingBalance}
-                              onWithdraw={(amount) => handleWithdrawSpending(bucket.id, amount)}
-                              isWithdrawing={isReceiverWithdrawing === bucket.id}
-                            />
-                            <GoalBucketCard
-                              balance={bucket.goalBalance}
-                              unlockDate={bucket.unlockDate}
-                              onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
-                              isWithdrawing={isReceiverWithdrawing === bucket.id}
-                            />
-                          </div>
+                        ))}
+                      </div>
+
+                      {totalReceivedBucketsPages > 1 && (
+                        <div className="hidden md:flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-outline-variant shadow-sm text-xs font-semibold">
+                          <button
+                            onClick={() => setReceivedBucketsPage(prev => Math.max(prev - 1, 1))}
+                            disabled={receivedBucketsPage === 1}
+                            className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          >
+                            Previous
+                          </button>
+                          <span className="text-on-surface-variant">
+                            Page {receivedBucketsPage} of {totalReceivedBucketsPages}
+                          </span>
+                          <button
+                            onClick={() => setReceivedBucketsPage(prev => Math.min(prev + 1, totalReceivedBucketsPages))}
+                            disabled={receivedBucketsPage === totalReceivedBucketsPages}
+                            className="px-3 py-1.5 rounded-lg border border-outline-variant bg-white text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          >
+                            Next
+                          </button>
                         </div>
-                      ))}
+                      )}
                     </div>
                   )}
                 </section>

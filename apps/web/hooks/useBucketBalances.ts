@@ -30,8 +30,16 @@ export const useBucketBalances = (receiverAddress: string | null) => {
         refreshBalances();
       }
     });
+
+    const interval = setInterval(() => {
+      if (active) {
+        refreshBalances(true);
+      }
+    }, 5000);
+
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, [receiverAddress, refreshBalances]);
 

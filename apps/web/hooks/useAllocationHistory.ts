@@ -24,12 +24,12 @@ export const useAllocationHistory = (senderAddress: string | null) => {
   const [allocations, setAllocations] = useState<DepositAllocation[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (silent = false) => {
     if (!supabaseClient || !senderAddress) {
       setAllocations([]);
       return;
     }
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     try {
       const rows = await fetchSentTransactions(senderAddress, supabaseClient);
       // Only show deposit-type transactions in allocation history
@@ -39,7 +39,7 @@ export const useAllocationHistory = (senderAddress: string | null) => {
       console.error('Failed to fetch allocation history from Supabase:', err);
       setAllocations([]);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [senderAddress, supabaseClient]);
 
@@ -50,8 +50,16 @@ export const useAllocationHistory = (senderAddress: string | null) => {
         fetchHistory();
       }
     });
+
+    const interval = setInterval(() => {
+      if (active) {
+        fetchHistory(true);
+      }
+    }, 5000);
+
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, [senderAddress, fetchHistory]);
 

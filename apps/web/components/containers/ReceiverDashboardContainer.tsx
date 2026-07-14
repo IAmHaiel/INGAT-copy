@@ -10,9 +10,11 @@ import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 import { useWalletContext } from '@/context/WalletContext';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
+import { useToast } from '@/context/ToastContext';
 
 export default function ReceiverDashboardContainer() {
   const router = useRouter();
+  const { showToast } = useToast();
   const { 
     publicKey, 
     isConnected, 
@@ -34,6 +36,27 @@ export default function ReceiverDashboardContainer() {
       router.push('/');
     }
   }, [isConnected, isInitializing, router]);
+
+  useEffect(() => {
+    if (txHash) {
+      showToast({
+        type: 'success',
+        title: 'Withdrawal Completed',
+        message: 'Successfully withdrew from receiver bucket.',
+        txHash,
+      });
+    }
+  }, [txHash, showToast]);
+
+  useEffect(() => {
+    if (withdrawError) {
+      showToast({
+        type: 'error',
+        title: 'Withdrawal Failed',
+        message: withdrawError,
+      });
+    }
+  }, [withdrawError, showToast]);
 
   if (!isConnected || (isAuthenticating && !supabaseClient)) {
     return (

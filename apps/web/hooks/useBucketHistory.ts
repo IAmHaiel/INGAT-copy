@@ -42,13 +42,13 @@ export const useBucketHistory = (senderAddress: string | null) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (silent = false) => {
     if (!senderAddress || !supabaseClient) {
       setEntries([]);
       return;
     }
 
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     setError(null);
 
     try {
@@ -162,7 +162,7 @@ export const useBucketHistory = (senderAddress: string | null) => {
       console.error('Error fetching bucket history:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch bucket history');
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [senderAddress, supabaseClient]);
 
@@ -173,8 +173,16 @@ export const useBucketHistory = (senderAddress: string | null) => {
         fetchHistory();
       }
     });
+
+    const interval = setInterval(() => {
+      if (active) {
+        fetchHistory(true);
+      }
+    }, 5000);
+
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, [senderAddress, fetchHistory]);
 
