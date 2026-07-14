@@ -67,7 +67,7 @@ export const useSenderBuckets = (senderAddress: string | null) => {
     }
   }, [senderAddress, supabaseClient]);
 
-  const withdrawSenderGoal = async (receiverAddress: string, bucketId: number, amount: number): Promise<boolean> => {
+  const withdrawSenderGoal = async (receiverAddress: string, bucketId: number, amount: number, unlockDate?: number): Promise<boolean> => {
     if (!senderAddress) {
       setWithdrawError('Wallet not connected');
       return false;
@@ -98,7 +98,7 @@ export const useSenderBuckets = (senderAddress: string | null) => {
         spending_amount: null,
         goal_amount: amount,
         split_ratio: null,
-        unlock_date: null,
+        unlock_date: unlockDate || null,
       }, supabaseClient);
 
       // Refresh buckets

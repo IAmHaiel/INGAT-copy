@@ -2,9 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Send } from 'lucide-react';
 import AllocationHistoryList from '@/components/ui/history/AllocationHistoryList';
-import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { SummaryCard } from '@/components/ui/dashboard/SummaryCard';
 import { useWalletContext } from '@/context/WalletContext';
 import { useAllocationHistory } from '@/hooks/useAllocationHistory';
@@ -13,10 +11,12 @@ import { formatXlmWithUsd } from '@/lib/utils/price';
 import { useSenderBuckets } from '@/hooks/useSenderBuckets';
 import SenderBucketCard from '@/components/ui/dashboard/SenderBucketCard';
 import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
+import Header from '../ui/layout/Header';
+import Footer from '../ui/layout/Footer';
 
 export default function SenderDashboardContainer() {
   const router = useRouter();
-  const { publicKey, isConnected, isInitializing, disconnect } = useWalletContext();
+  const { publicKey, isConnected, isConnecting, isInitializing, connect, disconnect } = useWalletContext();
   const { allocations, isLoading: historyLoading, refreshHistory } = useAllocationHistory(publicKey);
   const {
     buckets,
@@ -31,7 +31,8 @@ export default function SenderDashboardContainer() {
   const [currentTime, setCurrentTime] = useState<number>(0);
 
   const handleWithdrawSenderGoal = async (receiverAddress: string, bucketId: number, amount: number) => {
-    const success = await withdrawSenderGoal(receiverAddress, bucketId, amount);
+    const bucket = buckets.find(b => b.id === bucketId && b.receiverAddress === receiverAddress);
+    const success = await withdrawSenderGoal(receiverAddress, bucketId, amount, bucket?.unlockDate);
     if (success) {
       refreshHistory();
     }
@@ -62,29 +63,15 @@ export default function SenderDashboardContainer() {
   const activeLocks = allocations.filter((a) => a.unlockDate > currentTime).length;
 
   return (
+    <>
+    <Header
+      publicKey={publicKey}
+      isConnected={isConnected}
+      isConnecting={isConnecting}
+      onConnect={connect}
+      onDisconnect={disconnect}
+    />
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-outline-variant shadow-sm">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push('/')}
-            className="p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer text-on-surface-variant border-0 flex items-center justify-center"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <h1 className="text-xl font-bold text-primary flex items-center gap-2">
-              <Send size={24} />
-              Sender Dashboard
-            </h1>
-            <p className="text-xs text-on-surface-variant mt-0.5">Manage splits, lock savings, and track allocation history.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 self-end md:self-auto">
-          <WalletAddressBadge address={publicKey} onDisconnect={disconnect} />
-        </div>
-      </header>
-
       {/* Transaction Feedbacks */}
       {(isWithdrawing !== null || txHash || withdrawError) && (
         <TransactionStatus
@@ -120,7 +107,7 @@ export default function SenderDashboardContainer() {
           <p className="text-xs text-on-primary-container/85">Configure split percentages and protect emergency/tuition savings immediately.</p>
         </div>
         <button
-          onClick={() => router.push('/sender/deposit')}
+          onClick={() => router.push('/sender')}
           className="bg-secondary-container text-on-secondary-container font-black py-3 px-6 rounded-xl transition-all hover:brightness-110 active:scale-95 cursor-pointer shadow-md text-sm border-0"
         >
           Create Split Remittance
@@ -130,12 +117,20 @@ export default function SenderDashboardContainer() {
       {/* Active Buckets */}
       <section className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-sm font-bold text-on-surface">Your Deposited Vault Buckets</h2>
-          {buckets.length > 0 && (
-            <span className="text-[11px] bg-primary/10 text-primary font-semibold px-2 py-0.5 rounded-full">
-              {buckets.length} Active
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-on-surface">Your Deposited Vault Buckets</h2>
+            {buckets.length > 0 && (
+              <span className="text-[11px] bg-primary/10 text-primary font-semibold px-2 py-0.5 rounded-full">
+                {buckets.length} Active
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => router.push('/dashboard/buckets')}
+            className="text-xs font-bold text-secondary hover:text-secondary-dark hover:underline bg-transparent border-0 cursor-pointer flex items-center gap-0.5"
+          >
+            View Full History →
+          </button>
         </div>
 
         {bucketsLoading && buckets.length === 0 ? (
@@ -174,5 +169,7 @@ export default function SenderDashboardContainer() {
         <AllocationHistoryList allocations={allocations} isLoading={historyLoading} />
       </section>
     </div>
+    <Footer />
+    </>
   );
 }

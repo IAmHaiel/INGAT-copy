@@ -10,7 +10,7 @@ export const useWithdraw = (receiverAddress: string | null, onSuccess?: (hash: s
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
-  const withdraw = async (bucketId: number, type: 'spending' | 'goal', amount: number) => {
+  const withdraw = async (bucketId: number, type: 'spending' | 'goal', amount: number, unlockDate?: number) => {
     if (!receiverAddress) {
       setError('Wallet not connected');
       return;
@@ -48,7 +48,7 @@ export const useWithdraw = (receiverAddress: string | null, onSuccess?: (hash: s
         spending_amount: type === 'spending' ? amount : null,
         goal_amount: type === 'goal' ? amount : null,
         split_ratio: null,
-        unlock_date: null,
+        unlock_date: unlockDate || null,
       }, supabaseClient).catch((err) => {
         console.error('[useWithdraw] Supabase persistence failed:', err);
       });

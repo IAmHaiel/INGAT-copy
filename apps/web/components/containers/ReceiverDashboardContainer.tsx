@@ -82,11 +82,13 @@ export default function ReceiverDashboardContainer() {
   }
 
   const handleWithdrawSpending = (bucketId: number, amount: number) => {
-    withdraw(bucketId, 'spending', amount);
+    const bucket = balances.find(b => b.id === bucketId);
+    withdraw(bucketId, 'spending', amount, bucket?.unlockDate);
   };
 
   const handleWithdrawGoal = (bucketId: number, amount: number) => {
-    withdraw(bucketId, 'goal', amount);
+    const bucket = balances.find(b => b.id === bucketId);
+    withdraw(bucketId, 'goal', amount, bucket?.unlockDate);
   };
 
   const showWithdrawStatus = isWithdrawing !== null || txHash || withdrawError;

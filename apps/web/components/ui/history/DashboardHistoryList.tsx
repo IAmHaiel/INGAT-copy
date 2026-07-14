@@ -9,12 +9,14 @@ interface DashboardHistoryListProps {
   allocations: DepositAllocation[];
   isLoading: boolean;
   currentUserAddress: string | null;
+  variant?: 'default' | 'plain';
 }
 
 const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({ 
   allocations, 
   isLoading, 
-  currentUserAddress 
+  currentUserAddress,
+  variant = 'default'
 }) => {
   const { priceUsd } = useXlmPrice();
 
@@ -27,11 +29,82 @@ const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({
   }
 
   if (!allocations || allocations.length === 0) {
+    if (variant === 'plain') {
+      return (
+        <div className="py-12 text-center text-on-surface-variant flex flex-col items-center justify-center">
+          <History size={48} className="text-outline-variant mb-2" />
+          <p className="font-semibold text-sm">No transactions found</p>
+          <p className="text-xs text-on-surface-variant mt-1">Transactions will appear here once executed.</p>
+        </div>
+      );
+    }
     return (
       <div className="bg-white rounded-xl border border-outline-variant p-8 text-center text-on-surface-variant shadow-sm flex flex-col items-center">
         <History size={48} className="text-outline-variant mb-2" />
         <p className="font-semibold text-sm">No transactions found</p>
         <p className="text-xs text-on-surface-variant mt-1">Transactions will appear here once executed.</p>
+      </div>
+    );
+  }
+
+  if (variant === 'plain') {
+    return (
+      <div className="divide-y divide-outline-variant">
+        {allocations.map((alloc) => {
+          const isSent = alloc.sender === currentUserAddress;
+          
+          return (
+            <div key={alloc.id} className="py-4 flex justify-between items-center hover:bg-surface/50 transition-colors">
+              <div className="flex items-center gap-3">
+                {/* Arrow Indicator */}
+                <div className={`p-2 rounded-xl flex items-center justify-center ${
+                  isSent 
+                    ? 'bg-primary/10 text-primary' 
+                    : 'bg-secondary/10 text-secondary'
+                }`}>
+                  {isSent ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-on-surface">
+                      {isSent ? `Sent to ${formatAddress(alloc.receiver)}` : `Received from ${formatAddress(alloc.sender)}`}
+                    </span>
+                    <a
+                      href={`https://stellar.expert/explorer/testnet/tx/${alloc.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-primary hover:underline flex items-center"
+                    >
+                      view tx <ExternalLink size={10} className="ml-0.5" />
+                    </a>
+                  </div>
+                  <div className="text-[10px] text-on-surface-variant flex items-center gap-2">
+                    <span>{formatDate(alloc.timestamp)}</span>
+                    <span>•</span>
+                    <span>Split: {alloc.splitRatio}% Spending / {100 - alloc.splitRatio}% Goal</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className={`text-base font-black block ${
+                  isSent ? 'text-primary' : 'text-secondary'
+                }`}>
+                  {isSent ? '-' : '+'}{formatAmount(alloc.amount)} XLM
+                </span>
+                {priceUsd > 0 && (
+                  <span className="text-[10px] text-on-surface-variant block">
+                    {formatXlmWithUsd(alloc.amount, priceUsd)}
+                  </span>
+                )}
+                <span className="text-[9px] text-on-surface-variant block">
+                  Lock ends: {formatDate(alloc.unlockDate)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   }
