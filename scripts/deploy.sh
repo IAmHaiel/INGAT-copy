@@ -100,28 +100,16 @@ if ! curl -sf "https://horizon-testnet.stellar.org/accounts/$DEPLOYER_ADDRESS" >
 fi
 
 # ==============================================================================
-# Step 4: Deploy PHPC Stablecoin SAC
+# Step 4: Retrieve Native XLM SAC ID
 # ==============================================================================
-info "Deploying $ASSET_CODE Stablecoin SAC..."
+info "Retrieving Native XLM SAC contract ID..."
 
-PHPC_OUTPUT=$(stellar contract asset deploy \
-    --asset "$ASSET_CODE:$DEPLOYER_ADDRESS" \
-    --network "$NETWORK" \
-    --source "$IDENTITY" 2>&1)
+# Fetch the deterministic contract ID for native asset
+XLM_SAC_ID=$(stellar contract id asset \
+    --asset native \
+    --network "$NETWORK")
 
-# Extract the contract ID (last line that starts with C)
-PHPC_SAC_ID=$(echo "$PHPC_OUTPUT" | grep -oP '^C[A-Z0-9]{55}$' | tail -1)
-
-if [ -z "$PHPC_SAC_ID" ]; then
-    # Maybe already deployed — try to get it from the output
-    PHPC_SAC_ID=$(echo "$PHPC_OUTPUT" | grep -oP 'C[A-Z0-9]{55}' | tail -1)
-fi
-
-if [ -z "$PHPC_SAC_ID" ]; then
-    error "Failed to deploy PHPC SAC. Output:\n$PHPC_OUTPUT"
-fi
-
-success "PHPC SAC deployed: $PHPC_SAC_ID"
+success "Native XLM SAC ID: $XLM_SAC_ID"
 
 # ==============================================================================
 # Step 5: Deploy INGAT Vault Contract
@@ -146,15 +134,15 @@ fi
 success "Vault deployed: $VAULT_ID"
 
 # ==============================================================================
-# Step 6: Initialize Vault with PHPC token
+# Step 6: Initialize Vault with Native XLM token
 # ==============================================================================
-info "Initializing vault with PHPC token..."
+info "Initializing vault with Native XLM token..."
 
 INIT_OUTPUT=$(stellar contract invoke \
     --id "$VAULT_ID" \
     --network "$NETWORK" \
     --source "$IDENTITY" \
-    -- initialize --token "$PHPC_SAC_ID" 2>&1)
+    -- initialize --token "$XLM_SAC_ID" 2>&1)
 
 # Verify initialization
 VERIFY_TOKEN=$(stellar contract invoke \
@@ -163,10 +151,10 @@ VERIFY_TOKEN=$(stellar contract invoke \
     --source "$IDENTITY" \
     -- get_token 2>&1 | grep -oP '"C[A-Z0-9]{55}"' | tr -d '"')
 
-if [ "$VERIFY_TOKEN" != "$PHPC_SAC_ID" ]; then
-    warn "Token verification mismatch. Expected: $PHPC_SAC_ID, Got: $VERIFY_TOKEN"
+if [ "$VERIFY_TOKEN" != "$XLM_SAC_ID" ]; then
+    warn "Token verification mismatch. Expected: $XLM_SAC_ID, Got: $VERIFY_TOKEN"
 else
-    success "Vault initialized with PHPC token"
+    success "Vault initialized with Native XLM token"
 fi
 
 # ==============================================================================
@@ -178,7 +166,7 @@ echo -e "${GREEN}🎉 Deployment Complete!${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "Vault Contract:     $VAULT_ID"
-echo "PHPC SAC:           $PHPC_SAC_ID"
+echo "Native XLM SAC:     $XLM_SAC_ID"
 echo "Deployer:           $DEPLOYER_ADDRESS"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -186,7 +174,7 @@ echo "Copy the following into apps/web/.env.local:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "NEXT_PUBLIC_CONTRACT_ID=$VAULT_ID"
-echo "NEXT_PUBLIC_STABLECOIN_TOKEN_ID=$PHPC_SAC_ID"
+echo "NEXT_PUBLIC_TOKEN_ID=$XLM_SAC_ID"
 echo "NEXT_PUBLIC_RPC_URL=https://soroban-testnet.stellar.org"
 echo "NEXT_PUBLIC_NETWORK_PASSPHRASE=Test SDF Network ; September 2015"
 echo ""

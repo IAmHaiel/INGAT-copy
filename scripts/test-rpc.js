@@ -1,7 +1,7 @@
 const { rpc, nativeToScVal, Address } = require('@stellar/stellar-sdk');
 
 const server = new rpc.Server('https://soroban-testnet.stellar.org');
-const CONTRACT_ID = 'CALZQBX7GJIQ6MZC6MIIDEJPDBHPHBDHQTGHSUTOW7A7S7OPS4V4346U';
+const CONTRACT_ID = 'CCQGNVUCCAO6WNBXEHT3ZMPB5L57HZJLBIGPY27VSLJMTLVTZJUUINEQ';
 const DECIMALS = 10000000;
 const LEDGERS_PER_DAY = 17280;
 

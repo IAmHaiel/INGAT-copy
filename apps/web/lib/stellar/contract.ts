@@ -25,7 +25,10 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
 
     const sim = await server.simulateTransaction(tx);
     
-    if (rpc.Api.isSimulationSuccess(sim) && sim.result?.retval) {
+    if (rpc.Api.isSimulationSuccess(sim)) {
+      if (!sim.result?.retval) {
+        return [];
+      }
       const nativeVal = scValToNative(sim.result.retval);
       if (!nativeVal || !Array.isArray(nativeVal)) {
         return [];
@@ -38,10 +41,12 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
         unlockDate: Number(item.unlock_date),
       }));
     }
-    return [];
+    
+    const errorMsg = (sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed';
+    throw new Error(errorMsg);
   } catch (err) {
     console.error('Error fetching bucket balances:', err);
-    return [];
+    throw err;
   }
 };
 
