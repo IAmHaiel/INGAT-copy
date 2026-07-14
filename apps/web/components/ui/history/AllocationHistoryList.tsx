@@ -31,6 +31,8 @@ const AllocationHistoryList: React.FC<AllocationHistoryListProps> = ({ allocatio
     );
   }
 
+  const sortedAllocations = [...allocations].sort((a, b) => b.timestamp - a.timestamp);
+
   return (
     <div className="bg-white rounded-xl border border-outline-variant shadow-md overflow-hidden">
       <div className="p-4 border-b border-outline-variant bg-surface-container/30">
@@ -38,7 +40,7 @@ const AllocationHistoryList: React.FC<AllocationHistoryListProps> = ({ allocatio
       </div>
       <div className="overflow-x-auto">
         <div className="min-w-[480px] divide-y divide-outline-variant">
-        {allocations.map((alloc) => (
+        {sortedAllocations.map((alloc) => (
           <div key={alloc.id} className="p-4 flex justify-between items-center hover:bg-surface/50 transition-colors">
             <div className="space-y-1">
               <div className="flex items-center gap-2">

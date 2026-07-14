@@ -94,7 +94,7 @@ export default function SenderDashboardContainer() {
       onConnect={connect}
       onDisconnect={disconnect}
     />
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full animate-fade-in">
       {/* Transaction Feedbacks */}
       {(isWithdrawing !== null || txHash || withdrawError) && (
         <TransactionStatus

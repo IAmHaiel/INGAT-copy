@@ -18,7 +18,7 @@ function TransactionConfirmationContent({ type }: TransactionConfirmationContain
   const dashboardPath = '/dashboard';
 
   return (
-    <div className="max-w-md mx-auto px-4 py-16 space-y-6 flex-grow flex flex-col justify-center w-full">
+    <div className="max-w-md mx-auto px-4 py-16 space-y-6 flex-grow flex flex-col justify-center w-full animate-fade-in">
       <div className="bg-white p-6 rounded-2xl border border-outline-variant shadow-lg text-center space-y-6">
         <div className="space-y-2">
           <h1 className="text-xl font-bold text-on-surface">Transaction Confirmation</h1>

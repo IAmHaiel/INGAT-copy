@@ -55,7 +55,7 @@ export default function SenderFormPageContainer() {
         onConnect={connect}
         onDisconnect={disconnect}
       />
-      <div className="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
+      <div className="max-w-7xl mx-auto px-4 py-8 flex-grow w-full animate-fade-in">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Form */}
           <div className="lg:col-span-7 xl:col-span-7 w-full">
@@ -63,9 +63,9 @@ export default function SenderFormPageContainer() {
           </div>
 
           {/* Right Column: Transaction History (Desktop Only) */}
-          <div className="hidden lg:block lg:col-span-5 xl:col-span-5 w-full sticky top-8 space-y-4">
+          <div className="hidden lg:flex lg:col-span-5 xl:col-span-5 w-full flex-col space-y-4">
             {/* Header matches DepositFormContainer header */}
-            <header className="h-16 flex justify-between items-center bg-white px-4 rounded-2xl border border-outline-variant shadow-sm">
+            <header className="h-16 flex justify-between items-center bg-white px-4 rounded-2xl border border-outline-variant shadow-sm flex-shrink-0">
               <div className="flex items-center gap-2">
                 <History size={20} className="text-primary" />
                 <h1 className="text-base font-bold text-primary">Live Transactions</h1>
@@ -107,15 +107,16 @@ export default function SenderFormPageContainer() {
                 </button>
               </div>
             </header>
-            
+ 
             {/* Body Card matches DepositForm container card */}
-            <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-md">
-              <div className="max-h-[480px] overflow-y-auto pr-1">
+            <div className="bg-white p-4 rounded-xl border border-outline-variant shadow-md flex flex-col lg:h-[532px]">
+              <div className="flex-grow overflow-y-auto pr-1 min-h-0">
                 <DashboardHistoryList
                   allocations={activeTransactions}
                   isLoading={isHistoryLoading}
                   currentUserAddress={publicKey}
                   variant="plain"
+                  itemsPerPage={10}
                 />
               </div>
             </div>

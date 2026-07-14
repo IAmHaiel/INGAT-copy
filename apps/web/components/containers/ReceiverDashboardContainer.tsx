@@ -117,7 +117,7 @@ export default function ReceiverDashboardContainer() {
   const showWithdrawStatus = isWithdrawing !== null || txHash || withdrawError;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 flex-grow w-full">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 flex-grow w-full animate-fade-in">
       {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-outline-variant shadow-sm">
         <div className="flex items-center gap-3">

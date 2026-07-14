@@ -209,7 +209,7 @@ export default function DashboardContainer() {
         onConnect={connect}
         onDisconnect={disconnect}
       />
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full">
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full animate-fade-in">
         {/* Tab Toggle Navigation */}
         <div className="border-b border-outline-variant flex gap-4">
           <button
@@ -401,7 +401,7 @@ export default function DashboardContainer() {
                 </div>
                 <div className="space-y-2">
                   <h2 className="text-xl font-bold text-secondary">Signature Required</h2>
-                  <p className="text-sm text-on-surface-variant leading-relaxed">
+                  <p className="text-sm text-on-primary-container leading-relaxed">
                     We need your secure signature to authenticate and load your protected vault buckets.
                   </p>
                   {authError && authError !== 'The user rejected this request.' && (
@@ -452,7 +452,7 @@ export default function DashboardContainer() {
                 <section className="bg-secondary p-6 rounded-2xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-md border-0">
                   <div className="space-y-1">
                     <h2 className="text-lg font-bold">Expecting a remittance?</h2>
-                    <p className="text-xs text-on-secondary-container/85">Refresh your wallet balance to query the smart contract for new incoming split remittances.</p>
+                    <p className="text-xs text-on-primary">Refresh your wallet balance to query the smart contract for new incoming split remittances.</p>
                   </div>
                   <button
                     onClick={() => refreshBalances(false)}

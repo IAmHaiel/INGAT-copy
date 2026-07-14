@@ -129,7 +129,7 @@ export default function BucketHistoryPageContainer() {
         onConnect={connect}
         onDisconnect={disconnect}
       />
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full">
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full animate-fade-in">
 
         {/* Tab Navigation */}
         <div className="border-b border-outline-variant flex gap-4">

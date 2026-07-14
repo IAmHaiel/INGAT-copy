@@ -11,6 +11,7 @@ interface DashboardHistoryListProps {
   currentUserAddress: string | null;
   variant?: 'default' | 'plain';
   title?: string;
+  itemsPerPage?: number;
 }
 
 const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({ 
@@ -18,11 +19,11 @@ const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({
   isLoading, 
   currentUserAddress,
   variant = 'default',
-  title
+  title,
+  itemsPerPage = 10
 }) => {
   const { priceUsd } = useXlmPrice();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -55,9 +56,10 @@ const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({
     );
   }
 
-  const totalPages = Math.ceil(allocations.length / itemsPerPage);
+  const sortedAllocations = [...allocations].sort((a, b) => b.timestamp - a.timestamp);
+  const totalPages = Math.ceil(sortedAllocations.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedAllocations = allocations.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedAllocations = sortedAllocations.slice(startIndex, startIndex + itemsPerPage);
 
   const renderPaginationControls = (isMobile: boolean) => {
     return (
@@ -122,7 +124,7 @@ const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({
             const isSent = alloc.sender === currentUserAddress;
             
             return (
-              <div key={alloc.id} className="py-4 flex justify-between items-center hover:bg-surface/50 transition-colors">
+              <div key={alloc.id} className="py-2 px-1 flex justify-between items-center hover:bg-surface/50 transition-colors">
                 <div className="flex items-center gap-3">
                   {/* Arrow Indicator */}
                   <div className={`p-2 rounded-xl flex items-center justify-center ${
@@ -196,7 +198,7 @@ const DashboardHistoryList: React.FC<DashboardHistoryListProps> = ({
             const isSent = alloc.sender === currentUserAddress;
             
             return (
-              <div key={alloc.id} className="p-4 flex justify-between items-center hover:bg-surface/50 transition-colors">
+              <div key={alloc.id} className="py-2.5 px-4 flex justify-between items-center hover:bg-surface/50 transition-colors">
                 <div className="flex items-center gap-3">
                   {/* Arrow Indicator */}
                   <div className={`p-2 rounded-xl flex items-center justify-center ${

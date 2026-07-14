@@ -24,7 +24,6 @@ export default function DepositFormContainer() {
       },
       duration: 10000
     });
-    router.push('/dashboard');
   });
 
   useEffect(() => {
@@ -56,9 +55,9 @@ export default function DepositFormContainer() {
   };
 
   return (
-    <div className="space-y-4 flex-grow w-full">
+    <div className="space-y-4 flex flex-col h-full w-full">
       {/* Header */}
-      <header className="h-16 flex justify-between items-center bg-white px-4 rounded-2xl border border-outline-variant shadow-sm">
+      <header className="h-16 flex justify-between items-center bg-white px-4 rounded-2xl border border-outline-variant shadow-sm flex-shrink-0">
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.push('/dashboard')}
