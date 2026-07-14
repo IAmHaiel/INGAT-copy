@@ -10,11 +10,10 @@ import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 import { useWalletContext } from '@/context/WalletContext';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
-import { useToast } from '@/context/ToastContext';
+import { toast } from 'sonner';
 
 export default function ReceiverDashboardContainer() {
   const router = useRouter();
-  const { showToast } = useToast();
   const { 
     publicKey, 
     isConnected, 
@@ -39,24 +38,25 @@ export default function ReceiverDashboardContainer() {
 
   useEffect(() => {
     if (txHash) {
-      showToast({
-        type: 'success',
-        title: 'Withdrawal Completed',
-        message: 'Successfully withdrew from receiver bucket.',
-        txHash,
+      toast.success('Withdrawal Completed', {
+        description: 'Successfully withdrew from receiver bucket.',
+        action: {
+          label: 'View Tx',
+          onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${txHash}`, '_blank')
+        },
+        duration: 10000
       });
     }
-  }, [txHash, showToast]);
+  }, [txHash]);
 
   useEffect(() => {
     if (withdrawError) {
-      showToast({
-        type: 'error',
-        title: 'Withdrawal Failed',
-        message: withdrawError,
+      toast.error('Withdrawal Failed', {
+        description: withdrawError,
+        duration: 5000
       });
     }
-  }, [withdrawError, showToast]);
+  }, [withdrawError]);
 
   if (!isConnected || (isAuthenticating && !supabaseClient)) {
     return (

@@ -11,7 +11,7 @@ import { useSenderBuckets } from '@/hooks/useSenderBuckets';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
 import { useDashboardTransactions } from '@/hooks/useDashboardTransactions';
-import { useToast } from '@/context/ToastContext';
+import { toast } from 'sonner';
 
 // UI components
 import Header from '../ui/layout/Header';
@@ -25,7 +25,6 @@ import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 
 export default function DashboardContainer() {
   const router = useRouter();
-  const { showToast } = useToast();
   const {
     publicKey,
     isConnected,
@@ -133,45 +132,47 @@ export default function DashboardContainer() {
 
   useEffect(() => {
     if (senderTxHash) {
-      showToast({
-        type: 'success',
-        title: 'Withdrawal Completed',
-        message: 'Successfully withdrew goal amount to wallet.',
-        txHash: senderTxHash,
+      toast.success('Withdrawal Completed', {
+        description: 'Successfully withdrew goal amount to wallet.',
+        action: {
+          label: 'View Tx',
+          onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${senderTxHash}`, '_blank')
+        },
+        duration: 10000
       });
     }
-  }, [senderTxHash, showToast]);
+  }, [senderTxHash]);
 
   useEffect(() => {
     if (senderWithdrawError) {
-      showToast({
-        type: 'error',
-        title: 'Withdrawal Failed',
-        message: senderWithdrawError,
+      toast.error('Withdrawal Failed', {
+        description: senderWithdrawError,
+        duration: 5000
       });
     }
-  }, [senderWithdrawError, showToast]);
+  }, [senderWithdrawError]);
 
   useEffect(() => {
     if (receiverTxHash) {
-      showToast({
-        type: 'success',
-        title: 'Withdrawal Completed',
-        message: 'Successfully withdrew from receiver bucket.',
-        txHash: receiverTxHash,
+      toast.success('Withdrawal Completed', {
+        description: 'Successfully withdrew from receiver bucket.',
+        action: {
+          label: 'View Tx',
+          onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${receiverTxHash}`, '_blank')
+        },
+        duration: 10000
       });
     }
-  }, [receiverTxHash, showToast]);
+  }, [receiverTxHash]);
 
   useEffect(() => {
     if (receiverWithdrawError) {
-      showToast({
-        type: 'error',
-        title: 'Withdrawal Failed',
-        message: receiverWithdrawError,
+      toast.error('Withdrawal Failed', {
+        description: receiverWithdrawError,
+        duration: 5000
       });
     }
-  }, [receiverWithdrawError, showToast]);
+  }, [receiverWithdrawError]);
 
   useEffect(() => {
     if (isInitializing) return;
