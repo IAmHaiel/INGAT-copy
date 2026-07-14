@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Send } from 'lucide-react';
 import AllocationHistoryList from '@/components/ui/history/AllocationHistoryList';
+import HistorySummarizer from '@/components/ui/history/HistorySummarizer';
 import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { SummaryCard } from '@/components/ui/dashboard/SummaryCard';
 import { useWalletContext } from '@/context/WalletContext';
@@ -100,7 +101,8 @@ export default function SenderDashboardContainer() {
       </section>
 
       {/* History */}
-      <section>
+      <section className="space-y-4">
+        <HistorySummarizer allocations={allocations} isLoading={historyLoading} />
         <AllocationHistoryList allocations={allocations} isLoading={historyLoading} />
       </section>
     </div>

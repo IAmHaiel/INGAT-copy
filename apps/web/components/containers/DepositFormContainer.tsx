@@ -2,28 +2,38 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import DepositForm from '@/components/ui/deposit/DepositForm';
 import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { useWalletContext } from '@/context/WalletContext';
 import { useDeposit } from '@/hooks/useDeposit';
+import { useKnownAddresses } from '@/hooks/useKnownAddresses';
 import { DepositFormInputs } from '@/types/transaction';
 import { toast } from 'sonner';
  
 export default function DepositFormContainer() {
   const router = useRouter();
   const { publicKey, isConnected, isInitializing, disconnect } = useWalletContext();
+  const { knownAddresses, isLoading: isAddressesLoading } = useKnownAddresses(publicKey);
  
+  const inputsRef = useRef<DepositFormInputs | null>(null);
+
   const { deposit, isSubmitting, errors, txError } = useDeposit(publicKey, (hash) => {
-    toast.success('Deposit Split Completed!', {
-      description: `Confirmed on testnet: ${hash.slice(0, 8)}...${hash.slice(-8)}`,
-      action: {
-        label: 'View Tx',
-        onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${hash}`, '_blank')
-      },
-      duration: 10000
-    });
-    router.push('/dashboard');
+    const inputs = inputsRef.current;
+    if (inputs) {
+      toast.success('Deposit Split Completed!', {
+        description: `Confirmed on testnet: ${hash.slice(0, 8)}...${hash.slice(-8)}`,
+        action: {
+          label: 'View Tx',
+          onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${hash}`, '_blank')
+        },
+        duration: 5000
+      });
+      router.push(`/sender/confirmation?hash=${hash}&amount=${inputs.amount}&split=${inputs.splitRatio}&date=${inputs.unlockDate}`);
+    } else {
+      router.push('/dashboard');
+    }
   });
 
   useEffect(() => {
@@ -42,6 +52,7 @@ export default function DepositFormContainer() {
   }
 
   const handleDepositSubmit = async (inputs: DepositFormInputs): Promise<boolean> => {
+    inputsRef.current = inputs;
     return await deposit(inputs);
   };
 
@@ -69,6 +80,8 @@ export default function DepositFormContainer() {
         isSubmitting={isSubmitting}
         validationErrors={errors}
         txError={txError}
+        knownAddresses={knownAddresses}
+        isAddressesLoading={isAddressesLoading}
       />
     </div>
   );

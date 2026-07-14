@@ -1,0 +1,11 @@
+{
+  "name": "@ingat/ai",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "@ai-sdk/groq": "^1.0.12",
+    "ai": "^4.0.22",
+    "zod": "^3.23.8"
+  }
+}
