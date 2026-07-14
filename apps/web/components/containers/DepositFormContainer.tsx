@@ -4,7 +4,6 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import DepositForm from '@/components/ui/deposit/DepositForm';
-import WalletAddressBadge from '@/components/ui/wallet/WalletAddressBadge';
 import { useWalletContext } from '@/context/WalletContext';
 import { useDeposit } from '@/hooks/useDeposit';
 import { useKnownAddresses } from '@/hooks/useKnownAddresses';
@@ -13,7 +12,7 @@ import { toast } from 'sonner';
  
 export default function DepositFormContainer() {
   const router = useRouter();
-  const { publicKey, isConnected, isInitializing, disconnect } = useWalletContext();
+  const { publicKey, isConnected, isInitializing } = useWalletContext();
   const { knownAddresses, isLoading: isAddressesLoading } = useKnownAddresses(publicKey);
  
   const { deposit, isSubmitting, errors, txError } = useDeposit(publicKey, (hash) => {
@@ -48,7 +47,7 @@ export default function DepositFormContainer() {
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8 space-y-6 flex-grow w-full">
+    <div className="space-y-4 flex-grow w-full">
       {/* Header */}
       <header className="flex justify-between items-center bg-white p-4 rounded-2xl border border-outline-variant shadow-sm">
         <div className="flex items-center gap-2">
@@ -62,7 +61,6 @@ export default function DepositFormContainer() {
             <h1 className="text-base font-bold text-primary">New Remittance</h1>
           </div>
         </div>
-        <WalletAddressBadge address={publicKey} onDisconnect={disconnect} />
       </header>
 
       {/* Form */}
