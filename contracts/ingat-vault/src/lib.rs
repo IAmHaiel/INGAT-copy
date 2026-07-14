@@ -52,6 +52,16 @@ impl IngatVault {
         withdraw::withdraw_goal(env, receiver, bucket_id, amount)
     }
 
+    pub fn withdraw_goal_sender(
+        env: Env,
+        sender: Address,
+        receiver: Address,
+        bucket_id: u32,
+        amount: i128,
+    ) -> Result<(), Error> {
+        withdraw::withdraw_goal_sender(env, sender, receiver, bucket_id, amount)
+    }
+
     pub fn get_buckets(env: Env, receiver: Address) -> Vec<BucketState> {
         let count = storage::get_bucket_count(&env, &receiver);
         let mut buckets = Vec::new(&env);

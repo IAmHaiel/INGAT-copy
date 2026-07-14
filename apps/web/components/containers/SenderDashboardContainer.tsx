@@ -10,13 +10,32 @@ import { useWalletContext } from '@/context/WalletContext';
 import { useAllocationHistory } from '@/hooks/useAllocationHistory';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
+import { useSenderBuckets } from '@/hooks/useSenderBuckets';
+import SenderBucketCard from '@/components/ui/dashboard/SenderBucketCard';
+import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 
 export default function SenderDashboardContainer() {
   const router = useRouter();
   const { publicKey, isConnected, isInitializing, disconnect } = useWalletContext();
-  const { allocations, isLoading: historyLoading } = useAllocationHistory(publicKey);
+  const { allocations, isLoading: historyLoading, refreshHistory } = useAllocationHistory(publicKey);
+  const {
+    buckets,
+    isLoading: bucketsLoading,
+    error: bucketsError,
+    withdrawSenderGoal,
+    isWithdrawing,
+    withdrawError,
+    txHash,
+  } = useSenderBuckets(publicKey);
   const { priceUsd } = useXlmPrice();
   const [currentTime, setCurrentTime] = useState<number>(0);
+
+  const handleWithdrawSenderGoal = async (receiverAddress: string, bucketId: number, amount: number) => {
+    const success = await withdrawSenderGoal(receiverAddress, bucketId, amount);
+    if (success) {
+      refreshHistory();
+    }
+  };
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -44,7 +63,7 @@ export default function SenderDashboardContainer() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full">
-      {/* Dashboard Header */}
+      {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-outline-variant shadow-sm">
         <div className="flex items-center gap-3">
           <button
@@ -65,6 +84,15 @@ export default function SenderDashboardContainer() {
           <WalletAddressBadge address={publicKey} onDisconnect={disconnect} />
         </div>
       </header>
+
+      {/* Transaction Feedbacks */}
+      {(isWithdrawing !== null || txHash || withdrawError) && (
+        <TransactionStatus
+          status={isWithdrawing !== null ? 'pending' : withdrawError ? 'error' : 'success'}
+          hash={txHash}
+          errorMsg={withdrawError}
+        />
+      )}
 
       {/* Metrics Row */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -97,6 +125,48 @@ export default function SenderDashboardContainer() {
         >
           Create Split Remittance
         </button>
+      </section>
+
+      {/* Active Buckets */}
+      <section className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-sm font-bold text-on-surface">Your Deposited Vault Buckets</h2>
+          {buckets.length > 0 && (
+            <span className="text-[11px] bg-primary/10 text-primary font-semibold px-2 py-0.5 rounded-full">
+              {buckets.length} Active
+            </span>
+          )}
+        </div>
+
+        {bucketsLoading && buckets.length === 0 ? (
+          <div className="flex justify-center items-center py-8">
+            <span className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+          </div>
+        ) : bucketsError ? (
+          <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-xs">
+            Error fetching bucket balances: {bucketsError}
+          </div>
+        ) : buckets.length === 0 ? (
+          <div className="text-center py-10 bg-white rounded-2xl border border-outline-variant shadow-sm p-5">
+            <p className="text-on-surface-variant font-semibold text-sm">No active vault buckets found</p>
+            <p className="text-on-surface-variant text-[11px] mt-0.5">Deposits you send will show live on-chain balances here.</p>
+          </div>
+        ) : (
+          <div className="space-y-4 max-h-[500px] overflow-y-auto p-2 border border-outline-variant rounded-2xl bg-surface-container/20">
+            {buckets.map((bucket) => (
+              <SenderBucketCard
+                key={`${bucket.receiverAddress}-${bucket.id}`}
+                id={bucket.id}
+                receiverAddress={bucket.receiverAddress}
+                spendingBalance={bucket.spendingBalance}
+                goalBalance={bucket.goalBalance}
+                unlockDate={bucket.unlockDate}
+                onWithdrawGoal={handleWithdrawSenderGoal}
+                isWithdrawing={isWithdrawing === bucket.id}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* History */}

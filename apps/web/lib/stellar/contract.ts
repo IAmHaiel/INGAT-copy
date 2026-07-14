@@ -142,6 +142,37 @@ export const buildWithdrawGoalTx = async (
   }
 };
 
+export const buildWithdrawGoalSenderTx = async (
+  senderAddress: string,
+  receiverAddress: string,
+  bucketId: number,
+  amount: number
+): Promise<string> => {
+  const senderScVal = Address.fromString(senderAddress).toScVal();
+  const receiverScVal = Address.fromString(receiverAddress).toScVal();
+  const bucketIdScVal = nativeToScVal(bucketId, { type: 'u32' });
+  
+  const scaledAmount = BigInt(Math.round(amount * DECIMALS));
+  const amountScVal = nativeToScVal(scaledAmount, { type: 'i128' });
+
+  const accountResponse = await server.getAccount(senderAddress);
+  const tx = new TransactionBuilder(accountResponse, {
+    fee: '100',
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(contract.call('withdraw_goal_sender', senderScVal, receiverScVal, bucketIdScVal, amountScVal))
+    .setTimeout(30)
+    .build();
+
+  const sim = await server.simulateTransaction(tx);
+  if (rpc.Api.isSimulationSuccess(sim)) {
+    const assembledTx = rpc.assembleTransaction(tx, sim);
+    return assembledTx.build().toXDR();
+  } else {
+    throw new Error((sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed for sender goal withdrawal');
+  }
+};
+
 export const submitTransaction = async (signedXDR: string): Promise<string> => {
   const tx = TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
   const response = await server.sendTransaction(tx);

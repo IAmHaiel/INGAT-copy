@@ -12,4 +12,5 @@ pub enum Error {
     GoalBucketLocked = 6,
     InvalidAmount = 7,
     InvalidBucket = 8,
+    NotBucketSender = 9,
 }

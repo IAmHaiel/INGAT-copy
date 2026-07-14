@@ -47,3 +47,10 @@ Maintain high test coverage under `tests/vault_test.rs` to verify:
 - Success and failure branches of deposits.
 - Timelock enforcement (adjusting ledger times using `env.ledger().set_timestamp(...)`).
 - Complete flow from initialization to double-withdrawals.
+
+## 5. Contract Semantics and Boundary Behavior
+- **Timelock unlock boundary**: Enforced as `current_time >= unlock_date`. Withdrawal is possible at the exact second the unlock date arrives.
+- **Split Ratio**: Consumed immediately at deposit time to split balances into `spending_balance` and `goal_balance`. Split ratio configuration is not saved on-chain.
+- **Sender Post-Maturity Withdrawal**: Senders can reclaim remaining Goal bucket funds after the unlock date passes using the `withdraw_goal_sender` function. Senders cannot reclaim funds before maturity.
+- **Bucket Identification**: Buckets are identified by `(receiver_address, bucket_id)`. Bucket IDs auto-increment per receiver.
+

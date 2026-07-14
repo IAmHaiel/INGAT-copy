@@ -92,3 +92,287 @@ fn test_vault_deposit_and_withdraw() {
     let bucket = buckets.get(0).unwrap();
     assert_eq!(bucket.goal_balance, 25);
 }
+
+#[test]
+fn test_sender_cannot_withdraw_spending() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    client.deposit(&sender, &receiver, &100, &50, &11000);
+
+    let res = client.try_withdraw_spending(&sender, &0, &10);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_sender_cannot_withdraw_goal_before_unlock() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    client.deposit(&sender, &receiver, &100, &50, &11000);
+
+    let res = client.try_withdraw_goal(&sender, &0, &10);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_sender_cannot_withdraw_goal_after_unlock() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    client.deposit(&sender, &receiver, &100, &50, &11000);
+
+    env.ledger().set_timestamp(11001);
+
+    let res = client.try_withdraw_goal(&sender, &0, &10);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_goal_withdrawal_1s_before_unlock_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &11000);
+
+    env.ledger().set_timestamp(10999);
+    let res = client.try_withdraw_goal(&receiver, &0, &10);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_goal_withdrawal_at_exact_unlock_succeeds() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_client = token::Client::new(&env, &token_address);
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &11000);
+
+    env.ledger().set_timestamp(11000);
+    client.withdraw_goal(&receiver, &0, &10);
+    assert_eq!(token_client.balance(&receiver), 10);
+}
+
+#[test]
+fn test_sender_withdraw_goal_after_unlock() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_client = token::Client::new(&env, &token_address);
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &11000);
+
+    env.ledger().set_timestamp(11000);
+    client.withdraw_goal_sender(&sender, &receiver, &0, &10);
+    assert_eq!(token_client.balance(&sender), 910);
+}
+
+#[test]
+fn test_sender_withdraw_goal_before_unlock_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &11000);
+
+    env.ledger().set_timestamp(10999);
+    let res = client.try_withdraw_goal_sender(&sender, &receiver, &0, &10);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_sender_withdraw_wrong_bucket_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender_a = Address::generate(&env);
+    let sender_b = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender_a, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender_a, &receiver, &100, &50, &11000);
+
+    env.ledger().set_timestamp(11000);
+    let res = client.try_withdraw_goal_sender(&sender_b, &receiver, &0, &10);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_double_initialization_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+
+    client.initialize(&token_address);
+    let res = client.try_initialize(&token_address);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_partial_spending_withdrawal() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_client = token::Client::new(&env, &token_address);
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    client.deposit(&sender, &receiver, &100, &60, &11000);
+
+    client.withdraw_spending(&receiver, &0, &20);
+    assert_eq!(token_client.balance(&receiver), 20);
+
+    let buckets = client.get_buckets(&receiver);
+    let bucket = buckets.get(0).unwrap();
+    assert_eq!(bucket.spending_balance, 40);
+}
+
+#[test]
+fn test_partial_goal_withdrawal() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_client = token::Client::new(&env, &token_address);
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    client.deposit(&sender, &receiver, &100, &60, &11000);
+
+    env.ledger().set_timestamp(11000);
+
+    client.withdraw_goal(&receiver, &0, &15);
+    assert_eq!(token_client.balance(&receiver), 15);
+
+    let buckets = client.get_buckets(&receiver);
+    let bucket = buckets.get(0).unwrap();
+    assert_eq!(bucket.goal_balance, 25);
+}
+
