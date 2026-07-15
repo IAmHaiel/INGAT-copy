@@ -376,3 +376,302 @@ fn test_partial_goal_withdrawal() {
     assert_eq!(bucket.goal_balance, 25);
 }
 
+#[test]
+fn test_emergency_request_happy_path() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_client = token::Client::new(&env, &token_address);
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &20000); // 50 spend, 50 goal
+
+    // Request emergency withdrawal of 30 from goal bucket
+    client.request_emergency_withdrawal(&receiver, &0, &30);
+
+    let req = client.get_emergency_request(&receiver, &0).unwrap();
+    assert_eq!(req.amount, 30);
+    assert_eq!(req.requested_at, 10000);
+    assert_eq!(req.cooldown_ends_at, 10000 + 172800);
+    assert_eq!(req.status, ingat_vault::storage::EmergencyStatus::Pending);
+
+    // Fast-forward to exactly cooldown end time (182800)
+    env.ledger().set_timestamp(10000 + 172800);
+
+    client.execute_emergency_withdrawal(&receiver, &0);
+
+    assert_eq!(token_client.balance(&receiver), 30);
+    
+    let buckets = client.get_buckets(&receiver);
+    let bucket = buckets.get(0).unwrap();
+    assert_eq!(bucket.goal_balance, 20); // 50 - 30 = 20
+
+    let req = client.get_emergency_request(&receiver, &0).unwrap();
+    assert_eq!(req.status, ingat_vault::storage::EmergencyStatus::Executed);
+}
+
+#[test]
+fn test_emergency_execute_before_cooldown_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &20000);
+
+    client.request_emergency_withdrawal(&receiver, &0, &30);
+
+    // Fast-forward 1s short of cooldown ends
+    env.ledger().set_timestamp(10000 + 172800 - 1);
+    let res = client.try_execute_emergency_withdrawal(&receiver, &0);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_emergency_sender_cancel() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &20000);
+
+    client.request_emergency_withdrawal(&receiver, &0, &30);
+
+    // Sender cancels request before cooldown expires
+    client.cancel_emergency_withdrawal(&sender, &receiver, &0);
+
+    let req = client.get_emergency_request(&receiver, &0).unwrap();
+    assert_eq!(req.status, ingat_vault::storage::EmergencyStatus::Cancelled);
+    assert_eq!(req.last_cancel_at, 10000);
+
+    // Execute should now fail
+    env.ledger().set_timestamp(10000 + 172800 + 1);
+    let res = client.try_execute_emergency_withdrawal(&receiver, &0);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_emergency_receiver_cancel() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &20000);
+
+    client.request_emergency_withdrawal(&receiver, &0, &30);
+
+    // Receiver cancels their own request
+    client.cancel_emergency_receiver(&receiver, &0);
+
+    let req = client.get_emergency_request(&receiver, &0).unwrap();
+    assert_eq!(req.status, ingat_vault::storage::EmergencyStatus::Cancelled);
+    assert_eq!(req.last_cancel_at, 0); // resets
+
+    // Execute fails
+    env.ledger().set_timestamp(10000 + 172800 + 1);
+    let res = client.try_execute_emergency_withdrawal(&receiver, &0);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_emergency_re_request_throttle() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &20000);
+
+    client.request_emergency_withdrawal(&receiver, &0, &30);
+    client.cancel_emergency_withdrawal(&sender, &receiver, &0);
+
+    // Immediate re-request should fail
+    let res = client.try_request_emergency_withdrawal(&receiver, &0, &30);
+    assert!(res.is_err());
+
+    // Re-request after 59 mins should fail
+    env.ledger().set_timestamp(10000 + 3599);
+    let res = client.try_request_emergency_withdrawal(&receiver, &0, &30);
+    assert!(res.is_err());
+
+    // Re-request after 60 mins should succeed
+    env.ledger().set_timestamp(10000 + 3600);
+    let res = client.try_request_emergency_withdrawal(&receiver, &0, &30);
+    assert!(res.is_ok());
+}
+
+#[test]
+fn test_emergency_double_request_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &20000);
+
+    client.request_emergency_withdrawal(&receiver, &0, &10);
+    let res = client.try_request_emergency_withdrawal(&receiver, &0, &10);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_emergency_excess_amount_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &20000); // 50 spend, 50 goal
+
+    // Request emergency withdrawal of 51 (exceeds 50 goal balance)
+    let res = client.try_request_emergency_withdrawal(&receiver, &0, &51);
+    assert!(res.is_err());
+}
+
+#[test]
+fn test_natural_unlock_supersedes_pending_request() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_client = token::Client::new(&env, &token_address);
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &15000); // unlock at 15000
+
+    client.request_emergency_withdrawal(&receiver, &0, &30);
+
+    // Fast-forward past unlock date (15000) but before emergency cooldown (10000 + 172800)
+    env.ledger().set_timestamp(15001);
+
+    // Receiver should be able to withdraw normally from goal
+    client.withdraw_goal(&receiver, &0, &40);
+    assert_eq!(token_client.balance(&receiver), 40);
+}
+
+#[test]
+fn test_third_party_cannot_cancel() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(IngatVault, ());
+    let client = IngatVaultClient::new(&env, &contract_id);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    client.initialize(&token_address);
+
+    let sender = Address::generate(&env);
+    let receiver = Address::generate(&env);
+    let third_party = Address::generate(&env);
+
+    token_admin_client.mint(&sender, &1000);
+    env.ledger().set_timestamp(10000);
+    client.deposit(&sender, &receiver, &100, &50, &20000);
+
+    client.request_emergency_withdrawal(&receiver, &0, &30);
+
+    // Third party tries to cancel
+    let res = client.try_cancel_emergency_withdrawal(&third_party, &receiver, &0);
+    assert!(res.is_err());
+}
+

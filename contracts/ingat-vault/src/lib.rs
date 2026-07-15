@@ -5,6 +5,7 @@ pub mod errors;
 pub mod storage;
 pub mod deposit;
 pub mod withdraw;
+pub mod emergency;
 
 use errors::Error;
 use storage::BucketState;
@@ -60,6 +61,48 @@ impl IngatVault {
         amount: i128,
     ) -> Result<(), Error> {
         withdraw::withdraw_goal_sender(env, sender, receiver, bucket_id, amount)
+    }
+
+    pub fn request_emergency_withdrawal(
+        env: Env,
+        receiver: Address,
+        bucket_id: u32,
+        amount: i128,
+    ) -> Result<(), Error> {
+        emergency::request_emergency_withdrawal(env, receiver, bucket_id, amount)
+    }
+
+    pub fn cancel_emergency_withdrawal(
+        env: Env,
+        sender: Address,
+        receiver: Address,
+        bucket_id: u32,
+    ) -> Result<(), Error> {
+        emergency::cancel_emergency_withdrawal(env, sender, receiver, bucket_id)
+    }
+
+    pub fn cancel_emergency_receiver(
+        env: Env,
+        receiver: Address,
+        bucket_id: u32,
+    ) -> Result<(), Error> {
+        emergency::cancel_emergency_receiver(env, receiver, bucket_id)
+    }
+
+    pub fn execute_emergency_withdrawal(
+        env: Env,
+        receiver: Address,
+        bucket_id: u32,
+    ) -> Result<(), Error> {
+        emergency::execute_emergency_withdrawal(env, receiver, bucket_id)
+    }
+
+    pub fn get_emergency_request(
+        env: Env,
+        receiver: Address,
+        bucket_id: u32,
+    ) -> Option<storage::EmergencyRequest> {
+        storage::get_emergency_request(&env, &receiver, bucket_id)
     }
 
     pub fn get_buckets(env: Env, receiver: Address) -> Vec<BucketState> {

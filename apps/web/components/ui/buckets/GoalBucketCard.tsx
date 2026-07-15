@@ -1,29 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { formatAmount, formatDate, formatDistanceToNow } from '@/lib/utils/format';
-import { Lock, Unlock, Calendar } from 'lucide-react';
+import { Lock, Unlock, Calendar, ShieldAlert } from 'lucide-react';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
+import { EmergencyRequest } from '@/types/emergency';
+import { CooldownBanner } from '../emergency/CooldownBanner';
+import { RequestEarlyAccessModal } from '../emergency/RequestEarlyAccessModal';
 
 interface GoalBucketCardProps {
+  bucketId: number;
   balance: number;
   unlockDate: number; // unix timestamp in seconds
   goalLabel?: string | null;
+  senderAddress: string;
   onWithdraw: (amount: number) => void;
   isWithdrawing: boolean;
+  emergencyRequest?: EmergencyRequest | null;
+  onRequestEmergency?: (amount: number) => void;
+  onCancelEmergency?: () => void;
+  onExecuteEmergency?: () => void;
+  isEmergencyLoading?: boolean;
 }
 
 const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
+  bucketId,
   balance,
   unlockDate,
   goalLabel,
+  senderAddress,
   onWithdraw,
   isWithdrawing,
+  emergencyRequest = null,
+  onRequestEmergency,
+  onCancelEmergency,
+  onExecuteEmergency,
+  isEmergencyLoading = false,
 }) => {
   const [amount, setAmount] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(true);
   const [timeLeftStr, setTimeLeftStr] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { priceUsd } = useXlmPrice();
+
   useEffect(() => {
     const checkLock = () => {
       const now = Math.floor(Date.now() / 1000);
@@ -46,7 +65,15 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
     }
   };
 
+  const handleRequestConfirm = (reqAmount: number) => {
+    if (onRequestEmergency) {
+      onRequestEmergency(reqAmount);
+    }
+    setIsModalOpen(false);
+  };
+
   const hasBalance = balance > 0;
+  const isEmergencyPending = emergencyRequest && emergencyRequest.status === 'Pending';
 
   return (
     <div className={`p-5 rounded-xl border shadow-md space-y-4 transition-all ${isLocked ? 'bg-amber-50/40 border-amber-200/50' : 'bg-white border-outline-variant'}`}>
@@ -66,7 +93,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
           </div>
         </div>
 
-        {hasBalance && (
+        {hasBalance && !isEmergencyPending && (
           <div className={`text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${isLocked ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-green-50 text-green-700 border border-green-200'}`}>
             <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
             <span>{isLocked ? timeLeftStr : 'Unlocked'}</span>
@@ -91,7 +118,18 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
         )}
       </div>
 
-      {isOpen ? (
+      {isEmergencyPending ? (
+        <div className="pt-2">
+          <CooldownBanner
+            cooldownEndsAt={emergencyRequest.cooldownEndsAt}
+            amount={emergencyRequest.amount}
+            onCancel={onCancelEmergency}
+            onExecute={onExecuteEmergency}
+            role="receiver"
+            isLoading={isEmergencyLoading}
+          />
+        </div>
+      ) : isOpen ? (
         <form onSubmit={handleSubmit} className="space-y-3 pt-3 border-t border-outline-variant animate-[fadeIn_150ms_ease-out]">
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-grow">
@@ -121,7 +159,6 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             </button>
           </div>
 
-          {/* Interactive Hints */}
           <div className="space-y-1 min-h-[16px]">
             {amount && parseFloat(amount) > 0 && priceUsd > 0 && (
               <p className="text-[11px] text-on-surface-variant">
@@ -154,13 +191,35 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
           </div>
         </form>
       ) : (
-        <button
-          onClick={() => setIsOpen(true)}
-          disabled={!hasBalance || isLocked || isWithdrawing}
-          className={`w-full py-2.5 rounded-lg font-bold text-sm transition-all cursor-pointer disabled:opacity-50 border-0 ${isLocked ? 'bg-secondary-container/10 text-secondary border border-secondary-container/20 hover:bg-secondary-container/20' : 'bg-green-50 hover:bg-green-100 text-green-700'}`}
-        >
-          {isWithdrawing ? 'Processing...' : isLocked ? 'Locked (Cannot Withdraw)' : 'Withdraw Unlocked Savings'}
-        </button>
+        <div className="space-y-2">
+          {!isLocked ? (
+            <button
+              onClick={() => setIsOpen(true)}
+              disabled={!hasBalance || isWithdrawing}
+              className="w-full py-2.5 rounded-lg font-bold text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-all cursor-pointer border-0"
+            >
+              {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              disabled={!hasBalance || isEmergencyLoading}
+              className="w-full py-2.5 rounded-lg font-bold text-sm bg-secondary-container/10 text-secondary border border-secondary-container/20 hover:bg-secondary-container/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+            >
+              <ShieldAlert size={16} />
+              Request Early Access
+            </button>
+          )}
+        </div>
+      )}
+
+      {isModalOpen && (
+        <RequestEarlyAccessModal
+          bucket={{ id: bucketId, goalBalance: balance }}
+          onConfirm={handleRequestConfirm}
+          onClose={() => setIsModalOpen(false)}
+          isLoading={isEmergencyLoading}
+        />
       )}
     </div>
   );

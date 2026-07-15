@@ -28,6 +28,7 @@ function validInputs(overrides?: Partial<DepositFormInputs>): DepositFormInputs 
     amount: '100',
     splitRatio: 50,
     unlockDate: futureDate(),
+    goalLabel: 'Test Goal',
     ...overrides,
   };
 }
@@ -203,6 +204,7 @@ describe('validateDeposit', () => {
       amount: '',
       splitRatio: -1,
       unlockDate: '',
+      goalLabel: '',
     });
     expect(errors.length).toBeGreaterThanOrEqual(4);
     expect(errors.map((e) => e.field)).toContain('receiver');

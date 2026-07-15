@@ -10,6 +10,7 @@ import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 import { useWalletContext } from '@/context/WalletContext';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
+import { useEmergencyWithdrawal } from '@/hooks/useEmergencyWithdrawal';
 import { fetchReceivedTransactions } from '@/lib/supabase';
 import { TransactionRow } from '@/lib/supabase/types';
 import { toast } from 'sonner';
@@ -30,6 +31,32 @@ export default function ReceiverDashboardContainer() {
   const { withdraw, isWithdrawing, error: withdrawError, txHash } = useWithdraw(publicKey, () => {
     refreshBalances();
   });
+  const {
+    requestEmergency,
+    cancelEmergencyReceiver,
+    executeEmergency,
+    isLoading: isEmergencyLoading,
+    error: emergencyError,
+  } = useEmergencyWithdrawal(publicKey, (action) => {
+    refreshBalances();
+    if (action === 'requested') {
+      toast.success('Early Access Requested', {
+        description: 'Emergency cooldown of 48 hours is now active.',
+        duration: 5000
+      });
+    } else if (action === 'cancelled') {
+      toast.success('Request Cancelled', {
+        description: 'Emergency request has been successfully cancelled.',
+        duration: 5000
+      });
+    } else if (action === 'executed') {
+      toast.success('Early Access Withdrawal Executed', {
+        description: 'Funds successfully withdrawn from Goal bucket.',
+        duration: 5000
+      });
+    }
+  });
+
   const [depositRecords, setDepositRecords] = useState<TransactionRow[]>([]);
 
   const fetchDeposits = useCallback(async () => {
@@ -87,6 +114,15 @@ export default function ReceiverDashboardContainer() {
       });
     }
   }, [withdrawError]);
+
+  useEffect(() => {
+    if (emergencyError) {
+      toast.error('Emergency Action Failed', {
+        description: emergencyError,
+        duration: 5000
+      });
+    }
+  }, [emergencyError]);
 
   if (!isConnected || (isAuthenticating && !supabaseClient)) {
     return (
@@ -217,11 +253,22 @@ export default function ReceiverDashboardContainer() {
                   isWithdrawing={isWithdrawing === bucket.id}
                 />
                 <GoalBucketCard
+                  bucketId={bucket.id}
                   balance={bucket.goalBalance}
                   unlockDate={bucket.unlockDate}
                   goalLabel={getGoalLabel(bucket.sender, bucket.unlockDate)}
+                  senderAddress={bucket.sender}
                   onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
                   isWithdrawing={isWithdrawing === bucket.id}
+                  emergencyRequest={bucket.emergencyRequest}
+                  onRequestEmergency={(amount) => requestEmergency(bucket.id, amount, bucket.sender)}
+                  onCancelEmergency={() => cancelEmergencyReceiver(bucket.id)}
+                  onExecuteEmergency={() => {
+                    if (bucket.emergencyRequest) {
+                      executeEmergency(bucket.id, bucket.emergencyRequest.amount);
+                    }
+                  }}
+                  isEmergencyLoading={isEmergencyLoading}
                 />
               </div>
             </div>

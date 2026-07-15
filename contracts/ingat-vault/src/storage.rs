@@ -11,11 +11,30 @@ pub struct BucketState {
 }
 
 #[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum EmergencyStatus {
+    Pending = 0,
+    Executed = 1,
+    Cancelled = 2,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EmergencyRequest {
+    pub amount: i128,
+    pub requested_at: u64,
+    pub cooldown_ends_at: u64,
+    pub status: EmergencyStatus,
+    pub last_cancel_at: u64,
+}
+
+#[contracttype]
 pub enum DataKey {
     Initialized,
     Token,
     BucketCount(Address),
     Bucket(Address, u32),
+    EmergencyReq(Address, u32),
 }
 
 pub fn is_initialized(env: &Env) -> bool {
@@ -57,5 +76,20 @@ pub fn get_bucket(env: &Env, receiver: &Address, bucket_id: u32) -> Option<Bucke
 pub fn set_bucket(env: &Env, receiver: &Address, bucket_id: u32, state: &BucketState) {
     let key = DataKey::Bucket(receiver.clone(), bucket_id);
     env.storage().persistent().set(&key, state);
+    env.storage().persistent().extend_ttl(&key, 10000, 10000);
+}
+
+pub fn get_emergency_request(env: &Env, receiver: &Address, bucket_id: u32) -> Option<EmergencyRequest> {
+    let key = DataKey::EmergencyReq(receiver.clone(), bucket_id);
+    let req: Option<EmergencyRequest> = env.storage().persistent().get(&key);
+    if req.is_some() {
+        env.storage().persistent().extend_ttl(&key, 10000, 10000);
+    }
+    req
+}
+
+pub fn set_emergency_request(env: &Env, receiver: &Address, bucket_id: u32, req: &EmergencyRequest) {
+    let key = DataKey::EmergencyReq(receiver.clone(), bucket_id);
+    env.storage().persistent().set(&key, req);
     env.storage().persistent().extend_ttl(&key, 10000, 10000);
 }

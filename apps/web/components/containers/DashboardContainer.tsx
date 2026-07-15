@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Coins, Send, RefreshCw, ArrowRight } from 'lucide-react';
+import { Coins, Send, RefreshCw, ArrowRight, ShieldAlert } from 'lucide-react';
 import { useWalletContext } from '@/context/WalletContext';
 import { useAllocationHistory } from '@/hooks/useAllocationHistory';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
@@ -11,6 +11,10 @@ import { useSenderBuckets } from '@/hooks/useSenderBuckets';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
 import { useDashboardTransactions } from '@/hooks/useDashboardTransactions';
+import { useSenderCancelEmergency } from '@/hooks/useSenderCancelEmergency';
+import { useEmergencyWithdrawal } from '@/hooks/useEmergencyWithdrawal';
+import { getActiveEmergencyRequest, getSenderPendingRequests, EmergencyRequestRow } from '@/lib/supabase';
+import { formatAmount } from '@/lib/utils/format';
 import { toast } from 'sonner';
 
 // UI components
@@ -40,6 +44,7 @@ export default function DashboardContainer() {
 
   const [tab, setTab] = useState<'sent' | 'received'>('sent');
   const [currentTime, setCurrentTime] = useState<number>(0);
+  const [senderPendingRequests, setSenderPendingRequests] = useState<EmergencyRequestRow[]>([]);
 
   // Pagination states for buckets
   const [sentBucketsPage, setSentBucketsPage] = useState(1);
@@ -56,7 +61,38 @@ export default function DashboardContainer() {
     isWithdrawing: isSenderWithdrawing,
     withdrawError: senderWithdrawError,
     txHash: senderTxHash,
+    refreshBuckets,
   } = useSenderBuckets(publicKey);
+
+  const {
+    cancelEmergency: senderCancelEmergency,
+    isLoading: isSenderEmergencyLoading,
+    error: senderEmergencyError,
+  } = useSenderCancelEmergency(publicKey, () => {
+    refreshSentHistory();
+    refreshBuckets(true);
+    fetchSenderPendingRequests();
+    toast.success('Early Access Request Cancelled', {
+      description: 'The emergency withdrawal request has been successfully cancelled.',
+      duration: 5000
+    });
+  });
+
+  const fetchSenderPendingRequests = React.useCallback(async () => {
+    if (!supabaseClient || !publicKey) return;
+    try {
+      const reqs = await getSenderPendingRequests(publicKey, supabaseClient);
+      setSenderPendingRequests(reqs);
+    } catch (err) {
+      console.error('Failed to fetch sender pending requests:', err);
+    }
+  }, [publicKey, supabaseClient]);
+
+  useEffect(() => {
+    fetchSenderPendingRequests();
+    const interval = setInterval(fetchSenderPendingRequests, 5000);
+    return () => clearInterval(interval);
+  }, [fetchSenderPendingRequests]);
 
   // Receiver data hooks
   const { balances: receivedBalances, isLoading: receivedBalancesLoading, error: receivedBalancesError, refreshBalances } = useBucketBalances(publicKey);
@@ -64,6 +100,33 @@ export default function DashboardContainer() {
   const { withdraw: withdrawReceived, isWithdrawing: isReceiverWithdrawing, error: receiverWithdrawError, txHash: receiverTxHash } = useWithdraw(publicKey, () => {
     refreshBalances();
     refreshTransactions(true);
+  });
+
+  const {
+    requestEmergency,
+    cancelEmergencyReceiver,
+    executeEmergency,
+    isLoading: isReceiverEmergencyLoading,
+    error: receiverEmergencyError,
+  } = useEmergencyWithdrawal(publicKey, (action) => {
+    refreshBalances();
+    refreshTransactions(true);
+    if (action === 'requested') {
+      toast.success('Early Access Requested', {
+        description: 'Emergency cooldown of 48 hours is now active.',
+        duration: 5000
+      });
+    } else if (action === 'cancelled') {
+      toast.success('Request Cancelled', {
+        description: 'Emergency request has been successfully cancelled.',
+        duration: 5000
+      });
+    } else if (action === 'executed') {
+      toast.success('Early Access Withdrawal Executed', {
+        description: 'Funds successfully withdrawn from Goal bucket.',
+        duration: 5000
+      });
+    }
   });
 
   const { priceUsd } = useXlmPrice();
@@ -186,6 +249,24 @@ export default function DashboardContainer() {
   }, [receiverWithdrawError]);
 
   useEffect(() => {
+    if (senderEmergencyError) {
+      toast.error('Sender Emergency Action Failed', {
+        description: senderEmergencyError,
+        duration: 5000
+      });
+    }
+  }, [senderEmergencyError]);
+
+  useEffect(() => {
+    if (receiverEmergencyError) {
+      toast.error('Receiver Emergency Action Failed', {
+        description: receiverEmergencyError,
+        duration: 5000
+      });
+    }
+  }, [receiverEmergencyError]);
+
+  useEffect(() => {
     if (isInitializing) return;
     if (!isConnected) {
       router.push('/');
@@ -221,6 +302,34 @@ export default function DashboardContainer() {
         onDisconnect={disconnect}
       />
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full animate-fade-in">
+        {senderPendingRequests.map((req) => (
+          <div
+            key={req.tx_hash}
+            className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-[slideIn_200ms_ease-out]"
+          >
+            <div className="flex gap-3">
+              <div className="p-2 bg-amber-100 text-amber-700 rounded-lg shrink-0 flex items-center justify-center">
+                <ShieldAlert size={20} className="animate-bounce" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-900">
+                  Receiver Requested Early Access (Bucket #{req.bucket_id + 1})
+                </p>
+                <p className="text-xs text-amber-800/80 mt-0.5">
+                  Receiver has requested early withdrawal of <strong className="text-amber-950 font-extrabold">{formatAmount(req.amount)} XLM</strong> from Bucket #{req.bucket_id + 1}. A 48-hour cooldown is active.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => senderCancelEmergency(req.receiver_address, req.bucket_id, req.tx_hash)}
+              disabled={isSenderEmergencyLoading}
+              className="bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs py-2 px-4 rounded-lg transition-colors cursor-pointer border-0 shadow-sm shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSenderEmergencyLoading ? 'Cancelling...' : 'Cancel Request'}
+            </button>
+          </div>
+        ))}
+
         {/* Tab Toggle Navigation */}
         <div className="border-b border-outline-variant flex gap-4">
           <button
@@ -359,6 +468,21 @@ export default function DashboardContainer() {
                         goalLabel={bucket.goalLabel}
                         onWithdrawGoal={handleWithdrawSenderGoal}
                         isWithdrawing={isSenderWithdrawing === bucket.id}
+                        emergencyRequest={bucket.emergencyRequest}
+                        onCancelEmergency={async (receiverAddr, bId) => {
+                          try {
+                            const req = await getActiveEmergencyRequest(receiverAddr, bId, supabaseClient);
+                            if (req) {
+                              await senderCancelEmergency(receiverAddr, bId, req.tx_hash);
+                            } else {
+                              toast.error('No active emergency request found in database.');
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            toast.error('Failed to cancel emergency request.');
+                          }
+                        }}
+                        isEmergencyLoading={isSenderEmergencyLoading}
                       />
                     ))}
                   </div>
@@ -552,11 +676,22 @@ export default function DashboardContainer() {
                                 isWithdrawing={isReceiverWithdrawing === bucket.id}
                               />
                               <GoalBucketCard
+                                bucketId={bucket.id}
                                 balance={bucket.goalBalance}
                                 unlockDate={bucket.unlockDate}
                                 goalLabel={getGoalLabel(bucket.sender, bucket.unlockDate)}
+                                senderAddress={bucket.sender}
                                 onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
                                 isWithdrawing={isReceiverWithdrawing === bucket.id}
+                                emergencyRequest={bucket.emergencyRequest}
+                                onRequestEmergency={(amount) => requestEmergency(bucket.id, amount, bucket.sender)}
+                                onCancelEmergency={() => cancelEmergencyReceiver(bucket.id)}
+                                onExecuteEmergency={() => {
+                                  if (bucket.emergencyRequest) {
+                                    executeEmergency(bucket.id, bucket.emergencyRequest.amount);
+                                  }
+                                }}
+                                isEmergencyLoading={isReceiverEmergencyLoading}
                               />
                             </div>
                           </div>

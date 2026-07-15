@@ -105,7 +105,7 @@ graph TB
 
 INGAT is engineered to run entirely on the **Stellar Testnet** using modern Soroban smart contract patterns and frontend SDKs.
 
-- **Deployed Contract ID**: `CDHP4KWHKFOODLUSR4B4KWFIPXCI3NAUGIBENSISTWZS4TU7O3NGHBKL` — [View on Stellar Lab](https://lab.stellar.org/r/testnet/contract/CDHP4KWHKFOODLUSR4B4KWFIPXCI3NAUGIBENSISTWZS4TU7O3NGHBKL)
+- **Deployed Contract ID**: `CBI7CWIQOV2T63LB3XMWQJL52IMJGPO6LMSU2XMZHG2SD3JKH47VD42Z` — [View on Stellar Lab](https://lab.stellar.org/r/testnet/contract/CBI7CWIQOV2T63LB3XMWQJL52IMJGPO6LMSU2XMZHG2SD3JKH47VD42Z)
 - **Native XLM Token (SAC)**: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
 
 ```mermaid

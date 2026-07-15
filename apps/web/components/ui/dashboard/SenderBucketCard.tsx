@@ -3,6 +3,8 @@ import { formatAmount, formatDate, formatDistanceToNow } from '@/lib/utils/forma
 import { Lock, Unlock, Calendar, ArrowUpRight, Coins } from 'lucide-react';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
+import { EmergencyRequest } from '@/types/emergency';
+import { CooldownBanner } from '../emergency/CooldownBanner';
 
 interface SenderBucketCardProps {
   id: number;
@@ -13,6 +15,9 @@ interface SenderBucketCardProps {
   goalLabel?: string | null;
   onWithdrawGoal: (receiverAddress: string, bucketId: number, amount: number) => void;
   isWithdrawing: boolean;
+  emergencyRequest?: EmergencyRequest | null;
+  onCancelEmergency?: (receiverAddress: string, bucketId: number) => void;
+  isEmergencyLoading?: boolean;
 }
 
 const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
@@ -24,6 +29,9 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
   goalLabel,
   onWithdrawGoal,
   isWithdrawing,
+  emergencyRequest = null,
+  onCancelEmergency,
+  isEmergencyLoading = false,
 }) => {
   const [amount, setAmount] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -82,6 +90,18 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/60 border border-amber-200/40 rounded-lg">
           <span className="text-xs text-secondary font-semibold">Goal:</span>
           <span className="text-xs text-on-surface italic">&ldquo;{goalLabel}&rdquo;</span>
+        </div>
+      )}
+
+      {emergencyRequest && emergencyRequest.status === 'Pending' && (
+        <div className="mt-2">
+          <CooldownBanner
+            cooldownEndsAt={emergencyRequest.cooldownEndsAt}
+            amount={emergencyRequest.amount}
+            onCancel={onCancelEmergency ? () => onCancelEmergency(receiverAddress, id) : undefined}
+            role="sender"
+            isLoading={isEmergencyLoading}
+          />
         </div>
       )}
 

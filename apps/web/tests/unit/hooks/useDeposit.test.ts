@@ -37,6 +37,7 @@ function validInputs(): DepositFormInputs {
     amount: '100',
     splitRatio: 60,
     unlockDate: futureDate(),
+    goalLabel: 'Test Goal',
   };
 }
 
@@ -64,6 +65,7 @@ describe('useDeposit', () => {
         amount: '',
         splitRatio: -1,
         unlockDate: '',
+        goalLabel: '',
       });
     });
 

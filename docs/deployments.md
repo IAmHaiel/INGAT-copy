@@ -1,9 +1,9 @@
 # INGAT — Testnet Deployment Record
 
 **Network:** Stellar Testnet  
-**Date:** 2026-07-13  
+**Date:** 2026-07-15  
 **Stellar CLI:** v27.0.0  
-**WASM Hash:** `6f70c02fd3f7bb1700b58e31fc27f8c4a7b948136d16a0812ef764e1b90d7e3b`
+**WASM Hash:** `f46510a8217d213f8e241b51c71c3fccdc93e9e7a75c5b94dd3a381a59e60da5`
 
 ---
 
@@ -11,10 +11,11 @@
 
 | Contract | ID | Explorer |
 |----------|----|---------| 
-| INGAT Vault (XLM) | `CDHP4KWHKFOODLUSR4B4KWFIPXCI3NAUGIBENSISTWZS4TU7O3NGHBKL` | [View](https://lab.stellar.org/r/testnet/contract/CDHP4KWHKFOODLUSR4B4KWFIPXCI3NAUGIBENSISTWZS4TU7O3NGHBKL) |
+| INGAT Vault (XLM) | `CBI7CWIQOV2T63LB3XMWQJL52IMJGPO6LMSU2XMZHG2SD3JKH47VD42Z` | [View](https://lab.stellar.org/r/testnet/contract/CBI7CWIQOV2T63LB3XMWQJL52IMJGPO6LMSU2XMZHG2SD3JKH47VD42Z) |
 | Native XLM SAC | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | [View](https://lab.stellar.org/r/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC) |
 
 > **Previous deployments:** 
+> - Vault `CDHP4KWHKFOODLUSR4B4KWFIPXCI3NAUGIBENSISTWZS4TU7O3NGHBKL` (XLM-based, multi-bucket but missing emergency withdrawal + sender goal reclaim)
 > - Vault `CCQGNVUCCAO6WNBXEHT3ZMPB5L57HZJLBIGPY27VSLJMTLVTZJUUINEQ` (XLM-based, lacking sender post-maturity goal withdrawal)
 > - Vault `CALZQBX7GJIQ6MZC6MIIDEJPDBHPHBDHQTGHSUTOW7A7S7OPS4V4346U` (XLM-based, missing contract functions)
 > - Vault `CCIXHEXJULBZSRCB5DOMRFB24F73LVNKEVYNB5SPNFW7HV7EHRGKBHFF` (PHPC-based, deprecated to eliminate trustline requirements)
@@ -59,11 +60,16 @@ In production, INGAT would use a stablecoin (USDC, PHPC) for value stability, bu
 All contract functions tested successfully with native XLM:
 
 1. **deposit** — 20 XLM deposited with 60/40 split ✅
-2. **get_bucket** — Returns correct spending (12 XLM), goal (8 XLM), unlock_date ✅
+2. **get_buckets** — Returns correct spending (12 XLM), goal (8 XLM), unlock_date ✅
 3. **withdraw_spending** — 5 XLM withdrawn from spending bucket ✅
 4. **withdraw_goal (locked)** — Rejected with Error #6 (GoalBucketLocked) before unlock ✅
 5. **withdraw_goal (unlocked)** — Works after unlock time ✅
-6. **No trustline required** — Any funded account can deposit/withdraw immediately ✅
+6. **withdraw_goal_sender** — Sender can reclaim goal funds after unlock ✅
+7. **request_emergency_withdrawal** — Receiver requests early goal access with 48h cooldown ✅
+8. **cancel_emergency_withdrawal** — Sender cancels pending emergency request ✅
+9. **cancel_emergency_receiver** — Receiver self-cancels emergency request ✅
+10. **execute_emergency_withdrawal** — Funds released after cooldown elapses ✅
+11. **No trustline required** — Any funded account can deposit/withdraw immediately ✅
 
 ---
 

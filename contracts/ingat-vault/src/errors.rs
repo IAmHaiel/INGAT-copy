@@ -13,4 +13,9 @@ pub enum Error {
     InvalidAmount = 7,
     InvalidBucket = 8,
     NotBucketSender = 9,
+    CooldownAlreadyActive = 10,
+    NoActiveCooldown = 11,
+    CooldownNotElapsed = 12,
+    ReRequestTooSoon = 13,
+    NotBucketReceiver = 14,
 }

@@ -2,12 +2,70 @@ import { Contract, Address, TransactionBuilder, Account, scValToNative, nativeTo
 import { server, CONTRACT_ID, NETWORK_PASSPHRASE } from './client';
 import { BucketState } from '@/types/bucket';
 import { DepositAllocation } from '@/types/transaction';
+import { EmergencyRequest, EmergencyRequestStatus } from '@/types/emergency';
 
 const contract = new Contract(CONTRACT_ID);
 const DECIMALS = 10_000_000; // 7 decimals for Stellar assets
 
 const getDummyAccount = () => {
   return new Account('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF', '0');
+};
+
+export const fetchEmergencyRequest = async (
+  receiverAddress: string,
+  bucketId: number
+): Promise<EmergencyRequest | null> => {
+  try {
+    const receiverScVal = Address.fromString(receiverAddress).toScVal();
+    const bucketIdScVal = nativeToScVal(bucketId, { type: 'u32' });
+    const dummySource = getDummyAccount();
+
+    const tx = new TransactionBuilder(dummySource, {
+      fee: '100',
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
+      .addOperation(contract.call('get_emergency_request', receiverScVal, bucketIdScVal))
+      .setTimeout(30)
+      .build();
+
+    const sim = await server.simulateTransaction(tx);
+    if (rpc.Api.isSimulationSuccess(sim)) {
+      if (!sim.result?.retval) {
+        return null;
+      }
+      const nativeVal = scValToNative(sim.result.retval);
+      if (!nativeVal) {
+        return null;
+      }
+
+      let statusStr: EmergencyRequestStatus = 'Pending';
+      const rawStatus = nativeVal.status;
+      if (rawStatus === 'Pending' || rawStatus === 0 || (typeof rawStatus === 'object' && rawStatus.tag === 'Pending')) {
+        statusStr = 'Pending';
+      } else if (rawStatus === 'Executed' || rawStatus === 1 || (typeof rawStatus === 'object' && rawStatus.tag === 'Executed')) {
+        statusStr = 'Executed';
+      } else if (rawStatus === 'Cancelled' || rawStatus === 2 || (typeof rawStatus === 'object' && rawStatus.tag === 'Cancelled')) {
+        statusStr = 'Cancelled';
+      } else {
+        const str = String(rawStatus);
+        if (str.includes('Pending') || str.includes('0')) statusStr = 'Pending';
+        else if (str.includes('Executed') || str.includes('1')) statusStr = 'Executed';
+        else if (str.includes('Cancelled') || str.includes('2')) statusStr = 'Cancelled';
+      }
+
+      return {
+        amount: Number(nativeVal.amount) / DECIMALS,
+        requestedAt: Number(nativeVal.requested_at),
+        cooldownEndsAt: Number(nativeVal.cooldown_ends_at),
+        status: statusStr,
+        lastCancelAt: Number(nativeVal.last_cancel_at),
+      };
+    }
+    return null;
+  } catch (err) {
+    console.error('Error fetching emergency request:', err);
+    return null;
+  }
 };
 
 export const fetchBucketBalances = async (receiverAddress: string): Promise<BucketState[]> => {
@@ -33,14 +91,26 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
       if (!nativeVal || !Array.isArray(nativeVal)) {
         return [];
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return nativeVal.map((item: any) => ({
+      
+      const buckets = nativeVal.map((item: any) => ({
         id: Number(item.id),
         sender: String(item.sender),
         spendingBalance: Number(item.spending_balance) / DECIMALS,
         goalBalance: Number(item.goal_balance) / DECIMALS,
         unlockDate: Number(item.unlock_date),
       }));
+
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const bucketsWithEmergency = await Promise.all(
+        buckets.map(async (bucket) => {
+          if (bucket.goalBalance > 0 && bucket.unlockDate > nowSeconds) {
+            const emergencyRequest = await fetchEmergencyRequest(receiverAddress, bucket.id);
+            return { ...bucket, emergencyRequest };
+          }
+          return { ...bucket, emergencyRequest: null };
+        })
+      );
+      return bucketsWithEmergency;
     }
     
     const errorMsg = (sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed';
@@ -170,6 +240,111 @@ export const buildWithdrawGoalSenderTx = async (
     return assembledTx.build().toXDR();
   } else {
     throw new Error((sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed for sender goal withdrawal');
+  }
+};
+
+export const buildRequestEmergencyWithdrawalTx = async (
+  receiverAddress: string,
+  bucketId: number,
+  amount: number
+): Promise<string> => {
+  const receiverScVal = Address.fromString(receiverAddress).toScVal();
+  const bucketIdScVal = nativeToScVal(bucketId, { type: 'u32' });
+  const scaledAmount = BigInt(Math.round(amount * DECIMALS));
+  const amountScVal = nativeToScVal(scaledAmount, { type: 'i128' });
+
+  const accountResponse = await server.getAccount(receiverAddress);
+  const tx = new TransactionBuilder(accountResponse, {
+    fee: '100',
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(contract.call('request_emergency_withdrawal', receiverScVal, bucketIdScVal, amountScVal))
+    .setTimeout(30)
+    .build();
+
+  const sim = await server.simulateTransaction(tx);
+  if (rpc.Api.isSimulationSuccess(sim)) {
+    const assembledTx = rpc.assembleTransaction(tx, sim);
+    return assembledTx.build().toXDR();
+  } else {
+    throw new Error((sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed for request emergency withdrawal');
+  }
+};
+
+export const buildCancelEmergencyWithdrawalTx = async (
+  senderAddress: string,
+  receiverAddress: string,
+  bucketId: number
+): Promise<string> => {
+  const senderScVal = Address.fromString(senderAddress).toScVal();
+  const receiverScVal = Address.fromString(receiverAddress).toScVal();
+  const bucketIdScVal = nativeToScVal(bucketId, { type: 'u32' });
+
+  const accountResponse = await server.getAccount(senderAddress);
+  const tx = new TransactionBuilder(accountResponse, {
+    fee: '100',
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(contract.call('cancel_emergency_withdrawal', senderScVal, receiverScVal, bucketIdScVal))
+    .setTimeout(30)
+    .build();
+
+  const sim = await server.simulateTransaction(tx);
+  if (rpc.Api.isSimulationSuccess(sim)) {
+    const assembledTx = rpc.assembleTransaction(tx, sim);
+    return assembledTx.build().toXDR();
+  } else {
+    throw new Error((sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed for cancel emergency withdrawal');
+  }
+};
+
+export const buildCancelEmergencyWithdrawalReceiverTx = async (
+  receiverAddress: string,
+  bucketId: number
+): Promise<string> => {
+  const receiverScVal = Address.fromString(receiverAddress).toScVal();
+  const bucketIdScVal = nativeToScVal(bucketId, { type: 'u32' });
+
+  const accountResponse = await server.getAccount(receiverAddress);
+  const tx = new TransactionBuilder(accountResponse, {
+    fee: '100',
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(contract.call('cancel_emergency_receiver', receiverScVal, bucketIdScVal))
+    .setTimeout(30)
+    .build();
+
+  const sim = await server.simulateTransaction(tx);
+  if (rpc.Api.isSimulationSuccess(sim)) {
+    const assembledTx = rpc.assembleTransaction(tx, sim);
+    return assembledTx.build().toXDR();
+  } else {
+    throw new Error((sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed for receiver cancel emergency withdrawal');
+  }
+};
+
+export const buildExecuteEmergencyWithdrawalTx = async (
+  receiverAddress: string,
+  bucketId: number
+): Promise<string> => {
+  const receiverScVal = Address.fromString(receiverAddress).toScVal();
+  const bucketIdScVal = nativeToScVal(bucketId, { type: 'u32' });
+
+  const accountResponse = await server.getAccount(receiverAddress);
+  const tx = new TransactionBuilder(accountResponse, {
+    fee: '100',
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(contract.call('execute_emergency_withdrawal', receiverScVal, bucketIdScVal))
+    .setTimeout(30)
+    .build();
+
+  const sim = await server.simulateTransaction(tx);
+  if (rpc.Api.isSimulationSuccess(sim)) {
+    const assembledTx = rpc.assembleTransaction(tx, sim);
+    return assembledTx.build().toXDR();
+  } else {
+    throw new Error((sim as { error?: string }).error || (sim as { result?: { error?: string } }).result?.error || 'Simulation failed for execute emergency withdrawal');
   }
 };
 
