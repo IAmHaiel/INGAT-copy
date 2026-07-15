@@ -9,6 +9,7 @@ import {
   Coins,
 } from "lucide-react";
 import { useWalletContext } from "@/context/WalletContext";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import {
   useBucketHistory,
   EnrichedBucketEntry,
@@ -29,7 +30,7 @@ export default function BucketHistoryPageContainer() {
     disconnect,
   } = useWalletContext();
 
-  const [tab, setTab] = useState<"sent" | "received">("sent");
+  const [tab, setTab] = useUrlTab<'sent' | 'received'>('sent', ['sent', 'received']);
 
   // Sent bucket history data
   const {
@@ -51,21 +52,8 @@ export default function BucketHistoryPageContainer() {
     useState<EnrichedBucketEntry | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Synchronize active tab with URL query parameter on mount
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get("tab");
-    if (t === "received" || t === "sent") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTab(t);
-    }
-  }, []);
-
-  const handleTabChange = (newTab: "sent" | "received") => {
+  const handleTabChange = (newTab: 'sent' | 'received') => {
     setTab(newTab);
-    const url = new URL(window.location.href);
-    url.searchParams.set("tab", newTab);
-    window.history.pushState({}, "", url.pathname + url.search);
     setSelectedEntry(null);
     setIsDrawerOpen(false);
   };

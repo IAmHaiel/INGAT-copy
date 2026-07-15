@@ -13,6 +13,7 @@ import { useWithdraw } from '@/hooks/useWithdraw';
 import { useEmergencyWithdrawal } from '@/hooks/useEmergencyWithdrawal';
 import { fetchReceivedTransactions } from '@/lib/supabase';
 import { TransactionRow } from '@/lib/supabase/types';
+import { useTxSuccessToast, useTxErrorToast } from '@/hooks/useTransactionToast';
 import { toast } from 'sonner';
 
 export default function ReceiverDashboardContainer() {
@@ -93,36 +94,9 @@ export default function ReceiverDashboardContainer() {
     }
   }, [isConnected, isInitializing, router]);
 
-  useEffect(() => {
-    if (txHash) {
-      toast.success('Withdrawal Completed', {
-        description: 'Successfully withdrew from receiver bucket.',
-        action: {
-          label: 'View Tx',
-          onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${txHash}`, '_blank')
-        },
-        duration: 10000
-      });
-    }
-  }, [txHash]);
-
-  useEffect(() => {
-    if (withdrawError) {
-      toast.error('Withdrawal Failed', {
-        description: withdrawError,
-        duration: 5000
-      });
-    }
-  }, [withdrawError]);
-
-  useEffect(() => {
-    if (emergencyError) {
-      toast.error('Emergency Action Failed', {
-        description: emergencyError,
-        duration: 5000
-      });
-    }
-  }, [emergencyError]);
+  useTxSuccessToast(txHash, 'Withdrawal Completed', 'Successfully withdrew from receiver bucket.');
+  useTxErrorToast(withdrawError, 'Withdrawal Failed');
+  useTxErrorToast(emergencyError, 'Emergency Action Failed');
 
   if (!isConnected || (isAuthenticating && !supabaseClient)) {
     return (
