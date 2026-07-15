@@ -58,6 +58,12 @@ jobs:
       - name: Build
         run: vercel build --cwd apps/web --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: Copy Hoisted React Dependencies
+        run: |
+          mkdir -p apps/web/node_modules
+          cp -r node_modules/react apps/web/node_modules/
+          cp -r node_modules/react-dom apps/web/node_modules/
+
       - name: Deploy Preview
         id: deploy
         run: |
@@ -99,6 +105,12 @@ jobs:
 
       - name: Build
         run: vercel build --cwd apps/web --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Copy Hoisted React Dependencies
+        run: |
+          mkdir -p apps/web/node_modules
+          cp -r node_modules/react apps/web/node_modules/
+          cp -r node_modules/react-dom apps/web/node_modules/
 
       - name: Deploy Production
         id: deploy
