@@ -66,35 +66,35 @@ This document tracks feature gaps, acceptance criteria, and build priority for I
 **Priority: P0 — Core differentiator. This is what makes the lock humane instead of rigid. Build immediately after Phase 1.**
 
 **Should be able to:**
-- [ ] Receiver can call `request_emergency_withdrawal(bucket_id, amount)` on a locked Goal bucket at any time before maturity
-- [ ] Receiver sees a live cooldown countdown on their dashboard once a request is active (e.g., "47h 12m remaining")
-- [ ] Sender receives an off-chain notification the moment a request is made (amount + time remaining included)
-- [ ] Sender can call `cancel_emergency_withdrawal(bucket_id)` at any point before cooldown expires
-- [ ] Receiver can call `execute_emergency_withdrawal(bucket_id)` only after cooldown has elapsed and the request wasn't cancelled
-- [ ] Receiver can cancel their own pending request before it executes (optional, but recommended)
+- [x] Receiver can call `request_emergency_withdrawal(bucket_id, amount)` on a locked Goal bucket at any time before maturity
+- [x] Receiver sees a live cooldown countdown on their dashboard once a request is active (e.g., "47h 12m remaining")
+- [x] Sender receives an off-chain notification the moment a request is made (amount + time remaining included)
+- [x] Sender can call `cancel_emergency_withdrawal(bucket_id)` at any point before cooldown expires
+- [x] Receiver can call `execute_emergency_withdrawal(bucket_id)` only after cooldown has elapsed and the request wasn't cancelled
+- [x] Receiver can cancel their own pending request before it executes (optional, but recommended)
 
 **Should NOT be able to:**
-- [ ] Receiver cannot request more than the bucket's current balance
-- [ ] Receiver cannot execute before the cooldown period ends, even on repeated retries
-- [ ] Receiver cannot have two simultaneous emergency requests active on the same bucket
-- [ ] Sender cannot cancel a request after it has already executed (no-op, state-checked)
-- [ ] Neither party can shorten the cooldown window once a request is active
-- [ ] No third party (outside the linked sender/receiver pair) can call any of these functions — enforce `require_auth()` scoping
+- [x] Receiver cannot request more than the bucket's current balance
+- [x] Receiver cannot execute before the cooldown period ends, even on repeated retries
+- [x] Receiver cannot have two simultaneous emergency requests active on the same bucket
+- [x] Sender cannot cancel a request after it has already executed (no-op, state-checked)
+- [x] Neither party can shorten the cooldown window once a request is active
+- [x] No third party (outside the linked sender/receiver pair) can call any of these functions — enforce `require_auth()` scoping
 
 **Edge cases to decide explicitly:**
-- [ ] Sender cancels, receiver immediately re-requests — document whether there's a re-request cooldown (e.g., 1 hour) to prevent spam
-- [ ] `unlock_date` arrives naturally while an emergency request is pending — normal unlock should supersede; receiver can withdraw normally without erroring on the pending request
+- [x] Sender cancels, receiver immediately re-requests — document whether there's a re-request cooldown (e.g., 1 hour) to prevent spam
+- [x] `unlock_date` arrives naturally while an emergency request is pending — normal unlock should supersede; receiver can withdraw normally without erroring on the pending request
 
 ### 2.1 Frontend Surfacing (required — this feature is invisible without UI)
-- [ ] Goal bucket card shows a disabled "Withdraw" button pre-unlock, replaced with a "Request Early Access" button
-- [ ] Active cooldown displays a live countdown on both sender and receiver dashboards
-- [ ] Sender dashboard shows a clear "Cancel Request" action while a cooldown is active
-- [ ] Notification (toast/email/push) fires on: request made, request cancelled, request executed
+- [x] Goal bucket card shows a disabled "Withdraw" button pre-unlock, replaced with a "Request Early Access" button
+- [x] Active cooldown displays a live countdown on both sender and receiver dashboards
+- [x] Sender dashboard shows a clear "Cancel Request" action while a cooldown is active
+- [x] Notification (toast/email/push) fires on: request made, request cancelled, request executed
 
 **Tests to write:**
-- [ ] Request → attempt execute at cooldown−1s → fail
-- [ ] Request → attempt execute at cooldown+1s → success
-- [ ] Request → sender cancels at cooldown−1h → attempt execute → fail (no active request)
+- [x] Request → attempt execute at cooldown−1s → fail
+- [x] Request → attempt execute at cooldown+1s → success
+- [x] Request → sender cancels at cooldown−1h → attempt execute → fail (no active request)
 
 ---
 
