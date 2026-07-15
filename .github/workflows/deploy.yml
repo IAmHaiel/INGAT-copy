@@ -74,34 +74,3 @@ jobs:
               repo: context.repo.repo,
               body: `🚀 **Preview deployed:** ${{ steps.deploy.outputs.url }}`
             })
-
-  deploy-production:
-    name: Deploy Production
-    needs: check-secrets
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check-secrets.outputs.has-secrets == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: ${{ steps.deploy.outputs.url }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Pull Vercel Environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy Production
-        id: deploy
-        run: |
-          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> "$GITHUB_OUTPUT"
