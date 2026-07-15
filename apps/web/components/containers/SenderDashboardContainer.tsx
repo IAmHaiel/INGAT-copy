@@ -9,7 +9,7 @@ import { useAllocationHistory } from '@/hooks/useAllocationHistory';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 import { useSenderBuckets } from '@/hooks/useSenderBuckets';
-import { toast } from 'sonner';
+import { useTxSuccessToast, useTxErrorToast } from '@/hooks/useTransactionToast';
 import SenderBucketCard from '@/components/ui/dashboard/SenderBucketCard';
 import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 import Header from '../ui/layout/Header';
@@ -52,27 +52,8 @@ export default function SenderDashboardContainer() {
     }
   }, [isConnected, isInitializing, router]);
 
-  useEffect(() => {
-    if (txHash) {
-      toast.success('Withdrawal Completed', {
-        description: 'Successfully withdrew goal amount to wallet.',
-        action: {
-          label: 'View Tx',
-          onClick: () => window.open(`https://stellar.expert/explorer/testnet/tx/${txHash}`, '_blank')
-        },
-        duration: 10000
-      });
-    }
-  }, [txHash]);
-
-  useEffect(() => {
-    if (withdrawError) {
-      toast.error('Withdrawal Failed', {
-        description: withdrawError,
-        duration: 5000
-      });
-    }
-  }, [withdrawError]);
+  useTxSuccessToast(txHash, 'Withdrawal Completed', 'Successfully withdrew goal amount to wallet.');
+  useTxErrorToast(withdrawError, 'Withdrawal Failed');
 
   if (!isConnected) {
     return (
