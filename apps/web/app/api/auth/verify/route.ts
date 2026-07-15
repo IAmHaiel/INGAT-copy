@@ -5,11 +5,17 @@ import nacl from 'tweetnacl';
 import jwt from 'jsonwebtoken';
 import { createHash } from 'crypto';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const jwtSecret = process.env.SUPABASE_JWT_SECRET!;
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+let supabaseAdminInstance: ReturnType<typeof createClient> | null = null;
+function getSupabaseAdmin(): ReturnType<typeof createClient> {
+  if (!supabaseAdminInstance) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey);
+  }
+  return supabaseAdminInstance;
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -22,6 +28,8 @@ export async function POST(request: NextRequest) {
   if (!address.startsWith('G') || address.length !== 56) {
     return NextResponse.json({ error: 'Invalid Stellar address' }, { status: 400 });
   }
+
+  const supabaseAdmin = getSupabaseAdmin();
 
   // Look up the nonce
   const { data: nonceRecord, error: fetchError } = await supabaseAdmin
@@ -43,7 +51,7 @@ export async function POST(request: NextRequest) {
   await supabaseAdmin
     .from('auth_nonces')
     .update({ used: true })
-    .eq('id', nonceRecord.id);
+    .eq('id', (nonceRecord as { id: string | number }).id);
 
   // Verify the Ed25519 signature (SEP-53 format)
   // Freighter signs: SHA256("Stellar Signed Message:\n" + message)
