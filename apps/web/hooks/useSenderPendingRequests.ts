@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { getSenderPendingRequests, EmergencyRequestRow } from '@/lib/supabase';
+import { getSenderPendingRequests, EmergencyRequestRow, updateEmergencyRequestStatus } from '@/lib/supabase';
+import { fetchBucketBalances } from '@/lib/stellar/contract';
 
 export const useSenderPendingRequests = (
   senderAddress: string | null,
@@ -13,7 +13,42 @@ export const useSenderPendingRequests = (
     if (!supabaseClient || !senderAddress) return;
     try {
       const reqs = await getSenderPendingRequests(senderAddress, supabaseClient);
-      setSenderPendingRequests(reqs);
+
+      // Validate each pending request against on-chain state.
+      // If the bucket doesn't exist on the current contract, auto-dismiss it.
+      const uniqueReceivers = Array.from(new Set(reqs.map((r) => r.receiver_address)));
+      const receiverBucketsMap = new Map<string, number[]>();
+
+      await Promise.all(
+        uniqueReceivers.map(async (receiver) => {
+          try {
+            const buckets = await fetchBucketBalances(receiver);
+            receiverBucketsMap.set(receiver, buckets.map((b) => b.id));
+          } catch {
+            // If we can't fetch, keep the request visible (don't dismiss on network error)
+            receiverBucketsMap.set(receiver, reqs.filter((r) => r.receiver_address === receiver).map((r) => r.bucket_id));
+          }
+        })
+      );
+
+      const validReqs: EmergencyRequestRow[] = [];
+      const staleReqs: EmergencyRequestRow[] = [];
+
+      for (const req of reqs) {
+        const validBucketIds = receiverBucketsMap.get(req.receiver_address) || [];
+        if (validBucketIds.includes(req.bucket_id)) {
+          validReqs.push(req);
+        } else {
+          staleReqs.push(req);
+        }
+      }
+
+      // Auto-dismiss stale requests in background
+      for (const stale of staleReqs) {
+        await updateEmergencyRequestStatus(stale.tx_hash, 'cancelled', 'stale_dismissed', supabaseClient).catch(() => {});
+      }
+
+      setSenderPendingRequests(validReqs);
     } catch (err) {
       console.error('Failed to fetch sender pending requests:', err);
     }

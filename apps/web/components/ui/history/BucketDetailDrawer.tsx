@@ -281,13 +281,6 @@ export const BucketDetailDrawer: React.FC<BucketDetailDrawerProps> = ({
               </div>
             </div>
           )}
-
-          {/* Reserved slot for Phase 2 Emergency Requests */}
-          <div className="border-t border-outline-variant pt-4 text-center">
-            <span className="text-[10px] text-on-surface-variant italic">
-              Emergency Override Controls (Phase 2) are not active on this bucket.
-            </span>
-          </div>
         </div>
       </div>
     </>

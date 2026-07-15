@@ -1,5 +1,5 @@
 import { Contract, TransactionBuilder, Account, rpc } from '@stellar/stellar-sdk';
-import { server, CONTRACT_ID, NETWORK_PASSPHRASE } from '../client';
+import { getServer, CONTRACT_ID, NETWORK_PASSPHRASE } from '../client';
 
 export const contract = new Contract(CONTRACT_ID);
 export const DECIMALS = 10_000_000; // 7 decimals for Stellar assets
@@ -22,6 +22,7 @@ export const buildContractCallXDR = async (
   args: any[],
   errorContext: string
 ): Promise<string> => {
+  const server = getServer();
   const accountResponse = await server.getAccount(sourceAddress);
   const tx = new TransactionBuilder(accountResponse, {
     fee: '100',

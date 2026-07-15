@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { formatAmount, formatDate, formatDistanceToNow } from '@/lib/utils/format';
+import { formatAmount, formatDate, formatDistanceToNow, truncateAddress } from '@/lib/utils/format';
 import { Lock, Unlock, Calendar, ArrowUpRight, Coins } from 'lucide-react';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 import { EmergencyRequest } from '@/types/emergency';
 import { CooldownBanner } from '../emergency/CooldownBanner';
+import { getContactName } from '@/lib/utils/contacts';
 
 interface SenderBucketCardProps {
   id: number;
@@ -61,6 +62,7 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
     }
   };
 
+  const contactName = getContactName(receiverAddress);
   const hasGoalBalance = goalBalance > 0;
 
   return (
@@ -73,7 +75,7 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
           <span className="text-xs text-on-surface-variant font-medium flex items-center gap-1">
             Receiver: 
             <span className="inline-block max-w-[130px] sm:max-w-none truncate font-mono bg-surface-container px-2 py-0.5 rounded text-[11px] select-all align-middle" title={receiverAddress}>
-              {receiverAddress}
+              {contactName ? `${contactName} (${truncateAddress(receiverAddress)})` : truncateAddress(receiverAddress)}
             </span>
           </span>
         </div>

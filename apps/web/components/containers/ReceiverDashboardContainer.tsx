@@ -232,6 +232,7 @@ export default function ReceiverDashboardContainer() {
                   unlockDate={bucket.unlockDate}
                   goalLabel={getGoalLabel(bucket.sender, bucket.unlockDate)}
                   senderAddress={bucket.sender}
+                  receiverAddress={publicKey}
                   onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
                   isWithdrawing={isWithdrawing === bucket.id}
                   emergencyRequest={bucket.emergencyRequest}

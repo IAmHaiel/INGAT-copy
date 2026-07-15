@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { formatAmount, formatDate, formatDistanceToNow } from '@/lib/utils/format';
+import { formatAmount, formatDate, formatDistanceToNow, truncateAddress } from '@/lib/utils/format';
 import { Lock, Unlock, Calendar, ShieldAlert } from 'lucide-react';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 import { EmergencyRequest } from '@/types/emergency';
 import { CooldownBanner } from '../emergency/CooldownBanner';
 import { RequestEarlyAccessModal } from '../emergency/RequestEarlyAccessModal';
+import { getContactName } from '@/lib/utils/contacts';
 
 interface GoalBucketCardProps {
   bucketId: number;
@@ -13,6 +14,7 @@ interface GoalBucketCardProps {
   unlockDate: number; // unix timestamp in seconds
   goalLabel?: string | null;
   senderAddress: string;
+  receiverAddress: string | null;
   onWithdraw: (amount: number) => void;
   isWithdrawing: boolean;
   emergencyRequest?: EmergencyRequest | null;
@@ -28,6 +30,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   unlockDate,
   goalLabel,
   senderAddress,
+  receiverAddress,
   onWithdraw,
   isWithdrawing,
   emergencyRequest = null,
@@ -41,19 +44,37 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   const [isLocked, setIsLocked] = useState(true);
   const [timeLeftStr, setTimeLeftStr] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number>(0);
   const { priceUsd } = useXlmPrice();
+  const contactName = getContactName(senderAddress);
 
   useEffect(() => {
     const checkLock = () => {
       const now = Math.floor(Date.now() / 1000);
       setIsLocked(now < unlockDate);
       setTimeLeftStr(formatDistanceToNow(unlockDate));
+
+      // Calculate re-request cooldown (1 hour / 3600 seconds)
+      let maxCancelAt = 0;
+      if (emergencyRequest && emergencyRequest.status === 'Cancelled' && emergencyRequest.lastCancelAt) {
+        maxCancelAt = Math.max(maxCancelAt, emergencyRequest.lastCancelAt);
+      }
+      if (typeof window !== 'undefined' && receiverAddress) {
+        const localVal = localStorage.getItem(`cooldown_cancel_${receiverAddress}_${bucketId}`);
+        if (localVal) {
+          maxCancelAt = Math.max(maxCancelAt, parseInt(localVal, 10));
+        }
+      }
+
+      const cooldownEnds = maxCancelAt + 3600;
+      const timeLeft = Math.max(0, cooldownEnds - now);
+      setCooldownTimeLeft(timeLeft);
     };
 
     checkLock();
     const interval = setInterval(checkLock, 1000);
     return () => clearInterval(interval);
-  }, [unlockDate]);
+  }, [unlockDate, emergencyRequest, receiverAddress, bucketId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +122,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
         )}
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-2 border-t border-outline-variant/40 pt-3">
         {goalLabel && (
           <p className="text-xs font-semibold text-secondary italic">
             &ldquo;{goalLabel}&rdquo;
@@ -110,12 +131,21 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
         <p className="text-xs text-on-surface-variant">
           Funds are protected from impulse spending and locked on-chain.
         </p>
-        {unlockDate > 0 && (
+        <div className="flex flex-col gap-1">
+          {unlockDate > 0 && (
+            <div className="text-[11px] font-medium text-on-surface-variant flex items-center gap-1">
+              <Calendar size={14} />
+              <span>Release Date: {formatDate(unlockDate)}</span>
+            </div>
+          )}
           <div className="text-[11px] font-medium text-on-surface-variant flex items-center gap-1">
-            <Calendar size={14} />
-            <span>Release Date: {formatDate(unlockDate)}</span>
+            <span className="w-3.5 h-3.5 flex items-center justify-center text-[10px] font-bold bg-primary/10 text-primary rounded-full">S</span>
+            <span>Sender: </span>
+            <span className="font-mono bg-surface-container px-2 py-0.5 rounded text-[10px] select-all align-middle" title={senderAddress}>
+              {contactName ? `${contactName} (${truncateAddress(senderAddress)})` : truncateAddress(senderAddress)}
+            </span>
           </div>
-        )}
+        </div>
       </div>
 
       {isEmergencyPending ? (
@@ -199,6 +229,14 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
               className="w-full py-2.5 rounded-lg font-bold text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-all cursor-pointer border-0"
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
+            </button>
+          ) : cooldownTimeLeft > 0 ? (
+            <button
+              disabled
+              className="w-full py-2.5 rounded-lg font-bold text-sm bg-secondary-container/5 text-secondary/50 border border-secondary-container/10 flex items-center justify-center gap-1.5 cursor-not-allowed"
+            >
+              <ShieldAlert size={16} />
+              Cooldown Active ({Math.floor(cooldownTimeLeft / 60)}m {cooldownTimeLeft % 60}s)
             </button>
           ) : (
             <button

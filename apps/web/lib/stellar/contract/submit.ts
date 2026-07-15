@@ -1,7 +1,8 @@
 import { TransactionBuilder } from '@stellar/stellar-sdk';
-import { server, NETWORK_PASSPHRASE } from '../client';
+import { getServer, NETWORK_PASSPHRASE } from '../client';
 
 export const submitTransaction = async (signedXDR: string): Promise<string> => {
+  const server = getServer();
   const tx = TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
   const response = await server.sendTransaction(tx);
   

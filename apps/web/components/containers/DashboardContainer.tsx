@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Coins, Send } from 'lucide-react';
+import { Coins, Send, ShieldAlert } from 'lucide-react';
 import { useWalletContext } from '@/context/WalletContext';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { useUrlTab } from '@/hooks/useUrlTab';
@@ -16,9 +16,9 @@ import { toast } from 'sonner';
 // UI components
 import Header from '../ui/layout/Header';
 import Footer from '../ui/layout/Footer';
-import EmergencyRequestBanner from '../ui/dashboard/EmergencyRequestBanner';
 import SentDashboardView from '../ui/dashboard/SentDashboardView';
 import ReceivedDashboardView from '../ui/dashboard/ReceivedDashboardView';
+import EarlyAccessView from '../ui/dashboard/EarlyAccessView';
 
 export default function DashboardContainer() {
   const router = useRouter();
@@ -35,7 +35,7 @@ export default function DashboardContainer() {
     supabaseClient,
   } = useWalletContext();
 
-  const [tab, setTab] = useUrlTab<'sent' | 'received'>('sent', ['sent', 'received']);
+  const [tab, setTab] = useUrlTab<'sent' | 'received' | 'alerts'>('sent', ['sent', 'received', 'alerts']);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const { priceUsd } = useXlmPrice();
 
@@ -109,6 +109,15 @@ export default function DashboardContainer() {
     return match?.goalLabel ?? null;
   };
 
+  const getSenderGoalLabel = (receiverAddress: string, bucketId: number): string | null => {
+    const match = sentData.sentBuckets.find(
+      b => b.receiverAddress === receiverAddress && b.id === bucketId
+    );
+    return match?.goalLabel ?? null;
+  };
+
+  const alertCount = sentData.senderPendingRequests.length + receivedData.receivedBalances.filter(b => b.emergencyRequest && b.emergencyRequest.status === 'Pending').length;
+
   return (
     <>
       <Header
@@ -119,12 +128,6 @@ export default function DashboardContainer() {
         onDisconnect={disconnect}
       />
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-grow w-full animate-fade-in">
-        <EmergencyRequestBanner
-          requests={sentData.senderPendingRequests}
-          onCancel={sentData.senderCancelEmergency}
-          isLoading={sentData.isSenderEmergencyLoading}
-        />
-
         {/* Tab Toggle Navigation */}
         <div className="border-b border-outline-variant flex gap-4">
           <button
@@ -148,6 +151,22 @@ export default function DashboardContainer() {
           >
             <Coins size={16} />
             Received
+          </button>
+          <button
+            onClick={() => setTab('alerts')}
+            className={`pb-3 font-bold text-sm border-b-2 transition-all cursor-pointer bg-transparent border-0 flex items-center gap-2 ${
+              tab === 'alerts'
+                ? 'border-amber-600 text-amber-600'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <ShieldAlert size={16} />
+            Early Access
+            {alertCount > 0 && (
+              <span className="bg-amber-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none flex items-center justify-center">
+                {alertCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -188,7 +207,7 @@ export default function DashboardContainer() {
             onNavigateToSender={() => router.push('/sender')}
             onNavigateToBuckets={() => router.push('/dashboard/buckets?tab=sent')}
           />
-        ) : (
+        ) : tab === 'received' ? (
           <ReceivedDashboardView
             publicKey={publicKey}
             totalReceived={totalReceived}
@@ -220,6 +239,34 @@ export default function DashboardContainer() {
             onNextPage={receivedPagination.goNext}
             onNavigateToBuckets={() => router.push('/dashboard/buckets?tab=received')}
             getGoalLabel={getGoalLabel}
+          />
+        ) : (
+          <EarlyAccessView
+            senderPendingRequests={sentData.senderPendingRequests}
+            onSenderCancel={async (receiverAddr, bId) => {
+              try {
+                const req = await getActiveEmergencyRequest(receiverAddr, bId, supabaseClient);
+                if (req) {
+                  await sentData.senderCancelEmergency(receiverAddr, bId, req.tx_hash);
+                } else {
+                  toast.error('No active emergency request found in database.');
+                }
+              } catch (err) {
+                console.error(err);
+                toast.error('Failed to cancel emergency request.');
+              }
+            }}
+            isSenderCancelLoading={sentData.isSenderEmergencyLoading}
+            getGoalLabel={getSenderGoalLabel}
+            receivedBalances={receivedData.receivedBalances}
+            onReceiverCancel={(bucketId) => {
+              receivedData.cancelEmergencyReceiver(bucketId);
+            }}
+            onReceiverExecute={(bucketId, amount) => {
+              receivedData.executeEmergency(bucketId, amount);
+            }}
+            isReceiverEmergencyLoading={receivedData.isReceiverEmergencyLoading}
+            getReceivedGoalLabel={getGoalLabel}
           />
         )}
       </div>

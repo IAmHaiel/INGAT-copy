@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import {
   buildCancelEmergencyWithdrawalTx,
-  submitTransaction
+  submitTransaction,
+  fetchBucketBalances,
 } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
 import { updateEmergencyRequestStatus } from '@/lib/supabase';
@@ -27,12 +28,30 @@ export const useSenderCancelEmergency = (
     setTxHash(null);
 
     try {
+      // Validate bucket exists on-chain before calling contract
+      const buckets = await fetchBucketBalances(receiverAddress);
+      const bucketExists = buckets.some((b) => b.id === bucketId);
+
+      if (!bucketExists) {
+        // Bucket doesn't exist on current contract (likely stale data after redeploy).
+        // Auto-dismiss the stale Supabase record.
+        await updateEmergencyRequestStatus(activeTxHash, 'cancelled', 'stale_dismissed', supabaseClient);
+        if (onSuccess) {
+          onSuccess('stale_dismissed');
+        }
+        return;
+      }
+
       const unsignedXDR = await buildCancelEmergencyWithdrawalTx(senderAddress, receiverAddress, bucketId);
       const signedXDR = await signTxWithFreighter(unsignedXDR, senderAddress);
       const hash = await submitTransaction(signedXDR);
       setTxHash(hash);
 
       await updateEmergencyRequestStatus(activeTxHash, 'cancelled', hash, supabaseClient);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`cooldown_cancel_${receiverAddress}_${bucketId}`, Math.floor(Date.now() / 1000).toString());
+      }
 
       if (onSuccess) {
         onSuccess(hash);

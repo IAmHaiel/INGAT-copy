@@ -226,13 +226,18 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
                       className="hover:bg-surface-container/30 transition-colors cursor-pointer group"
                     >
                       <td className="p-4">
-                        <div>
+                        <div className="space-y-1">
                           <p className="font-bold text-on-surface">
                             {entry.receiverName || truncateAddress(entry.receiverAddress)}
                           </p>
                           {entry.receiverName && (
                             <p className="text-[10px] text-on-surface-variant font-mono mt-0.5">
                               {truncateAddress(entry.receiverAddress)}
+                            </p>
+                          )}
+                          {entry.goalLabel && (
+                            <p className="text-[10px] text-secondary font-semibold italic">
+                              &ldquo;{entry.goalLabel}&rdquo;
                             </p>
                           )}
                         </div>
@@ -288,6 +293,11 @@ export const BucketHistoryTable: React.FC<BucketHistoryTableProps> = ({
                     {entry.receiverName && (
                       <p className="text-[10px] font-mono text-on-surface-variant mt-0.5">
                         {truncateAddress(entry.receiverAddress)}
+                      </p>
+                    )}
+                    {entry.goalLabel && (
+                      <p className="text-[10px] text-secondary font-semibold italic mt-0.5">
+                        &ldquo;{entry.goalLabel}&rdquo;
                       </p>
                     )}
                   </div>

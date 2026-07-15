@@ -205,6 +205,7 @@ export default function ReceivedDashboardView({
                           unlockDate={bucket.unlockDate}
                           goalLabel={getGoalLabel(bucket.sender, bucket.unlockDate)}
                           senderAddress={bucket.sender}
+                          receiverAddress={publicKey}
                           onWithdraw={(amount) => onWithdrawGoal(bucket.id, amount)}
                           isWithdrawing={isReceiverWithdrawing === bucket.id}
                           emergencyRequest={bucket.emergencyRequest}

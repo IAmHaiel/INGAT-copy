@@ -86,6 +86,10 @@ export const useEmergencyWithdrawal = (
 
       await updateEmergencyRequestStatus(activeTxHash, 'cancelled', hash, supabaseClient);
 
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`cooldown_cancel_${receiverAddress}_${bucketId}`, Math.floor(Date.now() / 1000).toString());
+      }
+
       if (onSuccess) {
         onSuccess('cancelled', hash);
       }

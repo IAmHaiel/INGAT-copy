@@ -1,5 +1,5 @@
 import { Address, nativeToScVal, scValToNative } from '@stellar/stellar-sdk';
-import { server, CONTRACT_ID } from '../client';
+import { getServer, CONTRACT_ID } from '../client';
 import { DepositAllocation } from '@/types/transaction';
 import { DECIMALS } from './shared';
 
@@ -39,7 +39,7 @@ export const fetchDepositEvents = async (senderAddress: string): Promise<Deposit
   }
 
   try {
-    const latestLedgerResponse = await server.getLatestLedger();
+    const latestLedgerResponse = await getServer().getLatestLedger();
     const latestLedger = latestLedgerResponse.sequence;
     const startLedger = Math.max(1, latestLedger - LEDGERS_PER_DAY);
 
@@ -47,7 +47,7 @@ export const fetchDepositEvents = async (senderAddress: string): Promise<Deposit
     const depositSymbolXdr = nativeToScVal('deposit', { type: 'symbol' }).toXDR('base64');
     const senderScValXdr = Address.fromString(senderAddress).toScVal().toXDR('base64');
 
-    const response = await server.getEvents({
+    const response = await getServer().getEvents({
       startLedger,
       filters: [
         {
@@ -91,13 +91,13 @@ export const fetchReceivedDepositEvents = async (receiverAddress: string): Promi
   }
 
   try {
-    const latestLedgerResponse = await server.getLatestLedger();
+    const latestLedgerResponse = await getServer().getLatestLedger();
     const latestLedger = latestLedgerResponse.sequence;
     const startLedger = Math.max(1, latestLedger - LEDGERS_PER_DAY);
 
     const depositSymbolXdr = nativeToScVal('deposit', { type: 'symbol' }).toXDR('base64');
 
-    const response = await server.getEvents({
+    const response = await getServer().getEvents({
       startLedger,
       filters: [
         {
@@ -145,7 +145,7 @@ export const fetchReceivedDepositEvents = async (receiverAddress: string): Promi
  */
 export const fetchTransactionByHash = async (txHash: string): Promise<DepositAllocation | null> => {
   try {
-    const txResponse = await server.getTransaction(txHash);
+    const txResponse = await getServer().getTransaction(txHash);
 
     if (txResponse.status !== 'SUCCESS') {
       return null;

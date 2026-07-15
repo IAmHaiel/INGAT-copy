@@ -1,5 +1,5 @@
 import { Address, TransactionBuilder, scValToNative, nativeToScVal, rpc } from '@stellar/stellar-sdk';
-import { server, NETWORK_PASSPHRASE } from '../client';
+import { getServer, NETWORK_PASSPHRASE } from '../client';
 import { BucketState } from '@/types/bucket';
 import { EmergencyRequest, EmergencyRequestStatus } from '@/types/emergency';
 import { contract, getDummyAccount, DECIMALS, extractSimError } from './shared';
@@ -17,7 +17,7 @@ export const simulateRead = async (
     .setTimeout(30)
     .build();
 
-  const sim = await server.simulateTransaction(tx);
+  const sim = await getServer().simulateTransaction(tx);
   if (rpc.Api.isSimulationSuccess(sim)) {
     return sim.result?.retval || null;
   }
