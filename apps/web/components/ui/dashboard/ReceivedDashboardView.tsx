@@ -7,6 +7,7 @@ import GoalBucketCard from '@/components/ui/buckets/GoalBucketCard';
 import DashboardHistoryList from '@/components/ui/history/DashboardHistoryList';
 import PaginationControls from '@/components/ui/dashboard/PaginationControls';
 import AuthRequiredCard from '@/components/ui/dashboard/AuthRequiredCard';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 import { DepositAllocation } from '@/types/transaction';
 import { BucketState } from '@/types/bucket';
@@ -30,7 +31,7 @@ interface ReceivedDashboardViewProps {
   priceUsd: number;
   isAuthenticating: boolean;
   authError: string | null;
-  supabaseClient: any | null;
+  supabaseClient: SupabaseClient | null;
   onSign: () => void;
   onRefreshBalances: () => void;
   onWithdrawSpending: (bucketId: number, amount: number) => void;

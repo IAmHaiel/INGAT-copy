@@ -56,4 +56,4 @@ jobs:
         run: npm run contract:test
 
       - name: Build Contract (WASM)
-        run: npm run contract:build
+        run: cargo build --target wasm32-unknown-unknown --release --manifest-path contracts/ingat-vault/Cargo.toml

@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSenderPendingRequests, EmergencyRequestRow, updateEmergencyRequestStatus } from '@/lib/supabase';
 import { fetchBucketBalances } from '@/lib/stellar/contract';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export const useSenderPendingRequests = (
   senderAddress: string | null,
-  supabaseClient: any | null,
+  supabaseClient: SupabaseClient | null,
   intervalMs = 5000
 ) => {
   const [senderPendingRequests, setSenderPendingRequests] = useState<EmergencyRequestRow[]>([]);
@@ -55,9 +56,14 @@ export const useSenderPendingRequests = (
   }, [senderAddress, supabaseClient]);
 
   useEffect(() => {
-    fetchSenderPendingRequests();
+    const timer = setTimeout(() => {
+      fetchSenderPendingRequests();
+    }, 0);
     const interval = setInterval(fetchSenderPendingRequests, intervalMs);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, [fetchSenderPendingRequests, intervalMs]);
 
   return {

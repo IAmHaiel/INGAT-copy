@@ -1,18 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 export const useUrlTab = <T extends string>(
   defaultTab: T,
   validTabs: readonly T[]
 ): [T, (newTab: T) => void] => {
-  const [tab, setTab] = useState<T>(defaultTab);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get('tab') as T;
-    if (validTabs.includes(t)) {
-      setTab(t);
+  const [tab, setTab] = useState<T>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get('tab') as T;
+      if (validTabs.includes(t)) {
+        return t;
+      }
     }
-  }, [validTabs]);
+    return defaultTab;
+  });
 
   const handleTabChange = useCallback((newTab: T) => {
     setTab(newTab);

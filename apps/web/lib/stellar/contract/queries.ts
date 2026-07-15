@@ -1,4 +1,4 @@
-import { Address, TransactionBuilder, scValToNative, nativeToScVal, rpc } from '@stellar/stellar-sdk';
+import { Address, TransactionBuilder, scValToNative, nativeToScVal, rpc, xdr } from '@stellar/stellar-sdk';
 import { getServer, NETWORK_PASSPHRASE } from '../client';
 import { BucketState } from '@/types/bucket';
 import { EmergencyRequest, EmergencyRequestStatus } from '@/types/emergency';
@@ -6,8 +6,8 @@ import { contract, getDummyAccount, DECIMALS, extractSimError } from './shared';
 
 export const simulateRead = async (
   operationName: string,
-  args: any[]
-): Promise<any> => {
+  args: xdr.ScVal[]
+): Promise<xdr.ScVal | null> => {
   const dummySource = getDummyAccount();
   const tx = new TransactionBuilder(dummySource, {
     fee: '100',
@@ -75,7 +75,15 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
     const nativeVal = scValToNative(retval);
     if (!nativeVal || !Array.isArray(nativeVal)) return [];
 
-    const buckets = nativeVal.map((item: any) => ({
+    interface RawBucketItem {
+      id: string | number | bigint;
+      sender: string;
+      spending_balance: string | number | bigint;
+      goal_balance: string | number | bigint;
+      unlock_date: string | number | bigint;
+    }
+
+    const buckets = (nativeVal as unknown as RawBucketItem[]).map((item) => ({
       id: Number(item.id),
       sender: String(item.sender),
       spendingBalance: Number(item.spending_balance) / DECIMALS,

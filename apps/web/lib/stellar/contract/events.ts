@@ -1,4 +1,4 @@
-import { Address, nativeToScVal, scValToNative } from '@stellar/stellar-sdk';
+import { Address, nativeToScVal, scValToNative, xdr } from '@stellar/stellar-sdk';
 import { getServer, CONTRACT_ID } from '../client';
 import { DepositAllocation } from '@/types/transaction';
 import { DECIMALS } from './shared';
@@ -6,7 +6,7 @@ import { DECIMALS } from './shared';
 const LEDGERS_PER_DAY = 17_280; // ~24h at 5s/ledger
 
 export const parseDepositEvent = (
-  eventValue: any,
+  eventValue: xdr.ScVal,
   txHash: string,
   ledgerClosedAt: string | number,
   sender: string,
@@ -151,7 +151,12 @@ export const fetchTransactionByHash = async (txHash: string): Promise<DepositAll
       return null;
     }
 
-    const successResponse = txResponse as any;
+    const successResponse = txResponse as unknown as {
+      events: {
+        contractEventsXdr: xdr.ContractEvent[][];
+      };
+      createdAt: string | number;
+    };
     const { events, createdAt } = successResponse;
 
     // Search all contract events for our deposit event

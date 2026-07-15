@@ -1,4 +1,4 @@
-import { EmergencyRequestRow, EmergencyRequestInsert, EmergencyRequestStatus } from './types';
+import { EmergencyRequestRow, EmergencyRequestInsert } from './types';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 const TABLE = 'emergency_requests';

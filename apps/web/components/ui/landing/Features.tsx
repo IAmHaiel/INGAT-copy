@@ -1,27 +1,37 @@
 import React from 'react';
-import { SplitSquareVertical, Lock, Wallet, LayoutDashboard } from 'lucide-react';
+import { Split, Lock, AlertTriangle, Wallet, LayoutDashboard, Users } from 'lucide-react';
 
 export default function Features() {
   const items = [
     {
-      icon: <SplitSquareVertical className="w-6 h-6 text-primary" />,
+      icon: <Split className="w-6 h-6 text-primary" />,
       title: 'Programmable Split Remittance',
-      desc: 'Automatically divide every deposit into a Spending bucket and a Goal bucket using your chosen ratio — no manual budgeting needed.',
+      desc: 'Instantly divide deposits into a Spending bucket and a Goal bucket using custom ratios. No manual budgeting or mental math required.',
     },
     {
       icon: <Lock className="w-6 h-6 text-primary" />,
       title: 'On-Chain Goal Lock',
-      desc: 'Protect savings by locking the Goal bucket on-chain until a future date you set. Funds cannot be withdrawn early — enforced by the smart contract.',
+      desc: 'Lock goal savings on-chain using smart contracts until a set date. Capital is fully protected and secured by Soroban ledger leases.',
+    },
+    {
+      icon: <AlertTriangle className="w-6 h-6 text-primary" />,
+      title: 'Emergency Early Access',
+      desc: 'Receivers can request emergency early access to locked funds. Senders retain full oversight to approve or reject requests with strict cool-down rules.',
     },
     {
       icon: <Wallet className="w-6 h-6 text-primary" />,
-      title: 'Freighter Wallet Integration',
-      desc: 'Connect with one click via Freighter. Sign transactions securely without ever exposing your private keys.',
+      title: 'Freighter Wallet Security',
+      desc: 'Connect securely using Freighter Wallet. Sign and verify transactions client-side without exposing private keys or seed phrases.',
     },
     {
       icon: <LayoutDashboard className="w-6 h-6 text-primary" />,
-      title: 'Unified Sender & Receiver Dashboard',
-      desc: 'Toggle between Sender and Receiver modes in a single dashboard. Send splits, view vaults, withdraw funds, and track full transaction history.',
+      title: 'Unified Dashboard & History',
+      desc: 'Seamlessly toggle between Sender and Receiver roles. View real-time balances, track lock timers, and review permanent transaction logs.',
+    },
+    {
+      icon: <Users className="w-6 h-6 text-primary" />,
+      title: 'Address Book Aliases',
+      desc: 'Assign names to wallet addresses to easily recognize senders and receivers across all transaction logs, active buckets, and early request views.',
     },
   ];
 
@@ -37,7 +47,7 @@ export default function Features() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
           {items.map((item, idx) => (
             <div 
               key={idx} 

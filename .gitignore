@@ -4,3 +4,9 @@ node_modules
 .vercel
 .env*
 !.env.example
+
+# Agent metadata and steering system
+.agents/skills/
+.artifacts/
+.design-ref/
+.kiro/steering/

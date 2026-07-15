@@ -21,7 +21,7 @@ describe('SenderBucketCard', () => {
   it('renders locked bucket correctly', () => {
     render(<SenderBucketCard {...mockProps} />);
 
-    expect(screen.getByText(mockProps.receiverAddress)).toBeInTheDocument();
+    expect(screen.getByTitle(mockProps.receiverAddress)).toBeInTheDocument();
     expect(screen.getByText('100.00 XLM')).toBeInTheDocument();
     expect(screen.getByText('50.00 XLM')).toBeInTheDocument();
     expect(screen.getByText(/Goal locked:/)).toBeInTheDocument();

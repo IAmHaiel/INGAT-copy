@@ -29,11 +29,10 @@ export default function EarlyAccessView({
   isReceiverEmergencyLoading,
   getReceivedGoalLabel,
 }: EarlyAccessViewProps) {
-  const [now, setNow] = useState<number>(0);
+  const [now, setNow] = useState<number>(() => Math.floor(Date.now() / 1000));
   const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
 
   useEffect(() => {
-    setNow(Math.floor(Date.now() / 1000));
     const timer = setInterval(() => {
       setNow(Math.floor(Date.now() / 1000));
     }, 1000);
