@@ -1,7 +1,27 @@
 import { Contract, TransactionBuilder, Account, rpc, xdr } from '@stellar/stellar-sdk';
 import { getServer, CONTRACT_ID, NETWORK_PASSPHRASE } from '../client';
 
-export const contract = new Contract(CONTRACT_ID);
+// Lazily instantiate the Contract instance to avoid crashes during Next.js static prerendering
+// when CONTRACT_ID is not available or is empty.
+let _contractInstance: Contract | null = null;
+const getContractInstance = (): Contract => {
+  if (!_contractInstance) {
+    if (!CONTRACT_ID) {
+      throw new Error('Stellar Contract ID is not set. Please define NEXT_PUBLIC_CONTRACT_ID in your environment.');
+    }
+    _contractInstance = new Contract(CONTRACT_ID);
+  }
+  return _contractInstance;
+};
+
+export const contract = new Proxy({} as Contract, {
+  get(_, prop) {
+    const instance = getContractInstance();
+    const value = Reflect.get(instance, prop);
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+});
+
 export const DECIMALS = 10_000_000; // 7 decimals for Stellar assets
 
 export const getDummyAccount = () => {
