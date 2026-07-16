@@ -15,5 +15,8 @@
     "contract:test": "cargo test --manifest-path contracts/ingat-vault/Cargo.toml",
     "contract:clean": "cargo clean --manifest-path contracts/ingat-vault/Cargo.toml",
     "contract:deploy": "bash scripts/deploy.sh"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
   }
 }
