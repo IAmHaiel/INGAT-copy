@@ -52,7 +52,14 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Pull Vercel Environment
+      - name: Update Vercel Dashboard Environment Variables
+        run: |
+          vercel env rm NEXT_PUBLIC_CONTRACT_ID preview --token=${{ secrets.VERCEL_TOKEN }} --yes 2>/dev/null || true
+          echo "CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT" | vercel env add NEXT_PUBLIC_CONTRACT_ID preview --token=${{ secrets.VERCEL_TOKEN }}
+          vercel env rm NEXT_PUBLIC_TOKEN_ID preview --token=${{ secrets.VERCEL_TOKEN }} --yes 2>/dev/null || true
+          echo "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC" | vercel env add NEXT_PUBLIC_TOKEN_ID preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Pull Vercel Environment (with updated contract IDs)
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build
