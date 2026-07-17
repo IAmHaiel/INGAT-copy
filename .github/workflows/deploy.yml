@@ -62,11 +62,13 @@ jobs:
           echo 'NEXT_PUBLIC_RPC_URL="https://soroban-testnet.stellar.org"' >> .vercel/.env.preview.local
           echo 'NEXT_PUBLIC_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"' >> .vercel/.env.preview.local
 
-      - name: Clear Vercel Build Cache
-        run: rm -rf .vercel/cache
+      - name: Clear All Build Caches
+        run: rm -rf .vercel/cache .next/cache
 
-      - name: Build (no cache)
+      - name: Force Fresh Build (cache busted)
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_BUILD_CACHE_BUST: ${{ github.sha }}
 
       - name: Deploy Preview
         id: deploy
@@ -114,11 +116,13 @@ jobs:
           echo 'NEXT_PUBLIC_RPC_URL="https://soroban-testnet.stellar.org"' >> .vercel/.env.production.local
           echo 'NEXT_PUBLIC_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"' >> .vercel/.env.production.local
 
-      - name: Clear Vercel Build Cache
-        run: rm -rf .vercel/cache
+      - name: Clear All Build Caches
+        run: rm -rf .vercel/cache .next/cache
 
-      - name: Build (no cache)
+      - name: Force Fresh Build (cache busted)
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_BUILD_CACHE_BUST: ${{ github.sha }}
 
       - name: Deploy to Production
         id: deploy
