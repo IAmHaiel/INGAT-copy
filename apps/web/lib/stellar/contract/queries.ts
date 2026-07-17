@@ -84,13 +84,13 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
       approval_required: boolean;
     }
 
-    const buckets = (nativeVal as unknown as RawBucketItem[]).map((item) => ({
+    const buckets = (nativeVal as unknown as Array<Record<string, unknown>>).map((item) => ({
       id: Number(item.id),
       sender: String(item.sender),
       spendingBalance: Number(item.spending_balance) / DECIMALS,
       goalBalance: Number(item.goal_balance) / DECIMALS,
       unlockDate: Number(item.unlock_date),
-      approvalRequired: Boolean(item.approval_required),
+      approvalRequired: item.approval_required === true || item.approval_required === 1 || String(item.approval_required).toLowerCase() === 'true',
     }));
 
     const nowSeconds = Math.floor(Date.now() / 1000);
