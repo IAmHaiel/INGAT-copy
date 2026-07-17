@@ -269,7 +269,7 @@ export default function ReceiverDashboardContainer() {
                       }
                     }}
                     isEmergencyLoading={isEmergencyLoading}
-                    approvalRequired={bucket._isApprovalBucket}
+                    approvalRequired={bucket._reqFetched}
                     releaseRequest={bucket.releaseRequest}
                     onRequestRelease={() => handleRequestRelease(bucket.id)}
                     isReleaseLoading={isRequestingRelease}

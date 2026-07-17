@@ -7,7 +7,7 @@ export interface BucketState {
   goalBalance: number;
   unlockDate: number; // unix timestamp in seconds
   approvalRequired: boolean;
-  _isApprovalBucket: boolean;
+  _reqFetched: boolean;
   emergencyRequest?: EmergencyRequest | null;
   releaseRequest?: ReleaseRequest;
 }

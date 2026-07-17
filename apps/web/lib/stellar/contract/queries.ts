@@ -112,15 +112,16 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
     );
     const bucketsWithRelease = await Promise.all(
       bucketsWithEmergency.map(async (bucket) => {
-        if (bucket.approvalRequired && bucket.goalBalance > 0) {
+        const isApproval = bucket._isApprovalBucket || bucket.approvalRequired;
+        if (isApproval && bucket.goalBalance > 0) {
           try {
             const releaseReq = await fetchReleaseRequest(receiverAddress, bucket.id);
-            return { ...bucket, releaseRequest: releaseReq || undefined };
+            return { ...bucket, approvalRequired: true, releaseRequest: releaseReq || undefined, _reqFetched: true };
           } catch {
-            return bucket;
+            return { ...bucket, approvalRequired: true, _reqFetched: true };
           }
         }
-        return bucket;
+        return { ...bucket, _reqFetched: isApproval };
       })
     );
     return bucketsWithRelease;
