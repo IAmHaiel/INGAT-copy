@@ -102,7 +102,7 @@ export const CooldownBanner: React.FC<CooldownBannerProps> = ({
           </button>
         )}
 
-        {onCancel && (
+        {onCancel && role !== 'receiver' && (
           <button
             onClick={onCancel}
             disabled={isLoading}
