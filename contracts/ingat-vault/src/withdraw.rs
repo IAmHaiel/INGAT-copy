@@ -106,7 +106,11 @@ pub fn withdraw_goal_sender(
         return Err(Error::NotBucketSender);
     }
 
-    release::can_withdraw_goal(&env, &state, &receiver, bucket_id)?;
+    // Sender can always reclaim goal funds after unlock_date, regardless of approval mode
+    let current_time = env.ledger().timestamp();
+    if current_time < state.unlock_date {
+        return Err(Error::GoalBucketLocked);
+    }
 
     if state.goal_balance < amount {
         return Err(Error::InsufficientFunds);

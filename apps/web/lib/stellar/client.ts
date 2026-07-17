@@ -1,6 +1,6 @@
 import { rpc, Networks } from '@stellar/stellar-sdk';
 
-// BUILD_CACHE_BUST: c4412fa — edit this line to force Vercel to recompile this chunk
+// BUILD_CACHE_BUST: cd5d3a4 — sender reclaim fix, new contract ID
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
 
@@ -28,6 +28,6 @@ export function getServer(): rpc.Server {
 }
 
 // Contract IDs — set via environment variables (.env.local)
-export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || 'CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT';
+export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || 'CDNCRZ3GQTDUD2VIPTRGNM7SZLML27LW3LAYISECDVDEFTTGURSLS7XC';
 
 export const TOKEN_ID = process.env.NEXT_PUBLIC_TOKEN_ID || 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';

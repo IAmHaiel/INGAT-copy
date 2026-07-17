@@ -169,7 +169,7 @@ stellar keys generate receiver --network testnet
 
 SENDER=$(stellar keys address sender)
 RECEIVER=$(stellar keys address receiver)
-CONTRACT=CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT
+CONTRACT=CDNCRZ3GQTDUD2VIPTRGNM7SZLML27LW3LAYISECDVDEFTTGURSLS7XC
 
 # Deposit 20 XLM (7 decimals = 200000000 stroops) with 60/40 split, unlock in 5 minutes
 UNLOCK=$(($(date +%s) + 300))
@@ -277,11 +277,11 @@ These accounts are already set up on testnet with XLM:
 
 | Contract | ID |
 |----------|------|
-| INGAT Vault (v2.0.0) | `CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT` |
+| INGAT Vault (v2.0.0) | `CDNCRZ3GQTDUD2VIPTRGNM7SZLML27LW3LAYISECDVDEFTTGURSLS7XC` |
 | Native XLM SAC | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
 
 Verify on Stellar Explorer:
-- [Vault Contract](https://stellar.expert/explorer/testnet/contract/CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT)
+- [Vault Contract](https://stellar.expert/explorer/testnet/contract/CDNCRZ3GQTDUD2VIPTRGNM7SZLML27LW3LAYISECDVDEFTTGURSLS7XC)
 - [XLM SAC](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC)
 
 ---
