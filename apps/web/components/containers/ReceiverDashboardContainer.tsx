@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Handshake } from 'lucide-react';
 import SpendingBucketCard from '@/components/ui/buckets/SpendingBucketCard';
@@ -11,6 +11,8 @@ import { useWalletContext } from '@/context/WalletContext';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
 import { useEmergencyWithdrawal } from '@/hooks/useEmergencyWithdrawal';
+import { fetchReceivedTransactions } from '@/lib/supabase';
+import { TransactionRow } from '@/lib/supabase/types';
 import { useTxSuccessToast, useTxErrorToast } from '@/hooks/useTransactionToast';
 import { toast } from 'sonner';
 
@@ -21,6 +23,10 @@ export default function ReceiverDashboardContainer() {
     isConnected, 
     isInitializing,
     disconnect, 
+    isAuthenticating, 
+    authError, 
+    authenticate,
+    supabaseClient
   } = useWalletContext();
   const { balances, isLoading, error: fetchError, refreshBalances } = useBucketBalances(publicKey);
   const { withdraw, isWithdrawing, error: withdrawError, txHash } = useWithdraw(publicKey, () => {
@@ -52,8 +58,33 @@ export default function ReceiverDashboardContainer() {
     }
   });
 
-  const getGoalLabel = (_senderAddress: string, _unlockDate: number): string | null => {
-    return null;
+  const [depositRecords, setDepositRecords] = useState<TransactionRow[]>([]);
+
+  const fetchDeposits = useCallback(async () => {
+    if (!supabaseClient || !publicKey) return;
+    try {
+      const rows = await fetchReceivedTransactions(publicKey, supabaseClient);
+      setDepositRecords(rows.filter(r => r.type === 'deposit'));
+    } catch (err) {
+      console.error('Failed to fetch deposit records for goal labels:', err);
+    }
+  }, [publicKey, supabaseClient]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchDeposits();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchDeposits]);
+
+  /**
+   * Look up the goal label for a bucket by matching sender address and unlock date.
+   */
+  const getGoalLabel = (senderAddress: string, unlockDate: number): string | null => {
+    const match = depositRecords.find(
+      r => r.sender_address === senderAddress && r.unlock_date === unlockDate
+    );
+    return match?.goal_label ?? null;
   };
 
   useEffect(() => {
@@ -67,10 +98,48 @@ export default function ReceiverDashboardContainer() {
   useTxErrorToast(withdrawError, 'Withdrawal Failed');
   useTxErrorToast(emergencyError, 'Emergency Action Failed');
 
-  if (!isConnected) {
+  if (!isConnected || (isAuthenticating && !supabaseClient)) {
     return (
       <div className="flex justify-center items-center h-screen">
         <span className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin"></span>
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen bg-background-warm px-4">
+        <div className="bg-white p-8 rounded-2xl border border-outline-variant shadow-lg max-w-md w-full text-center space-y-6 animate-[fadeIn_200ms_ease-out]">
+          <div className="bg-amber-50 text-amber-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto border border-amber-100">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-secondary">Signature Required</h2>
+            <p className="text-sm text-on-surface-variant leading-relaxed">
+              We need your secure signature to authenticate and load your protected vault buckets.
+            </p>
+            {authError !== 'The user rejected this request.' && (
+              <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 mt-2 font-mono break-words">
+                {authError}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => publicKey && authenticate(publicKey)}
+            disabled={isAuthenticating}
+            className="w-full bg-secondary text-white py-3 rounded-lg font-bold transition-all active:scale-95 cursor-pointer shadow-md hover:shadow-lg border-0 disabled:opacity-50"
+          >
+            {isAuthenticating ? 'Waiting for signature...' : 'Sign Authentication Message'}
+          </button>
+          <button
+            onClick={disconnect}
+            className="text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer border-0 bg-transparent"
+          >
+            Disconnect Wallet
+          </button>
+        </div>
       </div>
     );
   }

@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { buildDepositTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
 import { validateDeposit, ValidationError } from '@/lib/validation/deposit';
+import { insertTransaction } from '@/lib/supabase';
 import { DepositFormInputs } from '@/types/transaction';
+import { useWalletContext } from '@/context/WalletContext';
 
 export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: string) => void) => {
+  const { supabaseClient } = useWalletContext();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [txError, setTxError] = useState<string | null>(null);
@@ -43,6 +46,26 @@ export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: st
 
       const hash = await submitTransaction(signedXDR);
       setTxHash(hash);
+
+      // Compute split amounts
+      const spendingAmount = amountNum * (inputs.splitRatio / 100);
+      const goalAmount = amountNum - spendingAmount;
+
+      // Persist to Supabase (fire-and-forget — tx is already confirmed on-chain)
+      insertTransaction({
+        tx_hash: hash,
+        type: 'deposit',
+        sender_address: senderAddress,
+        receiver_address: inputs.receiver,
+        amount: amountNum,
+        spending_amount: spendingAmount,
+        goal_amount: goalAmount,
+        split_ratio: inputs.splitRatio,
+        unlock_date: unlockDateEpoch,
+        goal_label: inputs.goalLabel?.trim() || null,
+      }, supabaseClient).catch((err) => {
+        console.error('[useDeposit] Supabase persistence failed:', err);
+      });
 
       if (onSuccess) {
         onSuccess(hash);

@@ -1,17 +1,11 @@
 import React from 'react';
 import { ShieldAlert } from 'lucide-react';
+import { EmergencyRequestRow } from '@/lib/supabase';
 import { formatAmount } from '@/lib/utils/format';
 
-interface PendingRequest {
-  receiver_address: string;
-  bucket_id: number;
-  amount: number;
-  cooldown_ends_at: number;
-}
-
 interface EmergencyRequestBannerProps {
-  requests: PendingRequest[];
-  onCancel: (receiverAddress: string, bucketId: number) => void;
+  requests: EmergencyRequestRow[];
+  onCancel: (receiverAddress: string, bucketId: number, txHash: string) => void;
   isLoading: boolean;
 }
 
@@ -26,7 +20,7 @@ export default function EmergencyRequestBanner({
     <>
       {requests.map((req) => (
         <div
-          key={`${req.receiver_address}_${req.bucket_id}`}
+          key={req.tx_hash}
           className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-[slideIn_200ms_ease-out]"
         >
           <div className="flex gap-3">
@@ -43,7 +37,7 @@ export default function EmergencyRequestBanner({
             </div>
           </div>
           <button
-            onClick={() => onCancel(req.receiver_address, req.bucket_id)}
+            onClick={() => onCancel(req.receiver_address, req.bucket_id, req.tx_hash)}
             disabled={isLoading}
             className="bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs py-2 px-4 rounded-lg transition-colors cursor-pointer border-0 shadow-sm shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >

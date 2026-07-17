@@ -1,18 +1,24 @@
 import { renderHook, act } from '@testing-library/react';
 import { useBucketHistory } from '@/hooks/useBucketHistory';
 
+const mockSupabaseClient = {};
+
 // Mock dependencies
 jest.mock('@/lib/stellar/contract', () => ({
   fetchBucketBalances: jest.fn(),
 }));
 
-jest.mock('@/lib/stellar/contract/events', () => ({
-  fetchDepositEvents: jest.fn(),
-  fetchReceivedDepositEvents: jest.fn(),
+jest.mock('@/lib/supabase', () => ({
+  fetchSentTransactions: jest.fn(),
+  fetchTransactionsByAddress: jest.fn(),
+}));
+
+jest.mock('@/context/WalletContext', () => ({
+  useWalletContext: () => ({ supabaseClient: mockSupabaseClient }),
 }));
 
 import { fetchBucketBalances } from '@/lib/stellar/contract';
-import { fetchDepositEvents } from '@/lib/stellar/contract/events';
+import { fetchSentTransactions, fetchTransactionsByAddress } from '@/lib/supabase';
 
 const SENDER_ADDRESS = 'GBZXN7PIRZGNMHGA7MUUUF4GWUQESTCDVWAYQOTNCFYMZ7GF3VG7DKIW';
 const RECEIVER_ADDRESS = 'GDXKVV5BGBDRNSJDCZAEX3XMXWD6Z2WBCHBCT55ZFWG6R2RL5MMTZR3Y';
@@ -23,6 +29,7 @@ describe('useBucketHistory', () => {
   });
 
   it('initializes with default empty state', () => {
+    (fetchSentTransactions as jest.Mock).mockResolvedValue([]);
     const { result } = renderHook(() => useBucketHistory(null));
 
     expect(result.current.entries).toEqual([]);
@@ -33,14 +40,14 @@ describe('useBucketHistory', () => {
   it('loads and joins bucket history successfully', async () => {
     const mockDeposits = [
       {
-        id: 'deposit-tx-hash',
-        sender: SENDER_ADDRESS,
-        receiver: RECEIVER_ADDRESS,
+        tx_hash: 'deposit-tx-hash',
+        type: 'deposit',
+        sender_address: SENDER_ADDRESS,
+        receiver_address: RECEIVER_ADDRESS,
         amount: 100,
-        splitRatio: 60,
-        unlockDate: 1800000000,
-        timestamp: 1750000000,
-        goalLabel: null,
+        split_ratio: 60,
+        unlock_date: 1800000000,
+        created_at: '2026-07-14T12:00:00Z',
       },
     ];
 
@@ -54,8 +61,21 @@ describe('useBucketHistory', () => {
       },
     ];
 
-    (fetchDepositEvents as jest.Mock).mockResolvedValue(mockDeposits);
+    const mockWithdrawals = [
+      {
+        tx_hash: 'withdrawal-tx-hash',
+        type: 'withdraw_goal',
+        sender_address: RECEIVER_ADDRESS,
+        receiver_address: RECEIVER_ADDRESS,
+        amount: 40,
+        unlock_date: 1800000000,
+        created_at: '2026-07-14T14:00:00Z',
+      },
+    ];
+
+    (fetchSentTransactions as jest.Mock).mockResolvedValue(mockDeposits);
     (fetchBucketBalances as jest.Mock).mockResolvedValue(mockOnChainBalances);
+    (fetchTransactionsByAddress as jest.Mock).mockResolvedValue(mockWithdrawals);
 
     const { result } = renderHook(() => useBucketHistory(SENDER_ADDRESS));
 
@@ -64,8 +84,9 @@ describe('useBucketHistory', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(fetchDepositEvents).toHaveBeenCalledWith(SENDER_ADDRESS);
+    expect(fetchSentTransactions).toHaveBeenCalledWith(SENDER_ADDRESS, mockSupabaseClient);
     expect(fetchBucketBalances).toHaveBeenCalledWith(RECEIVER_ADDRESS);
+    expect(fetchTransactionsByAddress).toHaveBeenCalledWith(RECEIVER_ADDRESS, mockSupabaseClient);
 
     expect(result.current.entries.length).toBe(1);
     const entry = result.current.entries[0];
@@ -74,5 +95,6 @@ describe('useBucketHistory', () => {
     expect(entry.spendingAmount).toBe(60);
     expect(entry.goalAmount).toBe(40);
     expect(entry.liveGoalBalance).toBe(40);
+    expect(entry.goalWithdrawalTxHash).toBe('withdrawal-tx-hash');
   });
 });

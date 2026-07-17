@@ -1,53 +1,59 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getSenderPendingRequests, EmergencyRequestRow, updateEmergencyRequestStatus } from '@/lib/supabase';
 import { fetchBucketBalances } from '@/lib/stellar/contract';
-import { fetchDepositEvents } from '@/lib/stellar/contract/events';
-
-interface PendingRequest {
-  receiver_address: string;
-  bucket_id: number;
-  amount: number;
-  cooldown_ends_at: number;
-}
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export const useSenderPendingRequests = (
   senderAddress: string | null,
-  intervalMs = 15000
+  supabaseClient: SupabaseClient | null,
+  intervalMs = 5000
 ) => {
-  const [senderPendingRequests, setSenderPendingRequests] = useState<PendingRequest[]>([]);
+  const [senderPendingRequests, setSenderPendingRequests] = useState<EmergencyRequestRow[]>([]);
 
   const fetchSenderPendingRequests = useCallback(async () => {
-    if (!senderAddress) return;
+    if (!supabaseClient || !senderAddress) return;
     try {
-      const events = await fetchDepositEvents(senderAddress);
-      const uniqueReceivers = Array.from(new Set(events.map((e) => e.receiver)));
+      const reqs = await getSenderPendingRequests(senderAddress, supabaseClient);
 
-      const pending: PendingRequest[] = [];
+      // Validate each pending request against on-chain state.
+      // If the bucket doesn't exist on the current contract, auto-dismiss it.
+      const uniqueReceivers = Array.from(new Set(reqs.map((r) => r.receiver_address)));
+      const receiverBucketsMap = new Map<string, number[]>();
 
       await Promise.all(
         uniqueReceivers.map(async (receiver) => {
           try {
             const buckets = await fetchBucketBalances(receiver);
-            for (const bucket of buckets) {
-              if (bucket.emergencyRequest && bucket.emergencyRequest.status === 'Pending') {
-                pending.push({
-                  receiver_address: receiver,
-                  bucket_id: bucket.id,
-                  amount: bucket.emergencyRequest.amount,
-                  cooldown_ends_at: bucket.emergencyRequest.cooldownEndsAt,
-                });
-              }
-            }
+            receiverBucketsMap.set(receiver, buckets.map((b) => b.id));
           } catch {
-            // Skip receivers we can't reach
+            // If we can't fetch, keep the request visible (don't dismiss on network error)
+            receiverBucketsMap.set(receiver, reqs.filter((r) => r.receiver_address === receiver).map((r) => r.bucket_id));
           }
         })
       );
 
-      setSenderPendingRequests(pending);
+      const validReqs: EmergencyRequestRow[] = [];
+      const staleReqs: EmergencyRequestRow[] = [];
+
+      for (const req of reqs) {
+        const validBucketIds = receiverBucketsMap.get(req.receiver_address) || [];
+        if (validBucketIds.includes(req.bucket_id)) {
+          validReqs.push(req);
+        } else {
+          staleReqs.push(req);
+        }
+      }
+
+      // Auto-dismiss stale requests in background
+      for (const stale of staleReqs) {
+        await updateEmergencyRequestStatus(stale.tx_hash, 'cancelled', 'stale_dismissed', supabaseClient).catch(() => {});
+      }
+
+      setSenderPendingRequests(validReqs);
     } catch (err) {
       console.error('Failed to fetch sender pending requests:', err);
     }
-  }, [senderAddress]);
+  }, [senderAddress, supabaseClient]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

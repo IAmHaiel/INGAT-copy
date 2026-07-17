@@ -1,30 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
+import { fetchSentTransactions, fetchTransactionsByAddress } from '@/lib/supabase';
 import { fetchBucketBalances } from '@/lib/stellar/contract';
-import { fetchDepositEvents } from '@/lib/stellar/contract/events';
+import { useWalletContext } from '@/context/WalletContext';
+import { TransactionRow } from '@/lib/supabase/types';
 import { BucketState } from '@/types/bucket';
 
 export type BucketGoalStatus = 'locked' | 'unlocked' | 'withdrawn' | 'emergency_pending' | 'emergency_executed' | 'spending_only';
 
 export interface EnrichedBucketEntry {
-  id: string;
+  id: string; // original deposit tx hash
   receiverAddress: string;
   receiverName: string | null;
   bucketIdOnChain: number | null;
-
+  
   // Deposit details
   depositTxHash: string;
-  depositDate: number;
+  depositDate: number; // unix timestamp
   depositAmount: number;
   spendingAmount: number;
   goalAmount: number;
   splitRatio: number;
-  unlockDate: number;
+  unlockDate: number; // unix timestamp
 
   // Live on-chain balances
   liveSpendingBalance: number | null;
   liveGoalBalance: number | null;
-
-  // Withdrawal details
+  
+  // Withdrawal details (from Supabase correlation)
   goalWithdrawalTxHash: string | null;
   goalWithdrawalDate: number | null;
   spendingWithdrawalTxHash: string | null;
@@ -36,12 +38,13 @@ export interface EnrichedBucketEntry {
 }
 
 export const useBucketHistory = (senderAddress: string | null) => {
+  const { supabaseClient } = useWalletContext();
   const [entries, setEntries] = useState<EnrichedBucketEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchHistory = useCallback(async (silent = false) => {
-    if (!senderAddress) {
+    if (!senderAddress || !supabaseClient) {
       setEntries([]);
       return;
     }
@@ -50,20 +53,28 @@ export const useBucketHistory = (senderAddress: string | null) => {
     setError(null);
 
     try {
-      // 1. Fetch deposit events from on-chain
-      const deposits = await fetchDepositEvents(senderAddress);
-      const uniqueReceivers = Array.from(new Set(deposits.map((d) => d.receiver)));
+      // 1. Fetch all transactions sent by the sender
+      const allSent = await fetchSentTransactions(senderAddress, supabaseClient);
+      const deposits = allSent.filter((r) => r.type === 'deposit');
+      const uniqueReceivers = Array.from(new Set(deposits.map((d) => d.receiver_address)));
 
-      // 2. Fetch on-chain buckets for each receiver
-      const receiverBucketsMap: Record<string, BucketState[]> = {};
+      // 2. Fetch in parallel for each receiver: on-chain buckets and transaction history
+      const receiverDataMap: Record<
+        string,
+        { buckets: BucketState[]; txs: TransactionRow[] }
+      > = {};
 
       await Promise.all(
         uniqueReceivers.map(async (receiver) => {
           try {
-            const buckets = await fetchBucketBalances(receiver).catch(() => [] as BucketState[]);
-            receiverBucketsMap[receiver] = buckets;
-          } catch {
-            receiverBucketsMap[receiver] = [];
+            const [buckets, txs] = await Promise.all([
+              fetchBucketBalances(receiver).catch(() => [] as BucketState[]),
+              fetchTransactionsByAddress(receiver, supabaseClient).catch(() => [] as TransactionRow[]),
+            ]);
+            receiverDataMap[receiver] = { buckets, txs };
+          } catch (err) {
+            console.error(`Error loading data for receiver ${receiver}:`, err);
+            receiverDataMap[receiver] = { buckets: [], txs: [] };
           }
         })
       );
@@ -77,18 +88,28 @@ export const useBucketHistory = (senderAddress: string | null) => {
 
       const now = Math.floor(Date.now() / 1000);
 
-      // 4. Enrich each deposit event
+      // 4. Enrich each deposit row
       const enrichedEntries: EnrichedBucketEntry[] = deposits.map((deposit) => {
-        const receiver = deposit.receiver;
-        const data = receiverBucketsMap[receiver] || [];
-
-        const liveBucket = data.find(
-          (b) => b.unlockDate === deposit.unlockDate && b.sender === senderAddress
+        const receiver = deposit.receiver_address;
+        const data = receiverDataMap[receiver] || { buckets: [], txs: [] };
+        
+        // Find matching on-chain bucket by unlockDate
+        const liveBucket = data.buckets.find(
+          (b) => b.unlockDate === deposit.unlock_date && b.sender === senderAddress
         );
 
-        const spendingAllocated = deposit.amount * (deposit.splitRatio / 100);
-        const goalAllocated = deposit.amount - spendingAllocated;
+        // Find matching withdrawals in Supabase by unlock_date correlation
+        const goalWithdrawal = data.txs.find(
+          (t) => t.type === 'withdraw_goal' && t.unlock_date === deposit.unlock_date
+        );
+        const spendingWithdrawal = data.txs.find(
+          (t) => t.type === 'withdraw_spending' && t.unlock_date === deposit.unlock_date
+        );
 
+        const spendingAllocated = Number(deposit.amount) * ((deposit.split_ratio ?? 100) / 100);
+        const goalAllocated = Number(deposit.amount) - spendingAllocated;
+
+        // Compute status
         let status: BucketGoalStatus = 'spending_only';
         if (goalAllocated > 0) {
           if (liveBucket) {
@@ -99,15 +120,11 @@ export const useBucketHistory = (senderAddress: string | null) => {
             } else {
               status = 'unlocked';
             }
-            if (liveBucket.emergencyRequest) {
-              if (liveBucket.emergencyRequest.status === 'Pending') {
-                status = 'emergency_pending';
-              } else if (liveBucket.emergencyRequest.status === 'Executed') {
-                status = 'emergency_executed';
-              }
-            }
           } else {
-            if (deposit.unlockDate && now < deposit.unlockDate) {
+            // Fallback to Supabase data if blockchain simulation failed or key expired
+            if (goalWithdrawal) {
+              status = 'withdrawn';
+            } else if (deposit.unlock_date && now < deposit.unlock_date) {
               status = 'locked';
             } else {
               status = 'unlocked';
@@ -116,29 +133,29 @@ export const useBucketHistory = (senderAddress: string | null) => {
         }
 
         return {
-          id: deposit.id,
+          id: deposit.tx_hash,
           receiverAddress: receiver,
           receiverName: contactMap.get(receiver) || null,
           bucketIdOnChain: liveBucket ? liveBucket.id : null,
-
-          depositTxHash: deposit.id,
-          depositDate: deposit.timestamp,
-          depositAmount: deposit.amount,
+          
+          depositTxHash: deposit.tx_hash,
+          depositDate: Math.floor(new Date(deposit.created_at).getTime() / 1000),
+          depositAmount: Number(deposit.amount),
           spendingAmount: spendingAllocated,
           goalAmount: goalAllocated,
-          splitRatio: deposit.splitRatio,
-          unlockDate: deposit.unlockDate ?? 0,
+          splitRatio: deposit.split_ratio ?? 100,
+          unlockDate: deposit.unlock_date ?? 0,
 
           liveSpendingBalance: liveBucket ? liveBucket.spendingBalance : null,
           liveGoalBalance: liveBucket ? liveBucket.goalBalance : null,
 
-          goalWithdrawalTxHash: liveBucket && liveBucket.goalBalance === 0 ? deposit.id : null,
-          goalWithdrawalDate: null,
-          spendingWithdrawalTxHash: null,
-          spendingWithdrawalDate: null,
+          goalWithdrawalTxHash: goalWithdrawal ? goalWithdrawal.tx_hash : null,
+          goalWithdrawalDate: goalWithdrawal ? Math.floor(new Date(goalWithdrawal.created_at).getTime() / 1000) : null,
+          spendingWithdrawalTxHash: spendingWithdrawal ? spendingWithdrawal.tx_hash : null,
+          spendingWithdrawalDate: spendingWithdrawal ? Math.floor(new Date(spendingWithdrawal.created_at).getTime() / 1000) : null,
 
           status,
-          goalLabel: deposit.goalLabel ?? null,
+          goalLabel: deposit.goal_label ?? null,
         };
       });
 
@@ -149,7 +166,7 @@ export const useBucketHistory = (senderAddress: string | null) => {
     } finally {
       if (!silent) setIsLoading(false);
     }
-  }, [senderAddress]);
+  }, [senderAddress, supabaseClient]);
 
   useEffect(() => {
     let active = true;
@@ -163,7 +180,7 @@ export const useBucketHistory = (senderAddress: string | null) => {
       if (active) {
         fetchHistory(true);
       }
-    }, 15000);
+    }, 5000);
 
     return () => {
       active = false;

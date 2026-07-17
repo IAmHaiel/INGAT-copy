@@ -12,6 +12,14 @@ jest.mock('@/lib/stellar/freighter', () => ({
   signTxWithFreighter: jest.fn(),
 }));
 
+jest.mock('@/lib/supabase', () => ({
+  insertTransaction: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('@/context/WalletContext', () => ({
+  useWalletContext: () => ({ supabaseClient: null }),
+}));
+
 import { buildDepositTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
 
