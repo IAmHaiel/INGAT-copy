@@ -125,7 +125,7 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
       })
     );
     // DEBUG: log final values before returning
-    console.warn('[INGAT_FINAL] buckets:', bucketsWithRelease.map(b => ({ id: b.id, appr: b.approvalRequired, req: b._reqFetched, hasIs: '_isApprovalBucket' in b })));
+    console.warn('[INGAT_FINAL] addr:', receiverAddress, 'count:', bucketsWithRelease.length, 'buckets:', bucketsWithRelease.map(b => ({ id: b.id, appr: b.approvalRequired, req: b._reqFetched })));
     return bucketsWithRelease;
   } catch (err) {
     console.error('Error fetching bucket balances:', err);
