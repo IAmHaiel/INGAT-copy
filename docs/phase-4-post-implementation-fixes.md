@@ -95,10 +95,12 @@ Where `localApprovalRequired` is fetched directly from the contract (always corr
 
 ## Fix 6: Bucket List Order
 
-**Commit:** `0d42153`  
+**Commits:** `0d42153`, `5d22c23`  
 **Issue:** Latest deposits appeared at the bottom of the list (ascending ID order). Both sender and receiver dashboards showed oldest buckets first.
 
-**Fix:** Added `.reverse()` to the `fetchBucketBalances` return value. Latest bucket (highest ID) now appears at the top on both dashboards.
+**Fix:** Added `[...bucketsWithRelease].reverse()` to the `fetchBucketBalances` return value. Latest bucket (highest ID) now appears at the top on both dashboards.
+
+**Note on mutation bug:** The first attempt used `return bucketsWithRelease.reverse()`. While `bucketsWithRelease` is a local variable, mutating it in place via `.reverse()` triggered a browser-level side effect that broke Freighter's authentication flow — the "Connect Wallet" button auto-logged in without showing the authorization popup. Switching to the non-mutating `[...arr].reverse()` pattern (creates a copy, reverses the copy) resolved it. For async functions returning arrays, prefer non-mutating operations to avoid unexpected runtime side effects.
 
 ---
 
@@ -135,7 +137,7 @@ Where `localApprovalRequired` is fetched directly from the contract (always corr
 | `contracts/ingat-vault/src/withdraw.rs` | 1 |
 | `apps/web/lib/stellar/client.ts` | 1 |
 | `apps/web/lib/utils/constants.ts` | 1 |
-| `apps/web/lib/stellar/contract/queries.ts` | 1 |
+| `apps/web/lib/stellar/contract/queries.ts` | 2 |
 | `apps/web/components/ui/buckets/GoalBucketCard.tsx` | 4 |
 | `apps/web/components/ui/dashboard/SenderBucketCard.tsx` | 1 |
 | `apps/web/.env.example` | 1 |
