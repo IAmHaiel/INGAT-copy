@@ -112,7 +112,7 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
         return { ...bucket, approvalRequired: !!isApproval, _canRequestRelease: false };
       })
     );
-    return bucketsWithRelease;
+    return bucketsWithRelease.reverse();
   } catch (err) {
     console.error('Error fetching bucket balances:', err);
     throw err;
