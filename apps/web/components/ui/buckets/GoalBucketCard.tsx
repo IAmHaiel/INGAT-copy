@@ -10,7 +10,7 @@ import { getContactName } from '@/lib/utils/contacts';
 
 import { ReleaseRequest } from '@/types/bucket';
 import { buildRequestReleaseTx, submitTransaction } from '@/lib/stellar/contract';
-import { fetchReleaseRequest } from '@/lib/stellar/contract/queries';
+import { fetchReleaseRequest, fetchBucketBalances } from '@/lib/stellar/contract/queries';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
 import { useWalletContext } from '@/context/WalletContext';
 import { toast } from 'sonner';
@@ -111,10 +111,23 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   const hasBalance = balance > 0;
   const isEmergencyPending = emergencyRequest && emergencyRequest.status === 'Pending';
 
-  // Local handler for Request Release — bypasses prop passing issues
+  // Direct contract reads — bypasses the broken prop pipeline
   const { publicKey } = useWalletContext();
   const [localReleaseLoading, setLocalReleaseLoading] = useState(false);
   const [localReleaseStatus, setLocalReleaseStatus] = useState<'Pending' | 'Approved' | 'Executed' | null>(null);
+  const [localApprovalRequired, setLocalApprovalRequired] = useState(false);
+  // On mount, read approval_required directly from the contract
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const buckets = await fetchBucketBalances(receiverAddress || '');
+        const mine = buckets.find(b => b.id === bucketId);
+        if (active && mine) setLocalApprovalRequired(mine.approvalRequired);
+      } catch {}
+    })();
+    return () => { active = false; };
+  }, [receiverAddress, bucketId]);
   // Poll release request status from contract directly
   useEffect(() => {
     let active = true;
@@ -155,7 +168,9 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   // bucket data loses field values between fetchBucketBalances and this component.
   // Hardcoding true for Phase 4; TimeOnly buckets get a functionless "Request Release" button
   // (contract rejects with BucketNotTimeAndApproval). This keeps the core feature working.
-  const effectiveApprovalRequired = true;
+  // True source of approval mode: fetched directly from contract on mount.
+  // Falls back to the prop value (which may be unreliable) if contract fetch hasn't completed yet.
+  const effectiveApprovalRequired = localApprovalRequired || approvalRequired;
 
   return (
     <div className={`p-5 rounded-xl border shadow-md space-y-4 transition-all ${isLocked ? 'bg-amber-50/40 border-amber-200/50' : 'bg-white border-outline-variant'}`}>
