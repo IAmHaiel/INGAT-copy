@@ -273,7 +273,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
                 <ShieldAlert size={16} />
                 Request Early Access
               </button>
-              {approvalRequired && (
+              {approvalRequired && !isLocked && (
                 <button
                   onClick={onRequestRelease}
                   disabled={!hasBalance || isReleaseLoading}
