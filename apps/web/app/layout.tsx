@@ -36,7 +36,7 @@ export default function RootLayout({
             closeButton
             toastOptions={{
               classNames: {
-                toast: "font-sans shadow-xl rounded-xl border border-outline-variant !p-4 !pb-7 !pr-16 relative overflow-hidden",
+                toast: "font-sans shadow-xl rounded-xl border border-outline-variant !p-4 !pb-7 !pr-16 relative",
                 title: "text-sm font-bold text-on-surface",
                 description: "text-xs font-medium text-on-surface-variant",
                 actionButton: "bg-[#005145] hover:bg-[#0f6b5c] text-white font-bold rounded-lg px-3 py-1.5 transition-colors cursor-pointer border-0",
@@ -46,6 +46,38 @@ export default function RootLayout({
               }
             }}
           />
+          {/* Close button override — loaded last for cascade priority */}
+          <style>{`
+            [data-sonner-toast] [data-close-button] {
+              position: absolute !important;
+              top: 14px !important;
+              right: 18px !important;
+              left: auto !important;
+              bottom: auto !important;
+              transform: none !important;
+              background: rgba(0,0,0,0.1) !important;
+              border: none !important;
+              border-radius: 8px !important;
+              cursor: pointer !important;
+              color: currentColor !important;
+              opacity: 1 !important;
+              transition: all 0.2s !important;
+              padding: 8px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              height: 38px !important;
+              width: 38px !important;
+            }
+            [data-sonner-toast] [data-close-button]:hover {
+              background: rgba(0,0,0,0.2) !important;
+            }
+            [data-sonner-toast] [data-close-button] svg {
+              width: 22px !important;
+              height: 22px !important;
+              stroke-width: 4 !important;
+            }
+          `}</style>
         </WalletProvider>
       </body>
     </html>
