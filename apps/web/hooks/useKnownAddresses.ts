@@ -1,22 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchSentTransactions } from '@/lib/supabase';
-import { useWalletContext } from '@/context/WalletContext';
+import { fetchDepositEvents } from '@/lib/stellar/contract/events';
 
 export const useKnownAddresses = (senderAddress: string | null) => {
-  const { supabaseClient } = useWalletContext();
   const [knownAddresses, setKnownAddresses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const fetchAddresses = useCallback(async () => {
-    if (!supabaseClient || !senderAddress) {
+    if (!senderAddress) {
       setKnownAddresses([]);
       return;
     }
     setIsLoading(true);
     try {
-      const rows = await fetchSentTransactions(senderAddress, supabaseClient);
+      const events = await fetchDepositEvents(senderAddress);
       const uniqueReceivers = Array.from(
-        new Set(rows.map((r) => r.receiver_address).filter(Boolean))
+        new Set(events.map((r) => r.receiver).filter(Boolean))
       );
       setKnownAddresses(uniqueReceivers);
     } catch (err) {
@@ -25,7 +23,7 @@ export const useKnownAddresses = (senderAddress: string | null) => {
     } finally {
       setIsLoading(false);
     }
-  }, [senderAddress, supabaseClient]);
+  }, [senderAddress]);
 
   useEffect(() => {
     let active = true;

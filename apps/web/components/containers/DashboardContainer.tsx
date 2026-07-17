@@ -10,7 +10,6 @@ import { usePagination } from '@/hooks/usePagination';
 import { useSentDashboardData } from '@/hooks/composed/useSentDashboardData';
 import { useReceivedDashboardData } from '@/hooks/composed/useReceivedDashboardData';
 import { useTxSuccessToast, useTxErrorToast } from '@/hooks/useTransactionToast';
-import { getActiveEmergencyRequest } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 // UI components
@@ -29,17 +28,13 @@ export default function DashboardContainer() {
     isInitializing,
     connect,
     disconnect,
-    isAuthenticating,
-    authError,
-    authenticate,
-    supabaseClient,
   } = useWalletContext();
 
   const [tab, setTab] = useUrlTab<'sent' | 'received' | 'alerts'>('sent', ['sent', 'received', 'alerts']);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const { priceUsd } = useXlmPrice();
 
-  const sentData = useSentDashboardData(publicKey, supabaseClient);
+  const sentData = useSentDashboardData(publicKey);
   const receivedData = useReceivedDashboardData(publicKey);
 
   const sentPagination = usePagination(sentData.sentBuckets, 5);
@@ -191,12 +186,7 @@ export default function DashboardContainer() {
             onWithdrawGoal={handleWithdrawSenderGoal}
             onCancelEmergency={async (receiverAddr, bId) => {
               try {
-                const req = await getActiveEmergencyRequest(receiverAddr, bId, supabaseClient);
-                if (req) {
-                  await sentData.senderCancelEmergency(receiverAddr, bId, req.tx_hash);
-                } else {
-                  toast.error('No active emergency request found in database.');
-                }
+                await sentData.senderCancelEmergency(receiverAddr, bId);
               } catch (err) {
                 console.error(err);
                 toast.error('Failed to cancel emergency request.');
@@ -225,10 +215,6 @@ export default function DashboardContainer() {
             receiverWithdrawError={receivedData.receiverWithdrawError}
             isReceiverEmergencyLoading={receivedData.isReceiverEmergencyLoading}
             priceUsd={priceUsd}
-            isAuthenticating={isAuthenticating}
-            authError={authError}
-            supabaseClient={supabaseClient}
-            onSign={() => publicKey && authenticate(publicKey)}
             onRefreshBalances={() => receivedData.refreshBalances(false)}
             onWithdrawSpending={handleWithdrawSpending}
             onWithdrawGoal={handleWithdrawGoal}
@@ -245,12 +231,7 @@ export default function DashboardContainer() {
             senderPendingRequests={sentData.senderPendingRequests}
             onSenderCancel={async (receiverAddr, bId) => {
               try {
-                const req = await getActiveEmergencyRequest(receiverAddr, bId, supabaseClient);
-                if (req) {
-                  await sentData.senderCancelEmergency(receiverAddr, bId, req.tx_hash);
-                } else {
-                  toast.error('No active emergency request found in database.');
-                }
+                await sentData.senderCancelEmergency(receiverAddr, bId);
               } catch (err) {
                 console.error(err);
                 toast.error('Failed to cancel emergency request.');

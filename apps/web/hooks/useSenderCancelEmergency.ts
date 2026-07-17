@@ -5,19 +5,16 @@ import {
   fetchBucketBalances,
 } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
-import { updateEmergencyRequestStatus } from '@/lib/supabase';
-import { useWalletContext } from '@/context/WalletContext';
 
 export const useSenderCancelEmergency = (
   senderAddress: string | null,
   onSuccess?: (hash: string) => void
 ) => {
-  const { supabaseClient } = useWalletContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
-  const cancelEmergency = async (receiverAddress: string, bucketId: number, activeTxHash: string) => {
+  const cancelEmergency = async (receiverAddress: string, bucketId: number) => {
     if (!senderAddress) {
       setError('Wallet not connected');
       return;
@@ -33,9 +30,6 @@ export const useSenderCancelEmergency = (
       const bucketExists = buckets.some((b) => b.id === bucketId);
 
       if (!bucketExists) {
-        // Bucket doesn't exist on current contract (likely stale data after redeploy).
-        // Auto-dismiss the stale Supabase record.
-        await updateEmergencyRequestStatus(activeTxHash, 'cancelled', 'stale_dismissed', supabaseClient);
         if (onSuccess) {
           onSuccess('stale_dismissed');
         }
@@ -46,8 +40,6 @@ export const useSenderCancelEmergency = (
       const signedXDR = await signTxWithFreighter(unsignedXDR, senderAddress);
       const hash = await submitTransaction(signedXDR);
       setTxHash(hash);
-
-      await updateEmergencyRequestStatus(activeTxHash, 'cancelled', hash, supabaseClient);
 
       if (typeof window !== 'undefined') {
         localStorage.setItem(`cooldown_cancel_${receiverAddress}_${bucketId}`, Math.floor(Date.now() / 1000).toString());

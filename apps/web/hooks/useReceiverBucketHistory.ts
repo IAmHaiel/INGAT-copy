@@ -1,17 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchTransactionsByAddress } from '@/lib/supabase';
 import { fetchBucketBalances } from '@/lib/stellar/contract';
-import { useWalletContext } from '@/context/WalletContext';
+import { fetchReceivedDepositEvents } from '@/lib/stellar/contract/events';
 import { EnrichedBucketEntry, BucketGoalStatus } from './useBucketHistory';
 
 export const useReceiverBucketHistory = (receiverAddress: string | null) => {
-  const { supabaseClient } = useWalletContext();
   const [entries, setEntries] = useState<EnrichedBucketEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchHistory = useCallback(async (silent = false) => {
-    if (!receiverAddress || !supabaseClient) {
+    if (!receiverAddress) {
       setEntries([]);
       return;
     }
@@ -20,13 +18,8 @@ export const useReceiverBucketHistory = (receiverAddress: string | null) => {
     setError(null);
 
     try {
-      // 1. Fetch all transactions related to this address
-      const allTxs = await fetchTransactionsByAddress(receiverAddress, supabaseClient);
-      
-      // Filter for deposits sent TO the user by others
-      const incomingDeposits = allTxs.filter(
-        (r) => r.type === 'deposit' && r.receiver_address === receiverAddress && r.sender_address !== receiverAddress
-      );
+      // 1. Fetch received deposit events from on-chain
+      const incomingDeposits = await fetchReceivedDepositEvents(receiverAddress);
 
       // 2. Fetch on-chain live buckets for the receiver
       const liveBuckets = await fetchBucketBalances(receiverAddress).catch(() => []);
@@ -40,27 +33,17 @@ export const useReceiverBucketHistory = (receiverAddress: string | null) => {
 
       const now = Math.floor(Date.now() / 1000);
 
-      // 4. Enrich each deposit row
+      // 4. Enrich each deposit event
       const enrichedEntries: EnrichedBucketEntry[] = incomingDeposits.map((deposit) => {
-        const sender = deposit.sender_address;
-        
-        // Find matching on-chain bucket by unlockDate
+        const sender = deposit.sender;
+
         const liveBucket = liveBuckets.find(
-          (b) => b.unlockDate === deposit.unlock_date && b.sender === sender
+          (b) => b.unlockDate === deposit.unlockDate && b.sender === sender
         );
 
-        // Find matching withdrawals in the transaction log
-        const goalWithdrawal = allTxs.find(
-          (t) => t.type === 'withdraw_goal' && t.unlock_date === deposit.unlock_date && t.sender_address === receiverAddress
-        );
-        const spendingWithdrawal = allTxs.find(
-          (t) => t.type === 'withdraw_spending' && t.unlock_date === deposit.unlock_date && t.sender_address === receiverAddress
-        );
+        const spendingAllocated = deposit.amount * (deposit.splitRatio / 100);
+        const goalAllocated = deposit.amount - spendingAllocated;
 
-        const spendingAllocated = Number(deposit.amount) * ((deposit.split_ratio ?? 100) / 100);
-        const goalAllocated = Number(deposit.amount) - spendingAllocated;
-
-        // Compute status
         let status: BucketGoalStatus = 'spending_only';
         if (goalAllocated > 0) {
           if (liveBucket) {
@@ -71,10 +54,15 @@ export const useReceiverBucketHistory = (receiverAddress: string | null) => {
             } else {
               status = 'unlocked';
             }
+            if (liveBucket.emergencyRequest) {
+              if (liveBucket.emergencyRequest.status === 'Pending') {
+                status = 'emergency_pending';
+              } else if (liveBucket.emergencyRequest.status === 'Executed') {
+                status = 'emergency_executed';
+              }
+            }
           } else {
-            if (goalWithdrawal) {
-              status = 'withdrawn';
-            } else if (deposit.unlock_date && now < deposit.unlock_date) {
+            if (deposit.unlockDate && now < deposit.unlockDate) {
               status = 'locked';
             } else {
               status = 'unlocked';
@@ -83,30 +71,29 @@ export const useReceiverBucketHistory = (receiverAddress: string | null) => {
         }
 
         return {
-          id: deposit.tx_hash,
-          // Reuse receiverAddress field to contain the Sender address for UI consistency
+          id: deposit.id,
           receiverAddress: sender,
           receiverName: contactMap.get(sender) || null,
           bucketIdOnChain: liveBucket ? liveBucket.id : null,
-          
-          depositTxHash: deposit.tx_hash,
-          depositDate: Math.floor(new Date(deposit.created_at).getTime() / 1000),
-          depositAmount: Number(deposit.amount),
+
+          depositTxHash: deposit.id,
+          depositDate: deposit.timestamp,
+          depositAmount: deposit.amount,
           spendingAmount: spendingAllocated,
           goalAmount: goalAllocated,
-          splitRatio: deposit.split_ratio ?? 100,
-          unlockDate: deposit.unlock_date ?? 0,
+          splitRatio: deposit.splitRatio ?? 100,
+          unlockDate: deposit.unlockDate ?? 0,
 
           liveSpendingBalance: liveBucket ? liveBucket.spendingBalance : null,
           liveGoalBalance: liveBucket ? liveBucket.goalBalance : null,
 
-          goalWithdrawalTxHash: goalWithdrawal ? goalWithdrawal.tx_hash : null,
-          goalWithdrawalDate: goalWithdrawal ? Math.floor(new Date(goalWithdrawal.created_at).getTime() / 1000) : null,
-          spendingWithdrawalTxHash: spendingWithdrawal ? spendingWithdrawal.tx_hash : null,
-          spendingWithdrawalDate: spendingWithdrawal ? Math.floor(new Date(spendingWithdrawal.created_at).getTime() / 1000) : null,
+          goalWithdrawalTxHash: null,
+          goalWithdrawalDate: null,
+          spendingWithdrawalTxHash: null,
+          spendingWithdrawalDate: null,
 
           status,
-          goalLabel: deposit.goal_label ?? null,
+          goalLabel: deposit.goalLabel ?? null,
         };
       });
 
@@ -117,7 +104,7 @@ export const useReceiverBucketHistory = (receiverAddress: string | null) => {
     } finally {
       if (!silent) setIsLoading(false);
     }
-  }, [receiverAddress, supabaseClient]);
+  }, [receiverAddress]);
 
   useEffect(() => {
     let active = true;
@@ -131,7 +118,7 @@ export const useReceiverBucketHistory = (receiverAddress: string | null) => {
       if (active) {
         fetchHistory(true);
       }
-    }, 5000);
+    }, 15000);
 
     return () => {
       active = false;

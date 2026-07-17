@@ -3,9 +3,8 @@ import { useSenderBuckets } from '@/hooks/useSenderBuckets';
 import { useSenderCancelEmergency } from '@/hooks/useSenderCancelEmergency';
 import { useSenderPendingRequests } from '@/hooks/useSenderPendingRequests';
 import { toast } from 'sonner';
-import { SupabaseClient } from '@supabase/supabase-js';
 
-export const useSentDashboardData = (publicKey: string | null, supabaseClient: SupabaseClient | null) => {
+export const useSentDashboardData = (publicKey: string | null) => {
   const { allocations: sentAllocations, isLoading: sentHistoryLoading, refreshHistory: refreshSentHistory } = useAllocationHistory(publicKey);
   const {
     buckets: sentBuckets,
@@ -21,7 +20,7 @@ export const useSentDashboardData = (publicKey: string | null, supabaseClient: S
   const {
     senderPendingRequests,
     refreshSenderPendingRequests,
-  } = useSenderPendingRequests(publicKey, supabaseClient);
+  } = useSenderPendingRequests(publicKey);
 
   const {
     cancelEmergency: senderCancelEmergency,

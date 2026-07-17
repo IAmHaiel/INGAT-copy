@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchSentTransactions } from '@/lib/supabase';
 import { fetchBucketBalances, buildWithdrawGoalSenderTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
-import { insertTransaction } from '@/lib/supabase';
-import { useWalletContext } from '@/context/WalletContext';
+import { fetchDepositEvents } from '@/lib/stellar/contract/events';
 import { BucketState } from '@/types/bucket';
 
 export interface SenderBucketState extends BucketState {
@@ -12,7 +10,6 @@ export interface SenderBucketState extends BucketState {
 }
 
 export const useSenderBuckets = (senderAddress: string | null) => {
-  const { supabaseClient } = useWalletContext();
   const [buckets, setBuckets] = useState<SenderBucketState[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +19,7 @@ export const useSenderBuckets = (senderAddress: string | null) => {
   const [txHash, setTxHash] = useState<string | null>(null);
 
   const fetchBuckets = useCallback(async (silent = false) => {
-    if (!supabaseClient || !senderAddress) {
+    if (!senderAddress) {
       setBuckets([]);
       return;
     }
@@ -31,30 +28,30 @@ export const useSenderBuckets = (senderAddress: string | null) => {
     if (!silent) setError(null);
 
     try {
-      // 1. Fetch transaction history to get all unique receiver addresses
-      const rows = await fetchSentTransactions(senderAddress, supabaseClient);
-      const deposits = rows.filter((r) => r.type === 'deposit');
-      const uniqueReceivers = Array.from(new Set(deposits.map((d) => d.receiver_address)));
+      // Get receiver addresses from on-chain deposit events
+      const events = await fetchDepositEvents(senderAddress);
+      const uniqueReceivers = Array.from(new Set(events.map((e) => e.receiver)));
 
-      // 2. Fetch bucket balances on-chain for each receiver address
+      // Build a map of deposits keyed by receiver+unlockDate for goalLabel lookup
+      const depositMap = new Map<string, string | null>();
+      for (const event of events) {
+        depositMap.set(`${event.receiver}_${event.unlockDate}`, event.goalLabel);
+      }
+
       const allSenderBuckets: SenderBucketState[] = [];
-      
+
       await Promise.all(
         uniqueReceivers.map(async (receiver) => {
           try {
             const receiverBuckets = await fetchBucketBalances(receiver);
-            // 3. Filter for buckets created by this sender with positive balance
             const senderMatches = receiverBuckets
               .filter((b) => b.sender === senderAddress && (b.spendingBalance > 0 || b.goalBalance > 0))
               .map((b) => {
-                // Match deposit record to get goal_label
-                const depositRecord = deposits.find(
-                  (d) => d.receiver_address === receiver && d.unlock_date === b.unlockDate
-                );
+                const goalLabel = depositMap.get(`${receiver}_${b.unlockDate}`) ?? null;
                 return {
                   ...b,
                   receiverAddress: receiver,
-                  goalLabel: depositRecord?.goal_label ?? null,
+                  goalLabel,
                 };
               });
             allSenderBuckets.push(...senderMatches);
@@ -64,7 +61,6 @@ export const useSenderBuckets = (senderAddress: string | null) => {
         })
       );
 
-      // Sort by unlockDate
       allSenderBuckets.sort((a, b) => b.unlockDate - a.unlockDate);
       setBuckets(allSenderBuckets);
     } catch (err) {
@@ -73,9 +69,9 @@ export const useSenderBuckets = (senderAddress: string | null) => {
     } finally {
       if (!silent) setIsLoading(false);
     }
-  }, [senderAddress, supabaseClient]);
+  }, [senderAddress]);
 
-  const withdrawSenderGoal = async (receiverAddress: string, bucketId: number, amount: number, unlockDate?: number): Promise<boolean> => {
+  const withdrawSenderGoal = async (receiverAddress: string, bucketId: number, amount: number, _unlockDate?: number): Promise<boolean> => {
     if (!senderAddress) {
       setWithdrawError('Wallet not connected');
       return false;
@@ -96,20 +92,6 @@ export const useSenderBuckets = (senderAddress: string | null) => {
       const hash = await submitTransaction(signedXDR);
       setTxHash(hash);
 
-      // Persist to Supabase
-      await insertTransaction({
-        tx_hash: hash,
-        type: 'withdraw_goal',
-        sender_address: senderAddress,
-        receiver_address: receiverAddress,
-        amount,
-        spending_amount: null,
-        goal_amount: amount,
-        split_ratio: null,
-        unlock_date: unlockDate || null,
-      }, supabaseClient);
-
-      // Refresh buckets
       await fetchBuckets(true);
       return true;
     } catch (err) {
@@ -133,7 +115,7 @@ export const useSenderBuckets = (senderAddress: string | null) => {
       if (active) {
         fetchBuckets(true);
       }
-    }, 5000);
+    }, 15000);
 
     return () => {
       active = false;

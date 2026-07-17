@@ -1,8 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useSenderBuckets } from '@/hooks/useSenderBuckets';
 
-const mockSupabaseClient = {};
-
 // Mock dependencies
 jest.mock('@/lib/stellar/contract', () => ({
   fetchBucketBalances: jest.fn(),
@@ -14,13 +12,8 @@ jest.mock('@/lib/stellar/freighter', () => ({
   signTxWithFreighter: jest.fn(),
 }));
 
-jest.mock('@/lib/supabase', () => ({
-  fetchSentTransactions: jest.fn(),
-  insertTransaction: jest.fn().mockResolvedValue(undefined),
-}));
-
-jest.mock('@/context/WalletContext', () => ({
-  useWalletContext: () => ({ supabaseClient: mockSupabaseClient }),
+jest.mock('@/lib/stellar/contract/events', () => ({
+  fetchDepositEvents: jest.fn(),
 }));
 
 jest.mock('@/hooks/useXlmPrice', () => ({
@@ -29,7 +22,7 @@ jest.mock('@/hooks/useXlmPrice', () => ({
 
 import { fetchBucketBalances, buildWithdrawGoalSenderTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
-import { fetchSentTransactions } from '@/lib/supabase';
+import { fetchDepositEvents } from '@/lib/stellar/contract/events';
 
 const SENDER_ADDRESS = 'GBZXN7PIRZGNMHGA7MUUUF4GWUQESTCDVWAYQOTNCFYMZ7GF3VG7DKIW';
 const RECEIVER_ADDRESS = 'GDXKVV5BGBDRNSJDCZAEX3XMXWD6Z2WBCHBCT55ZFWG6R2RL5MMTZR3Y';
@@ -40,7 +33,6 @@ describe('useSenderBuckets', () => {
   });
 
   it('initializes with default empty state', () => {
-    (fetchSentTransactions as jest.Mock).mockResolvedValue([]);
     const { result } = renderHook(() => useSenderBuckets(null));
 
     expect(result.current.buckets).toEqual([]);
@@ -49,12 +41,16 @@ describe('useSenderBuckets', () => {
   });
 
   it('loads sender buckets successfully', async () => {
-    const mockTxHistory = [
+    const mockEvents = [
       {
-        type: 'deposit',
-        sender_address: SENDER_ADDRESS,
-        receiver_address: RECEIVER_ADDRESS,
+        id: 'deposit-tx-hash',
+        sender: SENDER_ADDRESS,
+        receiver: RECEIVER_ADDRESS,
         amount: 150,
+        splitRatio: 60,
+        unlockDate: Math.floor(Date.now() / 1000) + 1000,
+        timestamp: Math.floor(Date.now() / 1000),
+        goalLabel: null,
       },
     ];
 
@@ -68,7 +64,7 @@ describe('useSenderBuckets', () => {
       },
     ];
 
-    (fetchSentTransactions as jest.Mock).mockResolvedValue(mockTxHistory);
+    (fetchDepositEvents as jest.Mock).mockResolvedValue(mockEvents);
     (fetchBucketBalances as jest.Mock).mockResolvedValue(mockBalances);
 
     const { result } = renderHook(() => useSenderBuckets(SENDER_ADDRESS));
@@ -78,7 +74,7 @@ describe('useSenderBuckets', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(fetchSentTransactions).toHaveBeenCalledWith(SENDER_ADDRESS, mockSupabaseClient);
+    expect(fetchDepositEvents).toHaveBeenCalledWith(SENDER_ADDRESS);
     expect(fetchBucketBalances).toHaveBeenCalledWith(RECEIVER_ADDRESS);
     expect(result.current.buckets.length).toBe(1);
     expect(result.current.buckets[0].receiverAddress).toBe(RECEIVER_ADDRESS);

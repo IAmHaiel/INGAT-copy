@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Clock, Ban, CheckCircle2 } from 'lucide-react';
-import { EmergencyRequestRow } from '@/lib/supabase';
 import { BucketState } from '@/types/bucket';
 import { formatAmount, truncateAddress } from '@/lib/utils/format';
 import { getContactName } from '@/lib/utils/contacts';
 
+interface PendingRequest {
+  receiver_address: string;
+  bucket_id: number;
+  amount: number;
+  cooldown_ends_at: number;
+}
+
 interface EarlyAccessViewProps {
-  senderPendingRequests: EmergencyRequestRow[];
+  senderPendingRequests: PendingRequest[];
   onSenderCancel: (receiverAddress: string, bucketId: number) => void;
   isSenderCancelLoading: boolean;
   getGoalLabel?: (receiverAddress: string, bucketId: number) => string | null;
@@ -105,7 +111,7 @@ export default function EarlyAccessView({
                 {senderPendingRequests.map((req) => {
                   const isCooldownDone = now >= req.cooldown_ends_at;
                   return (
-                    <div key={req.tx_hash} className="border border-amber-200 bg-amber-50/50 rounded-xl p-4 flex flex-col justify-between gap-4 shadow-sm">
+                    <div key={`${req.receiver_address}_${req.bucket_id}`} className="border border-amber-200 bg-amber-50/50 rounded-xl p-4 flex flex-col justify-between gap-4 shadow-sm">
                       <div className="space-y-2">
                         <div className="flex justify-between items-start">
                           <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">

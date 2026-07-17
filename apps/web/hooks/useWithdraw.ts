@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { buildWithdrawSpendingTx, buildWithdrawGoalTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
-import { insertTransaction } from '@/lib/supabase';
-import { useWalletContext } from '@/context/WalletContext';
 
 export const useWithdraw = (receiverAddress: string | null, onSuccess?: (hash: string) => void) => {
-  const { supabaseClient } = useWalletContext();
   const [isWithdrawing, setIsWithdrawing] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
-  const withdraw = async (bucketId: number, type: 'spending' | 'goal', amount: number, unlockDate?: number) => {
+  const withdraw = async (bucketId: number, type: 'spending' | 'goal', amount: number, _unlockDate?: number) => {
     if (!receiverAddress) {
       setError('Wallet not connected');
       return;
@@ -36,22 +33,6 @@ export const useWithdraw = (receiverAddress: string | null, onSuccess?: (hash: s
       const signedXDR = await signTxWithFreighter(unsignedXDR, receiverAddress);
       const hash = await submitTransaction(signedXDR);
       setTxHash(hash);
-
-      // Persist withdrawal to Supabase (fire-and-forget)
-      const txType = type === 'spending' ? 'withdraw_spending' : 'withdraw_goal';
-      insertTransaction({
-        tx_hash: hash,
-        type: txType,
-        sender_address: receiverAddress,
-        receiver_address: receiverAddress,
-        amount,
-        spending_amount: type === 'spending' ? amount : null,
-        goal_amount: type === 'goal' ? amount : null,
-        split_ratio: null,
-        unlock_date: unlockDate || null,
-      }, supabaseClient).catch((err) => {
-        console.error('[useWithdraw] Supabase persistence failed:', err);
-      });
 
       if (onSuccess) {
         onSuccess(hash);
