@@ -272,15 +272,17 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             </button>
           ) : (
             <div className="space-y-2">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                disabled={!hasBalance || isEmergencyLoading}
-                className="w-full py-2.5 rounded-lg font-bold text-sm bg-secondary-container/10 text-secondary border border-secondary-container/20 hover:bg-secondary-container/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
-              >
-                <ShieldAlert size={16} />
-                Request Early Access
-              </button>
-              {effectiveApprovalRequired && !isLocked && (
+              {isLocked && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  disabled={!hasBalance || isEmergencyLoading}
+                  className="w-full py-2.5 rounded-lg font-bold text-sm bg-secondary-container/10 text-secondary border border-secondary-container/20 hover:bg-secondary-container/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <ShieldAlert size={16} />
+                  Request Early Access
+                </button>
+              )}
+              {!isLocked && (
                 <button
                   onClick={onRequestRelease}
                   disabled={!hasBalance || isReleaseLoading}
