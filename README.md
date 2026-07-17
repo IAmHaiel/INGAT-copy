@@ -12,7 +12,6 @@
 ![Stellar](https://img.shields.io/badge/Stellar-Soroban-7d00ff?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square)
 ![Rust](https://img.shields.io/badge/Rust-Smart_Contracts-b7410e?style=flat-square)
-![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ecf8e?style=flat-square)
 
 </div>
 
@@ -34,7 +33,7 @@ INGAT is a decentralized split-remittance protocol on Stellar/Soroban. When an O
 - **Native XLM transfers** via the Stellar token contract interface.
 - **Freighter wallet integration** for signing (`@stellar/freighter-api`).
 - **Transaction building/simulation** via `@stellar/stellar-sdk` and Soroban RPC.
-- **On-chain event emission** for deposit/withdrawal indexing, with off-chain Supabase persistence for transaction history and cross-device access.
+- **On-chain event emission** for deposit/withdrawal indexing, with on-chain event queries for transaction history.
 
 ## Target Users
 
@@ -53,7 +52,7 @@ Overseas Filipino Workers and their families — specifically households that re
 
 - **Frontend**: Next.js 16, React 19, TypeScript, App Router, Tailwind CSS v4.
 - **UI**: Reusable presentational components, Lucide icons.
-- **Backend**: Supabase Database, SQL Migrations, Row Level Security (RLS) policies.
+- **Backend**: Stellar RPC event indexing for transaction history.
 - **Blockchain**: Stellar, Soroban, Horizon, `@stellar/stellar-sdk`.
 - **Wallets**: Freighter Wallet, `@stellar/freighter-api`.
 - **Smart contracts**: Rust, `soroban-sdk`.
@@ -73,8 +72,8 @@ Overseas Filipino Workers and their families — specifically households that re
 
 1. Clone the repository:
    ```bash
-    git clone https://github.com/IAmHaiel/INGAT.git
-    cd INGAT
+    git clone https://github.com/IAmHaiel/INGAT-copy.git
+    cd INGAT-copy
    ```
 2. Install workspace dependencies:
    ```bash
@@ -83,7 +82,7 @@ Overseas Filipino Workers and their families — specifically households that re
 
 ### Local Development
 
-1. Configure environment variables inside `apps/web/.env.local`.
+1. Copy `apps/web/.env.example` to `apps/web/.env.local` and fill in the contract IDs and RPC endpoint.
 2. Start the Turbopack dev server:
    ```bash
    npm run dev
