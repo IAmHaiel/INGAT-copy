@@ -189,8 +189,8 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
       )}
 
       {localReleaseReq?.status === 'Approved' && (
-        <div className="bg-green-50 p-3 rounded-xl border border-green-200">
-          <p className="text-xs font-bold text-green-800 flex items-center gap-1.5">
+        <div className="bg-teal-50 p-3 rounded-xl border border-teal-200">
+          <p className="text-xs font-bold text-teal-800 flex items-center gap-1.5">
             <ShieldCheck size={16} />
             Release Approved
           </p>

@@ -310,14 +310,14 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
           ) : hasBalance && !isLocked && effectiveApprovalRequired && (releaseRequest?.status === 'Approved' || localReleaseStatus === 'Approved') ? (
             // TimeAndApproval bucket, release approved — withdraw
             <div className="space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-teal-700 bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-200">
                 <ShieldCheck size={14} />
                 Sender approved release — goal is unlocked
               </div>
               <button
                 onClick={() => setIsOpen(true)}
                 disabled={!hasBalance || isWithdrawing}
-                className="w-full py-2.5 rounded-lg font-bold text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 transition-all cursor-pointer border-0"
+                className="w-full py-2.5 rounded-lg font-bold text-sm bg-teal-50 hover:bg-teal-100 text-teal-700 transition-all cursor-pointer border-0"
               >
                 {isWithdrawing ? 'Processing...' : 'Withdraw Approved Release'}
               </button>
