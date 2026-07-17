@@ -16,7 +16,7 @@ export const buildDepositTx = async (
   const amountScVal = nativeToScVal(scaledAmount, { type: 'i128' });
   const splitRatioScVal = nativeToScVal(splitRatio, { type: 'u32' });
   const unlockDateScVal = nativeToScVal(BigInt(unlockDate), { type: 'u64' });
-  const approvalRequiredScVal = nativeToScVal(approvalRequired ? 1 : 0, { type: 'u32' });
+  const approvalRequiredScVal = nativeToScVal(approvalRequired);
 
   return buildContractCallXDR(
     senderAddress,
