@@ -104,12 +104,12 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
         if (isApproval && bucket.goalBalance > 0) {
           try {
             const releaseReq = await fetchReleaseRequest(receiverAddress, bucket.id);
-            return { ...bucket, approvalRequired: true, releaseRequest: releaseReq || undefined };
+            return { ...bucket, approvalRequired: true, releaseRequest: releaseReq ?? undefined, _canRequestRelease: true };
           } catch {
-            return { ...bucket, approvalRequired: true };
+            return { ...bucket, approvalRequired: true, _canRequestRelease: true };
           }
         }
-        return { ...bucket, approvalRequired: !!isApproval };
+        return { ...bucket, approvalRequired: !!isApproval, _canRequestRelease: false };
       })
     );
     return bucketsWithRelease;
