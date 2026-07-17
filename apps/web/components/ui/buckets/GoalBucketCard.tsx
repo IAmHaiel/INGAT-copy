@@ -9,6 +9,10 @@ import { RequestEarlyAccessModal } from '../emergency/RequestEarlyAccessModal';
 import { getContactName } from '@/lib/utils/contacts';
 
 import { ReleaseRequest } from '@/types/bucket';
+import { buildRequestReleaseTx, submitTransaction } from '@/lib/stellar/contract';
+import { signTxWithFreighter } from '@/lib/stellar/freighter';
+import { useWalletContext } from '@/context/WalletContext';
+import { toast } from 'sonner';
 
 interface GoalBucketCardProps {
   bucketId: number;
@@ -105,6 +109,30 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
 
   const hasBalance = balance > 0;
   const isEmergencyPending = emergencyRequest && emergencyRequest.status === 'Pending';
+
+  // Local handler for Request Release — bypasses prop passing issues
+  const { publicKey } = useWalletContext();
+  const [localReleaseLoading, setLocalReleaseLoading] = useState(false);
+  const handleRequestReleaseLocal = async () => {
+    if (!publicKey) return;
+    setLocalReleaseLoading(true);
+    try {
+      const unsignedXDR = await buildRequestReleaseTx(publicKey, bucketId);
+      const signedXDR = await signTxWithFreighter(unsignedXDR, publicKey);
+      await submitTransaction(signedXDR);
+      toast.success('Release Requested', {
+        description: 'Sender can now approve. Auto-releases after 7 days if no response.',
+        duration: 5000,
+      });
+    } catch (err) {
+      toast.error('Release Request Failed', {
+        description: err instanceof Error ? err.message : 'Transaction failed',
+        duration: 5000,
+      });
+    } finally {
+      setLocalReleaseLoading(false);
+    }
+  };
 
   // NOTE: approvalRequired prop from the data pipeline is unreliable — it arrives as `false`
   // even though the contract returns `true`. This is a React state management issue where
@@ -284,12 +312,12 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
               )}
               {!isLocked && (
                 <button
-                  onClick={() => { console.warn('[CLICK] Request Release button clicked, handler:', typeof onRequestRelease); onRequestRelease?.(); }}
-                  disabled={!hasBalance || isReleaseLoading}
+                  onClick={handleRequestReleaseLocal}
+                  disabled={!hasBalance || localReleaseLoading}
                   className="w-full py-2.5 rounded-lg font-bold text-sm bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   <ShieldAlert size={16} />
-                  {isReleaseLoading ? 'Requesting...' : 'Request Release'}
+                  {localReleaseLoading ? 'Requesting...' : 'Request Release'}
                 </button>
               )}
             </div>
