@@ -81,6 +81,18 @@ const handleApproveRelease = async (...) => {
 
 ---
 
+### 5. Vercel deployment uses old contract ID (`CBI7CWIQ...`)
+
+**Trigger:** User tested the live app at `ingat-copy-web.vercel.app` — frontend sends `deposit` with 6 params (including `approval_required` as `u32`), but the old contract only accepts 5 params → `MismatchingParameterLen`.
+
+**Problem:** The Vercel project's dashboard environment variables still had `NEXT_PUBLIC_CONTRACT_ID=CBI7CWIQOV2T63LB3XMWQJL52IMJGPO6LMSU2XMZHG2SD3JKH47VD42Z` (the pre-Phase 4 contract). The repo `.env*` files were updated, but Vercel dashboard env vars take precedence over repo files.
+
+**Fix (two parts):**
+1. Created `vercel.json` at repo root with `env` block containing the new contract ID and token ID — provides a fallback if dashboard vars are absent
+2. Updated `.github/workflows/deploy.yml` — the production deploy step now runs `vercel env rm` + `vercel env add` before `vercel pull` to update the dashboard env vars to the new contract IDs, ensuring subsequent builds use the correct contract
+
+---
+
 ## Files Changed (All Fixes)
 
 | File | Change |
@@ -89,6 +101,8 @@ const handleApproveRelease = async (...) => {
 | `SenderDashboardContainer.tsx` | Removed unused `releaseError` state; replaced `useTxSuccessToast` with `toast.success`; added `toast` import |
 | `tests/unit/hooks/useDeposit.test.ts` | Added `approvalRequired: false` to 2 test objects |
 | `tests/unit/lib/validation/deposit.test.ts` | Added `approvalRequired: false` to 4 test objects |
+| `vercel.json` (new) | Added env block with `NEXT_PUBLIC_CONTRACT_ID` and `NEXT_PUBLIC_TOKEN_ID` |
+| `.github/workflows/deploy.yml` | Added `vercel env rm/add` step before `vercel pull` to update dashboard env vars |
 
 ## Verification
 
@@ -96,3 +110,4 @@ const handleApproveRelease = async (...) => {
 - `npm run lint` — **passes clean** (0 warnings, 0 errors)
 - `npm run build` — **passes** (TypeScript, all 17 routes)
 - `npm run contract:test` — **27/27 pass**
+- `deposit` on Vercel deployment — ✅ now calls `CAB4QC53...` with 6 params instead of `CBI7CWIQ...` with 5 params
