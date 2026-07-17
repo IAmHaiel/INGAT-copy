@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { formatAmount, formatDate, formatDistanceToNow, truncateAddress } from '@/lib/utils/format';
-import { Lock, Unlock, Calendar, ShieldAlert } from 'lucide-react';
+import { Lock, Unlock, Calendar, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 import { EmergencyRequest } from '@/types/emergency';
@@ -309,13 +309,19 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             </button>
           ) : !isLocked && effectiveApprovalRequired && (releaseRequest?.status === 'Approved' || localReleaseStatus === 'Approved') ? (
             // TimeAndApproval bucket, release approved — withdraw
-            <button
-              onClick={() => setIsOpen(true)}
-              disabled={!hasBalance || isWithdrawing}
-              className="w-full py-2.5 rounded-lg font-bold text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-all cursor-pointer border-0"
-            >
-              {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
-            </button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
+                <ShieldCheck size={14} />
+                Sender approved release — goal is unlocked
+              </div>
+              <button
+                onClick={() => setIsOpen(true)}
+                disabled={!hasBalance || isWithdrawing}
+                className="w-full py-2.5 rounded-lg font-bold text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 transition-all cursor-pointer border-0"
+              >
+                {isWithdrawing ? 'Processing...' : 'Withdraw Approved Release'}
+              </button>
+            </div>
           ) : (hasBalance && effectiveApprovalRequired && (releaseRequest?.status === 'Pending' || localReleaseStatus === 'Pending')) ? (
             // Release requested, awaiting sender approval
             <div className="w-full py-2.5 rounded-lg font-bold text-sm bg-amber-50 text-amber-700 border border-amber-200 text-center">
