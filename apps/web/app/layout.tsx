@@ -36,7 +36,7 @@ export default function RootLayout({
             closeButton
             toastOptions={{
               classNames: {
-                toast: "font-sans shadow-xl rounded-xl border border-outline-variant !p-4 !pb-7 !pr-14 relative overflow-hidden",
+                toast: "font-sans shadow-xl rounded-xl border border-outline-variant !p-4 !pb-7 !pr-16 relative overflow-hidden",
                 title: "text-sm font-bold text-on-surface",
                 description: "text-xs font-medium text-on-surface-variant",
                 actionButton: "bg-[#005145] hover:bg-[#0f6b5c] text-white font-bold rounded-lg px-3 py-1.5 transition-colors cursor-pointer border-0",
