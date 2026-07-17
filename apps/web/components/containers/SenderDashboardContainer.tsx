@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 import SenderBucketCard from '@/components/ui/dashboard/SenderBucketCard';
 import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 import Header from '../ui/layout/Header';
-import Footer from '../ui/layout/Footer';
 
 export default function SenderDashboardContainer() {
   const router = useRouter();
@@ -203,7 +202,6 @@ export default function SenderDashboardContainer() {
         <AllocationHistoryList allocations={allocations} isLoading={historyLoading} />
       </section>
     </div>
-    <Footer />
     </>
   );
 }

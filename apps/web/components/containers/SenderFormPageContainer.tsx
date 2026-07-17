@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useWalletContext } from '@/context/WalletContext';
 import { useDashboardTransactions } from '@/hooks/useDashboardTransactions';
 import Header from '../ui/layout/Header';
-import Footer from '../ui/layout/Footer';
 import DepositFormContainer from './DepositFormContainer';
 import DashboardHistoryList from '@/components/ui/history/DashboardHistoryList';
 import { History, Send, Coins } from 'lucide-react';
@@ -123,7 +122,6 @@ export default function SenderFormPageContainer() {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 }

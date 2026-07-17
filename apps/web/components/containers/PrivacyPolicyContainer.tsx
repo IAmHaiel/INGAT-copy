@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWalletContext } from '@/context/WalletContext';
 import Header from '@/components/ui/layout/Header';
-import Footer from '@/components/ui/layout/Footer';
 import WalletConnectModal from '@/components/ui/wallet/WalletConnectModal';
 
 export default function PrivacyPolicyContainer() {
@@ -98,8 +97,6 @@ export default function PrivacyPolicyContainer() {
           </section>
         </div>
       </main>
-
-      <Footer />
 
       {/* Wallet Connection Modal */}
       <WalletConnectModal

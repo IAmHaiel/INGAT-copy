@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWalletContext } from '@/context/WalletContext';
 import Header from '@/components/ui/layout/Header';
-import Footer from '@/components/ui/layout/Footer';
 import Hero from '@/components/ui/landing/Hero';
 import Video from '@/components/ui/landing/Video';
 import HowItWorks from '@/components/ui/landing/HowItWorks';
@@ -58,8 +57,6 @@ export default function LandingContainer() {
         <HowItWorks />
         <Features />
       </main>
-
-      <Footer />
 
       {/* Wallet Connection Modal */}
       <WalletConnectModal

@@ -15,7 +15,6 @@ import { toast } from 'sonner';
 
 // UI components
 import Header from '../ui/layout/Header';
-import Footer from '../ui/layout/Footer';
 import SentDashboardView from '../ui/dashboard/SentDashboardView';
 import ReceivedDashboardView from '../ui/dashboard/ReceivedDashboardView';
 import EarlyAccessView from '../ui/dashboard/EarlyAccessView';
@@ -270,7 +269,6 @@ export default function DashboardContainer() {
           />
         )}
       </div>
-      <Footer />
     </>
   );
 }

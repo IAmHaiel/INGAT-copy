@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/context/WalletContext";
 import { Toaster } from "sonner";
+import Footer from "@/components/ui/layout/Footer";
  
 const manrope = Manrope({
   subsets: ["latin"],
@@ -25,7 +26,10 @@ export default function RootLayout({
     <html lang="en" className={`${manrope.variable} h-full`}>
       <body className="font-sans flex flex-col min-h-screen bg-background-warm text-on-surface antialiased">
         <WalletProvider>
-          {children}
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
           <Toaster 
             position="top-right"
             richColors
