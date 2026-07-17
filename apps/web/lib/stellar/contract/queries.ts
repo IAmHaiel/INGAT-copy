@@ -75,15 +75,6 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
     const nativeVal = scValToNative(retval);
     if (!nativeVal || !Array.isArray(nativeVal)) return [];
 
-    interface RawBucketItem {
-      id: string | number | bigint;
-      sender: string;
-      spending_balance: string | number | bigint;
-      goal_balance: string | number | bigint;
-      unlock_date: string | number | bigint;
-      approval_required: boolean;
-    }
-
     const rawItems = nativeVal as unknown as Array<Record<string, unknown>>;
     const buckets = rawItems.map((item) => {
       const isApproval = item.approval_required === true || item.approval_required === 1 || String(item.approval_required).toLowerCase() === 'true';
@@ -94,9 +85,6 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
         goalBalance: Number(item.goal_balance) / DECIMALS,
         unlockDate: Number(item.unlock_date),
         approvalRequired: isApproval,
-        // Use _isApprovalBucket as the SOURCE OF TRUTH for approval status in the UI
-        // This bypasses any data flow issues with the approvalRequired field
-        _isApprovalBucket: isApproval,
       };
     });
 
@@ -112,20 +100,18 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
     );
     const bucketsWithRelease = await Promise.all(
       bucketsWithEmergency.map(async (bucket) => {
-        const isApproval = bucket._isApprovalBucket || bucket.approvalRequired;
+        const isApproval = bucket.approvalRequired;
         if (isApproval && bucket.goalBalance > 0) {
           try {
             const releaseReq = await fetchReleaseRequest(receiverAddress, bucket.id);
-            return { ...bucket, approvalRequired: true, releaseRequest: releaseReq || undefined, _reqFetched: true };
+            return { ...bucket, approvalRequired: true, releaseRequest: releaseReq || undefined };
           } catch {
-            return { ...bucket, approvalRequired: true, _reqFetched: true };
+            return { ...bucket, approvalRequired: true };
           }
         }
-        return { ...bucket, _reqFetched: !!isApproval, approvalRequired: !!isApproval };
+        return { ...bucket, approvalRequired: !!isApproval };
       })
     );
-    // DEBUG: log final values before returning
-    console.warn('[INGAT_FINAL] addr:', receiverAddress, 'count:', bucketsWithRelease.length, 'buckets:', bucketsWithRelease.map(b => ({ id: b.id, appr: b.approvalRequired, req: b._reqFetched })));
     return bucketsWithRelease;
   } catch (err) {
     console.error('Error fetching bucket balances:', err);

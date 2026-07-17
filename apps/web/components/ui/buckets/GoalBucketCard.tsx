@@ -106,7 +106,6 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   const hasBalance = balance > 0;
   const isEmergencyPending = emergencyRequest && emergencyRequest.status === 'Pending';
 
-  const isApprovalOverride = true; // TEMP: force approval mode for Phase 4 testing. Will be replaced with proper prop.
   return (
     <div className={`p-5 rounded-xl border shadow-md space-y-4 transition-all ${isLocked ? 'bg-amber-50/40 border-amber-200/50' : 'bg-white border-outline-variant'}`}>
       <div className="flex items-center justify-between">
@@ -233,7 +232,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
         </form>
       ) : (
         <div className="space-y-2">
-          {!isLocked && !isApprovalOverride ? (
+          {!isLocked && !approvalRequired ? (
             // TimeOnly bucket past unlock_date — standard withdraw
             <button
               onClick={() => setIsOpen(true)}
@@ -242,7 +241,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
             </button>
-          ) : !isLocked && isApprovalOverride && releaseRequest?.status === 'Approved' ? (
+          ) : !isLocked && approvalRequired && releaseRequest?.status === 'Approved' ? (
             // TimeAndApproval bucket, release approved — withdraw
             <button
               onClick={() => setIsOpen(true)}
@@ -251,7 +250,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
             </button>
-          ) : isApprovalOverride && releaseRequest?.status === 'Pending' ? (
+          ) : approvalRequired && releaseRequest?.status === 'Pending' ? (
             // Release requested, awaiting sender approval
             <div className="w-full py-2.5 rounded-lg font-bold text-sm bg-amber-50 text-amber-700 border border-amber-200 text-center">
               Release requested — awaiting sender approval
@@ -274,7 +273,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
                 <ShieldAlert size={16} />
                 Request Early Access
               </button>
-              {isApprovalOverride && !isLocked && (
+              {approvalRequired && !isLocked && (
                 <button
                   onClick={onRequestRelease}
                   disabled={!hasBalance || isReleaseLoading}
