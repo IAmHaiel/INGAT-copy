@@ -70,19 +70,19 @@ body {
 /* Sonner close button positioning */
 [data-sonner-toast] [data-close-button] {
   position: absolute !important;
-  top: 12px !important;
-  right: 14px !important;
+  top: 14px !important;
+  right: 18px !important;
   left: auto !important;
   bottom: auto !important;
   transform: none !important;
-  background: rgba(0, 0, 0, 0.06) !important;
+  background: rgba(0, 0, 0, 0.08) !important;
   border: none !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   cursor: pointer !important;
   color: currentColor !important;
-  opacity: 0.7 !important;
+  opacity: 0.85 !important;
   transition: all 0.2s !important;
-  padding: 4px !important;
+  padding: 6px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -90,13 +90,13 @@ body {
 
 [data-sonner-toast] [data-close-button]:hover {
   opacity: 1 !important;
-  background: rgba(0, 0, 0, 0.12) !important;
+  background: rgba(0, 0, 0, 0.18) !important;
 }
 
 [data-sonner-toast] [data-close-button] svg {
-  width: 16px !important;
-  height: 16px !important;
-  stroke-width: 2.5 !important;
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 3 !important; /* thicker stroke for the X shape */
 }
 
 @keyframes fadeIn {
