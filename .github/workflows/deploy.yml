@@ -52,15 +52,15 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Update Vercel Dashboard Environment Variables
-        run: |
-          vercel env rm NEXT_PUBLIC_CONTRACT_ID preview --token=${{ secrets.VERCEL_TOKEN }} --yes 2>/dev/null || true
-          echo "CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT" | vercel env add NEXT_PUBLIC_CONTRACT_ID preview --token=${{ secrets.VERCEL_TOKEN }}
-          vercel env rm NEXT_PUBLIC_TOKEN_ID preview --token=${{ secrets.VERCEL_TOKEN }} --yes 2>/dev/null || true
-          echo "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC" | vercel env add NEXT_PUBLIC_TOKEN_ID preview --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Pull Vercel Environment (with updated contract IDs)
+      - name: Pull Vercel Environment
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Override Contract Environment Variables
+        run: |
+          echo 'NEXT_PUBLIC_CONTRACT_ID="CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT"' > .vercel/.env.preview.local
+          echo 'NEXT_PUBLIC_TOKEN_ID="CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"' >> .vercel/.env.preview.local
+          echo 'NEXT_PUBLIC_RPC_URL="https://soroban-testnet.stellar.org"' >> .vercel/.env.preview.local
+          echo 'NEXT_PUBLIC_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"' >> .vercel/.env.preview.local
 
       - name: Build
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
@@ -101,15 +101,15 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Update Vercel Dashboard Environment Variables
-        run: |
-          vercel env rm NEXT_PUBLIC_CONTRACT_ID production --token=${{ secrets.VERCEL_TOKEN }} --yes 2>/dev/null || true
-          echo "CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT" | vercel env add NEXT_PUBLIC_CONTRACT_ID production --token=${{ secrets.VERCEL_TOKEN }}
-          vercel env rm NEXT_PUBLIC_TOKEN_ID production --token=${{ secrets.VERCEL_TOKEN }} --yes 2>/dev/null || true
-          echo "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC" | vercel env add NEXT_PUBLIC_TOKEN_ID production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Pull Vercel Environment (with updated contract IDs)
+      - name: Pull Vercel Environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Override Contract Environment Variables
+        run: |
+          echo 'NEXT_PUBLIC_CONTRACT_ID="CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT"' > .vercel/.env.production.local
+          echo 'NEXT_PUBLIC_TOKEN_ID="CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"' >> .vercel/.env.production.local
+          echo 'NEXT_PUBLIC_RPC_URL="https://soroban-testnet.stellar.org"' >> .vercel/.env.production.local
+          echo 'NEXT_PUBLIC_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"' >> .vercel/.env.production.local
 
       - name: Build
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
