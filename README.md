@@ -5,7 +5,7 @@
 
 **A Stellar-native split-remittance protocol where family support and savings goals are secure, transparent, and programmable by default.**
 
- **Track**: Payment & Consumer Applications | [Live App](https://ingat.vercel.app)
+ **Track**: Payment & Consumer Applications | [Live App](https://ingat-copy-web.vercel.app)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square)
 ![React](https://img.shields.io/badge/React-19-149eca?style=flat-square)
