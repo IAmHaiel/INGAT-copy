@@ -112,7 +112,8 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
         return { ...bucket, approvalRequired: !!isApproval, _canRequestRelease: false };
       })
     );
-    return bucketsWithRelease.reverse();
+    // Return newest buckets first (reverse of contract's ascending ID order)
+    return [...bucketsWithRelease].reverse();
   } catch (err) {
     console.error('Error fetching bucket balances:', err);
     throw err;
