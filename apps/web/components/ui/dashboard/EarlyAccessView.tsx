@@ -190,7 +190,23 @@ export default function EarlyAccessView({
                           <span className="text-xs font-black text-on-surface">{formatAmount(bucket.emergencyRequest.amount)} XLM</span>
                         </div>
                       </div>
-
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => onReceiverCancel(bucket.id)}
+                          disabled={isReceiverEmergencyLoading}
+                          className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold text-xs py-2 px-3 rounded-lg border border-outline-variant transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Cancel Request
+                        </button>
+                        <button
+                          onClick={() => onReceiverExecute(bucket.id, bucket.emergencyRequest!.amount)}
+                          disabled={isReceiverEmergencyLoading || !isCooldownDone}
+                          className="flex-1 bg-secondary text-white font-bold text-xs py-2 px-3 rounded-lg transition-all active:scale-95 disabled:bg-secondary/35 cursor-pointer border-0 shadow-sm flex items-center justify-center gap-1 disabled:cursor-not-allowed disabled:scale-100"
+                        >
+                          <CheckCircle2 size={14} />
+                          Execute
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
