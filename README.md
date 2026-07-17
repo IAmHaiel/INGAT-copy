@@ -73,8 +73,8 @@ Overseas Filipino Workers and their families — specifically households that re
 
 1. Clone the repository:
    ```bash
-    git clone https://github.com/IAmHaiel/INGAT.git
-    cd INGAT
+    git clone https://github.com/IAmHaiel/INGAT-copy.git
+    cd INGAT-copy
    ```
 2. Install workspace dependencies:
    ```bash
