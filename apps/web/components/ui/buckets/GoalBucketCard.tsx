@@ -113,6 +113,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   // Local handler for Request Release — bypasses prop passing issues
   const { publicKey } = useWalletContext();
   const [localReleaseLoading, setLocalReleaseLoading] = useState(false);
+  const [localReleaseRequested, setLocalReleaseRequested] = useState(false);
   const handleRequestReleaseLocal = async () => {
     if (!publicKey) return;
     setLocalReleaseLoading(true);
@@ -120,6 +121,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
       const unsignedXDR = await buildRequestReleaseTx(publicKey, bucketId);
       const signedXDR = await signTxWithFreighter(unsignedXDR, publicKey);
       await submitTransaction(signedXDR);
+      setLocalReleaseRequested(true);
       toast.success('Release Requested', {
         description: 'Sender can now approve. Auto-releases after 7 days if no response.',
         duration: 5000,
@@ -285,7 +287,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
             </button>
-          ) : effectiveApprovalRequired && releaseRequest?.status === 'Pending' ? (
+          ) : (effectiveApprovalRequired && (releaseRequest?.status === 'Pending' || localReleaseRequested)) ? (
             // Release requested, awaiting sender approval
             <div className="w-full py-2.5 rounded-lg font-bold text-sm bg-amber-50 text-amber-700 border border-amber-200 text-center">
               Release requested — awaiting sender approval
