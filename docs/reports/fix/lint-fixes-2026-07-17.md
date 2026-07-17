@@ -60,8 +60,39 @@ const handleApproveRelease = async (...) => {
 | `ReceiverDashboardContainer.tsx:72` | Removed unused `hash` variable |
 | `SenderDashboardContainer.tsx` | Removed unused `releaseError` state; replaced `useTxSuccessToast` with `toast.success`; added `toast` import |
 
+---
+
+### 4. Unit tests missing `approvalRequired` field (TS error)
+
+**Trigger:** Subsequent CI/CD TypeScript check failed on `npx tsc --noEmit`.
+
+**Problem:** The `DepositFormInputs` and `DepositParams` types now require `approvalRequired: boolean`, but 6 test objects across two test files were not updated:
+
+| File | Line | Issue |
+|------|------|-------|
+| `tests/unit/hooks/useDeposit.test.ts` | 35 | `validInputs()` return object missing `approvalRequired` |
+| `tests/unit/hooks/useDeposit.test.ts` | 63 | Inline deposit argument missing `approvalRequired` |
+| `tests/unit/lib/validation/deposit.test.ts` | 26 | `validInputs()` return object missing `approvalRequired` |
+| `tests/unit/lib/validation/deposit.test.ts` | 202 | Inline `validateDeposit` argument missing `approvalRequired` |
+| `tests/unit/lib/validation/deposit.test.ts` | 378 | `validParams()` return object missing `approvalRequired` |
+| `tests/unit/lib/validation/deposit.test.ts` | 420 | Inline `validateDepositOld` argument missing `approvalRequired` |
+
+**Fix:** Added `approvalRequired: false` to all 6 objects.
+
+---
+
+## Files Changed (All Fixes)
+
+| File | Change |
+|------|--------|
+| `ReceiverDashboardContainer.tsx:72` | Removed unused `hash` variable |
+| `SenderDashboardContainer.tsx` | Removed unused `releaseError` state; replaced `useTxSuccessToast` with `toast.success`; added `toast` import |
+| `tests/unit/hooks/useDeposit.test.ts` | Added `approvalRequired: false` to 2 test objects |
+| `tests/unit/lib/validation/deposit.test.ts` | Added `approvalRequired: false` to 4 test objects |
+
 ## Verification
 
+- `npx tsc --noEmit` — **passes** (0 errors)
 - `npm run lint` — **passes clean** (0 warnings, 0 errors)
 - `npm run build` — **passes** (TypeScript, all 17 routes)
-- `npm run contract:test` — **27/27 pass** (no contract changes, frontend only)
+- `npm run contract:test` — **27/27 pass**

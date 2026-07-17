@@ -29,6 +29,7 @@ function validInputs(overrides?: Partial<DepositFormInputs>): DepositFormInputs 
     splitRatio: 50,
     unlockDate: futureDate(),
     goalLabel: 'Test Goal',
+    approvalRequired: false,
     ...overrides,
   };
 }
@@ -205,6 +206,7 @@ describe('validateDeposit', () => {
       splitRatio: -1,
       unlockDate: '',
       goalLabel: '',
+      approvalRequired: false,
     });
     expect(errors.length).toBeGreaterThanOrEqual(4);
     expect(errors.map((e) => e.field)).toContain('receiver');
@@ -380,6 +382,7 @@ describe('validateDepositOld', () => {
       splitRatio: 50,
       receiverAddress: VALID_STELLAR_KEY,
       unlockDate: futureDate(),
+      approvalRequired: false,
       ...overrides,
     };
   }
@@ -422,6 +425,7 @@ describe('validateDepositOld', () => {
       splitRatio: 200,
       receiverAddress: 'X',
       unlockDate: 'invalid',
+      approvalRequired: false,
     });
     expect(result.valid).toBe(false);
     expect(Object.keys(result.errors).length).toBeGreaterThanOrEqual(4);
