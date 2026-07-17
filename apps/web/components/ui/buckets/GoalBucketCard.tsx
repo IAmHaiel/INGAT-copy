@@ -301,7 +301,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
             </button>
-          ) : (effectiveApprovalRequired && (releaseRequest?.status === 'Pending' || localReleaseStatus === 'Pending')) ? (
+          ) : (hasBalance && effectiveApprovalRequired && (releaseRequest?.status === 'Pending' || localReleaseStatus === 'Pending')) ? (
             // Release requested, awaiting sender approval
             <div className="w-full py-2.5 rounded-lg font-bold text-sm bg-amber-50 text-amber-700 border border-amber-200 text-center">
               Release requested — awaiting sender approval
@@ -326,10 +326,10 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
                   Request Early Access
                 </button>
               )}
-              {!isLocked && (
+              {hasBalance && !isLocked && (
                 <button
                   onClick={handleRequestReleaseLocal}
-                  disabled={!hasBalance || localReleaseLoading}
+                  disabled={localReleaseLoading}
                   className="w-full py-2.5 rounded-lg font-bold text-sm bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   <ShieldAlert size={16} />

@@ -165,7 +165,7 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
         </div>
       )}
 
-      {localReleaseReq?.status === 'Pending' && (
+      {hasGoalBalance && localReleaseReq?.status === 'Pending' && (
         <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/50 space-y-2">
           <div className="flex items-center gap-2">
             <ShieldCheck size={18} className="text-amber-600" />
