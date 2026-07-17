@@ -5,6 +5,11 @@ import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 import { EmergencyRequest } from '@/types/emergency';
 import { ReleaseRequest } from '@/types/bucket';
+import { fetchReleaseRequest } from '@/lib/stellar/contract/queries';
+import { buildApproveReleaseTx, submitTransaction } from '@/lib/stellar/contract';
+import { signTxWithFreighter } from '@/lib/stellar/freighter';
+import { useWalletContext } from '@/context/WalletContext';
+import { toast } from 'sonner';
 import { CooldownBanner } from '../emergency/CooldownBanner';
 import { getContactName } from '@/lib/utils/contacts';
 
@@ -48,6 +53,50 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
   const [isLocked, setIsLocked] = useState(true);
   const [timeLeftStr, setTimeLeftStr] = useState('');
   const { priceUsd } = useXlmPrice();
+  const { publicKey } = useWalletContext();
+  const [localReleaseReq, setLocalReleaseReq] = useState<ReleaseRequest | null | undefined>(undefined);
+  const [localApproving, setLocalApproving] = useState(false);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const req = await fetchReleaseRequest(receiverAddress, id);
+        if (active) setLocalReleaseReq(req);
+      } catch {
+        if (active) setLocalReleaseReq(undefined);
+      }
+    })();
+    const interval = setInterval(async () => {
+      try {
+        const req = await fetchReleaseRequest(receiverAddress, id);
+        if (active) setLocalReleaseReq(req);
+      } catch {
+        if (active) setLocalReleaseReq(undefined);
+      }
+    }, 10000);
+    return () => { active = false; clearInterval(interval); };
+  }, [receiverAddress, id]);
+  const handleApproveReleaseLocal = async () => {
+    if (!publicKey) return;
+    setLocalApproving(true);
+    try {
+      const unsignedXDR = await buildApproveReleaseTx(publicKey, receiverAddress, id);
+      const signedXDR = await signTxWithFreighter(unsignedXDR, publicKey);
+      await submitTransaction(signedXDR);
+      toast.success('Release Approved', {
+        description: 'Successfully approved goal bucket release.',
+        duration: 5000,
+      });
+      setLocalReleaseReq({ ...localReleaseReq!, status: 'Approved' } as ReleaseRequest);
+    } catch (err) {
+      toast.error('Approval Failed', {
+        description: err instanceof Error ? err.message : 'Failed to approve release',
+        duration: 5000,
+      });
+    } finally {
+      setLocalApproving(false);
+    }
+  };
 
   useEffect(() => {
     const checkLock = () => {
@@ -116,7 +165,7 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
         </div>
       )}
 
-      {approvalRequired && releaseRequest?.status === 'Pending' && (
+      {localReleaseReq?.status === 'Pending' && (
         <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/50 space-y-2">
           <div className="flex items-center gap-2">
             <ShieldCheck size={18} className="text-amber-600" />
@@ -124,22 +173,22 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
           </div>
           <p className="text-[11px] text-amber-700">
             The receiver has requested early release of the goal bucket. Funds will auto-release after{' '}
-            {releaseRequest.gracePeriodEndsAt > 0
-              ? formatDistanceToNow(releaseRequest.gracePeriodEndsAt)
+            {localReleaseReq.gracePeriodEndsAt > 0
+              ? formatDistanceToNow(localReleaseReq.gracePeriodEndsAt)
               : 'the grace period'}{' '}
             if you don&apos;t respond.
           </p>
           <button
-            onClick={() => onApproveRelease?.(receiverAddress, id)}
-            disabled={isReleaseLoading}
+            onClick={handleApproveReleaseLocal}
+            disabled={localApproving}
             className="bg-primary text-white font-bold text-xs py-2 px-4 rounded-lg hover:bg-primary-dark transition-colors cursor-pointer disabled:opacity-50 border-0"
           >
-            {isReleaseLoading ? 'Approving...' : 'Approve Release'}
+            {localApproving ? 'Approving...' : 'Approve Release'}
           </button>
         </div>
       )}
 
-      {approvalRequired && releaseRequest?.status === 'Approved' && (
+      {localReleaseReq?.status === 'Approved' && (
         <div className="bg-green-50 p-3 rounded-xl border border-green-200">
           <p className="text-xs font-bold text-green-800 flex items-center gap-1.5">
             <ShieldCheck size={16} />
