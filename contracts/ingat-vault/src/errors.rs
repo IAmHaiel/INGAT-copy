@@ -18,4 +18,10 @@ pub enum Error {
     CooldownNotElapsed = 12,
     ReRequestTooSoon = 13,
     NotBucketReceiver = 14,
+    BucketNotTimeAndApproval = 15,
+    ReleaseRequestAlreadyActive = 16,
+    NoActiveReleaseRequest = 17,
+    ReleaseNotApproved = 18,
+    ReleaseGracePeriodNotElapsed = 19,
+    SenderCannotRequestRelease = 20,
 }

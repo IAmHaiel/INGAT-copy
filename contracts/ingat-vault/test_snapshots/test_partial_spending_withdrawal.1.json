@@ -76,6 +76,9 @@
                 },
                 {
                   "u64": 11000
+                },
+                {
+                  "bool": false
                 }
               ]
             }
@@ -253,6 +256,14 @@
                 "durability": "persistent",
                 "val": {
                   "map": [
+                    {
+                      "key": {
+                        "symbol": "approval_required"
+                      },
+                      "val": {
+                        "bool": false
+                      }
+                    },
                     {
                       "key": {
                         "symbol": "goal_balance"

@@ -1,6 +1,7 @@
 use soroban_sdk::{token, Address, Env, symbol_short, log};
 use crate::errors::Error;
 use crate::storage;
+use crate::release;
 
 pub fn withdraw_spending(
     env: Env,
@@ -59,10 +60,7 @@ pub fn withdraw_goal(
 
     let mut state = storage::get_bucket(&env, &receiver, bucket_id).ok_or(Error::InvalidBucket)?;
 
-    let current_time = env.ledger().timestamp();
-    if current_time < state.unlock_date {
-        return Err(Error::GoalBucketLocked);
-    }
+    release::can_withdraw_goal(&env, &state, &receiver, bucket_id)?;
 
     if state.goal_balance < amount {
         return Err(Error::InsufficientFunds);
@@ -108,10 +106,7 @@ pub fn withdraw_goal_sender(
         return Err(Error::NotBucketSender);
     }
 
-    let current_time = env.ledger().timestamp();
-    if current_time < state.unlock_date {
-        return Err(Error::GoalBucketLocked);
-    }
+    release::can_withdraw_goal(&env, &state, &receiver, bucket_id)?;
 
     if state.goal_balance < amount {
         return Err(Error::InsufficientFunds);

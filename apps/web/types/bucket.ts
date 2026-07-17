@@ -6,7 +6,17 @@ export interface BucketState {
   spendingBalance: number;
   goalBalance: number;
   unlockDate: number; // unix timestamp in seconds
+  approvalRequired: boolean;
   emergencyRequest?: EmergencyRequest | null;
+  releaseRequest?: ReleaseRequest;
+}
+
+export type ReleaseStatus = 'Pending' | 'Approved' | 'Executed';
+
+export interface ReleaseRequest {
+  requestedAt: number;
+  gracePeriodEndsAt: number;
+  status: ReleaseStatus;
 }
 
 export type BucketType = 'spending' | 'goal';

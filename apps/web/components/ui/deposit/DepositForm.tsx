@@ -34,6 +34,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
   const [splitRatio, setSplitRatio] = useState(60); // default 60% spending
   const [unlockDate, setUnlockDate] = useState('');
   const [goalLabel, setGoalLabel] = useState('');
+  const [approvalRequired, setApprovalRequired] = useState(false);
   const [safetyState, setSafetyState] = useState<AddressSafetyState>('unknown');
   const [similarAddress, setSimilarAddress] = useState<string | undefined>(undefined);
   const [isNearMissConfirmed, setIsNearMissConfirmed] = useState(false);
@@ -86,6 +87,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
       splitRatio,
       unlockDate,
       goalLabel,
+      approvalRequired,
     });
 
     setLocalErrors(errors);
@@ -102,6 +104,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
       splitRatio,
       unlockDate,
       goalLabel,
+      approvalRequired,
     });
     if (success) {
       setReceiver('');
@@ -109,6 +112,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
       setSplitRatio(60);
       setUnlockDate('');
       setGoalLabel('');
+      setApprovalRequired(false);
       setSafetyState('unknown');
       setSimilarAddress(undefined);
       setIsNearMissConfirmed(false);
@@ -214,6 +218,21 @@ const DepositForm: React.FC<DepositFormProps> = ({
           error={getErrorForField('unlockDate')}
         />
 
+        {/* Approval Mode Toggle */}
+        <div className="flex items-center justify-between p-3 bg-surface-container/30 rounded-xl border border-outline-variant/50">
+          <div className="space-y-0.5">
+            <label className="text-sm font-semibold text-on-surface">Require Sender Approval</label>
+            <p className="text-[11px] text-on-surface-variant">Receiver can request early release; auto-unlocks after 7 days if unresponded.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setApprovalRequired(!approvalRequired)}
+            className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer border-0 ${approvalRequired ? 'bg-primary' : 'bg-gray-300'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${approvalRequired ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+
         {/* Goal Label / Note */}
         <div className="space-y-1">
           <label className="block text-sm font-semibold text-on-surface">Goal Label <span className="text-on-surface-variant font-normal">(optional)</span></label>
@@ -261,6 +280,7 @@ const DepositForm: React.FC<DepositFormProps> = ({
         goalLabel={goalLabel}
         priceUsd={priceUsd}
         isSubmitting={isSubmitting}
+        approvalRequired={approvalRequired}
       />
     </>
   );

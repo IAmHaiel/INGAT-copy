@@ -1,6 +1,6 @@
 import { Address, TransactionBuilder, scValToNative, nativeToScVal, rpc, xdr } from '@stellar/stellar-sdk';
 import { getServer, NETWORK_PASSPHRASE } from '../client';
-import { BucketState } from '@/types/bucket';
+import { BucketState, ReleaseRequest, ReleaseStatus } from '@/types/bucket';
 import { EmergencyRequest, EmergencyRequestStatus } from '@/types/emergency';
 import { contract, getDummyAccount, DECIMALS, extractSimError } from './shared';
 
@@ -81,6 +81,7 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
       spending_balance: string | number | bigint;
       goal_balance: string | number | bigint;
       unlock_date: string | number | bigint;
+      approval_required: boolean;
     }
 
     const buckets = (nativeVal as unknown as RawBucketItem[]).map((item) => ({
@@ -89,6 +90,7 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
       spendingBalance: Number(item.spending_balance) / DECIMALS,
       goalBalance: Number(item.goal_balance) / DECIMALS,
       unlockDate: Number(item.unlock_date),
+      approvalRequired: Boolean(item.approval_required),
     }));
 
     const nowSeconds = Math.floor(Date.now() / 1000);
@@ -101,9 +103,60 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
         return { ...bucket, emergencyRequest: null };
       })
     );
-    return bucketsWithEmergency;
+    const bucketsWithRelease = await Promise.all(
+      bucketsWithEmergency.map(async (bucket) => {
+        if (bucket.approvalRequired && bucket.goalBalance > 0) {
+          try {
+            const releaseReq = await fetchReleaseRequest(receiverAddress, bucket.id);
+            return { ...bucket, releaseRequest: releaseReq || undefined };
+          } catch {
+            return bucket;
+          }
+        }
+        return bucket;
+      })
+    );
+    return bucketsWithRelease;
   } catch (err) {
     console.error('Error fetching bucket balances:', err);
     throw err;
+  }
+};
+
+export const fetchReleaseRequest = async (
+  receiverAddress: string,
+  bucketId: number
+): Promise<ReleaseRequest | null> => {
+  try {
+    const receiverScVal = Address.fromString(receiverAddress).toScVal();
+    const bucketIdScVal = nativeToScVal(bucketId, { type: 'u32' });
+
+    const retval = await simulateRead('get_release_request', [receiverScVal, bucketIdScVal]);
+    if (!retval) return null;
+
+    const nativeVal = scValToNative(retval);
+    if (!nativeVal) return null;
+
+    let statusStr: ReleaseStatus = 'Pending';
+    const rawStatus = nativeVal.status;
+    if (rawStatus === 'Approved' || rawStatus === 1 || (typeof rawStatus === 'object' && rawStatus.tag === 'Approved')) {
+      statusStr = 'Approved';
+    } else if (rawStatus === 'Executed' || rawStatus === 2 || (typeof rawStatus === 'object' && rawStatus.tag === 'Executed')) {
+      statusStr = 'Executed';
+    } else {
+      const str = String(rawStatus);
+      if (str.includes('Pending') || str.includes('0')) statusStr = 'Pending';
+      else if (str.includes('Approved') || str.includes('1')) statusStr = 'Approved';
+      else if (str.includes('Executed') || str.includes('2')) statusStr = 'Executed';
+    }
+
+    return {
+      requestedAt: Number(nativeVal.requested_at),
+      gracePeriodEndsAt: Number(nativeVal.grace_period_ends_at),
+      status: statusStr,
+    };
+  } catch (err) {
+    console.error('Error fetching release request:', err);
+    return null;
   }
 };

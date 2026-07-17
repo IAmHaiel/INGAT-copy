@@ -15,6 +15,7 @@ export interface DepositFormInputs {
   splitRatio: number;
   unlockDate: string;
   goalLabel: string;
+  approvalRequired: boolean;
 }
 
 // Keep old interfaces for backward compatibility
@@ -23,6 +24,7 @@ export interface DepositParams {
   splitRatio: number;
   receiverAddress: string;
   unlockDate: string;
+  approvalRequired: boolean;
 }
 
 export interface WithdrawParams {

@@ -77,6 +77,9 @@
                 },
                 {
                   "u64": 11000
+                },
+                {
+                  "bool": false
                 }
               ]
             }
@@ -163,6 +166,9 @@
                 },
                 {
                   "u64": 12000
+                },
+                {
+                  "bool": false
                 }
               ]
             }
@@ -374,6 +380,14 @@
                   "map": [
                     {
                       "key": {
+                        "symbol": "approval_required"
+                      },
+                      "val": {
+                        "bool": false
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "goal_balance"
                       },
                       "val": {
@@ -470,6 +484,14 @@
                 "durability": "persistent",
                 "val": {
                   "map": [
+                    {
+                      "key": {
+                        "symbol": "approval_required"
+                      },
+                      "val": {
+                        "bool": false
+                      }
+                    },
                     {
                       "key": {
                         "symbol": "goal_balance"

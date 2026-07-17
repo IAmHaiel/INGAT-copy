@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { formatAmount, formatDate, formatDistanceToNow, truncateAddress } from '@/lib/utils/format';
-import { Lock, Unlock, Calendar, ArrowUpRight, Coins } from 'lucide-react';
+import { Lock, Unlock, Calendar, ArrowUpRight, Coins, ShieldCheck } from 'lucide-react';
 import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 import { EmergencyRequest } from '@/types/emergency';
+import { ReleaseRequest } from '@/types/bucket';
 import { CooldownBanner } from '../emergency/CooldownBanner';
 import { getContactName } from '@/lib/utils/contacts';
 
@@ -19,6 +20,10 @@ interface SenderBucketCardProps {
   emergencyRequest?: EmergencyRequest | null;
   onCancelEmergency?: (receiverAddress: string, bucketId: number) => void;
   isEmergencyLoading?: boolean;
+  approvalRequired?: boolean;
+  releaseRequest?: ReleaseRequest | null;
+  onApproveRelease?: (receiverAddress: string, bucketId: number) => void;
+  isReleaseLoading?: boolean;
 }
 
 const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
@@ -33,6 +38,10 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
   emergencyRequest = null,
   onCancelEmergency,
   isEmergencyLoading = false,
+  approvalRequired = false,
+  releaseRequest = null,
+  onApproveRelease,
+  isReleaseLoading = false,
 }) => {
   const [amount, setAmount] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -104,6 +113,38 @@ const SenderBucketCard: React.FC<SenderBucketCardProps> = ({
             role="sender"
             isLoading={isEmergencyLoading}
           />
+        </div>
+      )}
+
+      {approvalRequired && releaseRequest?.status === 'Pending' && (
+        <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/50 space-y-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={18} className="text-amber-600" />
+            <p className="text-xs font-bold text-amber-800">Release Requested</p>
+          </div>
+          <p className="text-[11px] text-amber-700">
+            The receiver has requested early release of the goal bucket. Funds will auto-release after{' '}
+            {releaseRequest.gracePeriodEndsAt > 0
+              ? formatDistanceToNow(releaseRequest.gracePeriodEndsAt)
+              : 'the grace period'}{' '}
+            if you don&apos;t respond.
+          </p>
+          <button
+            onClick={() => onApproveRelease?.(receiverAddress, id)}
+            disabled={isReleaseLoading}
+            className="bg-primary text-white font-bold text-xs py-2 px-4 rounded-lg hover:bg-primary-dark transition-colors cursor-pointer disabled:opacity-50 border-0"
+          >
+            {isReleaseLoading ? 'Approving...' : 'Approve Release'}
+          </button>
+        </div>
+      )}
+
+      {approvalRequired && releaseRequest?.status === 'Approved' && (
+        <div className="bg-green-50 p-3 rounded-xl border border-green-200">
+          <p className="text-xs font-bold text-green-800 flex items-center gap-1.5">
+            <ShieldCheck size={16} />
+            Release Approved
+          </p>
         </div>
       )}
 

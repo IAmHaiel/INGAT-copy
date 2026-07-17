@@ -8,6 +8,8 @@ import { CooldownBanner } from '../emergency/CooldownBanner';
 import { RequestEarlyAccessModal } from '../emergency/RequestEarlyAccessModal';
 import { getContactName } from '@/lib/utils/contacts';
 
+import { ReleaseRequest } from '@/types/bucket';
+
 interface GoalBucketCardProps {
   bucketId: number;
   balance: number;
@@ -22,6 +24,10 @@ interface GoalBucketCardProps {
   onCancelEmergency?: () => void;
   onExecuteEmergency?: () => void;
   isEmergencyLoading?: boolean;
+  approvalRequired?: boolean;
+  releaseRequest?: ReleaseRequest | null;
+  onRequestRelease?: () => void;
+  isReleaseLoading?: boolean;
 }
 
 const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
@@ -38,6 +44,10 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   onCancelEmergency,
   onExecuteEmergency,
   isEmergencyLoading = false,
+  approvalRequired = false,
+  releaseRequest = null,
+  onRequestRelease,
+  isReleaseLoading = false,
 }) => {
   const [amount, setAmount] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -230,6 +240,14 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
             </button>
+          ) : approvalRequired && releaseRequest?.status === 'Approved' ? (
+            <div className="w-full py-2.5 rounded-lg font-bold text-sm bg-green-50 text-green-700 border border-green-200 text-center">
+              Release approved — unlock date reached
+            </div>
+          ) : approvalRequired && releaseRequest?.status === 'Pending' ? (
+            <div className="w-full py-2.5 rounded-lg font-bold text-sm bg-amber-50 text-amber-700 border border-amber-200 text-center">
+              Release requested — awaiting sender approval
+            </div>
           ) : cooldownTimeLeft > 0 ? (
             <button
               disabled
@@ -239,14 +257,26 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
               Cooldown Active ({Math.floor(cooldownTimeLeft / 60)}m {cooldownTimeLeft % 60}s)
             </button>
           ) : (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              disabled={!hasBalance || isEmergencyLoading}
-              className="w-full py-2.5 rounded-lg font-bold text-sm bg-secondary-container/10 text-secondary border border-secondary-container/20 hover:bg-secondary-container/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
-            >
-              <ShieldAlert size={16} />
-              Request Early Access
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                disabled={!hasBalance || isEmergencyLoading}
+                className="w-full py-2.5 rounded-lg font-bold text-sm bg-secondary-container/10 text-secondary border border-secondary-container/20 hover:bg-secondary-container/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <ShieldAlert size={16} />
+                Request Early Access
+              </button>
+              {approvalRequired && (
+                <button
+                  onClick={onRequestRelease}
+                  disabled={!hasBalance || isReleaseLoading}
+                  className="w-full py-2.5 rounded-lg font-bold text-sm bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <ShieldAlert size={16} />
+                  {isReleaseLoading ? 'Requesting...' : 'Request Release'}
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}

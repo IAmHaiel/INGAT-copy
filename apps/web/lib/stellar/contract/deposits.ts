@@ -6,7 +6,8 @@ export const buildDepositTx = async (
   receiverAddress: string,
   amount: number,
   splitRatio: number,
-  unlockDate: number
+  unlockDate: number,
+  approvalRequired: boolean
 ): Promise<string> => {
   const senderScVal = Address.fromString(senderAddress).toScVal();
   const receiverScVal = Address.fromString(receiverAddress).toScVal();
@@ -15,11 +16,12 @@ export const buildDepositTx = async (
   const amountScVal = nativeToScVal(scaledAmount, { type: 'i128' });
   const splitRatioScVal = nativeToScVal(splitRatio, { type: 'u32' });
   const unlockDateScVal = nativeToScVal(BigInt(unlockDate), { type: 'u64' });
+  const approvalRequiredScVal = nativeToScVal(approvalRequired ? 1 : 0, { type: 'u32' });
 
   return buildContractCallXDR(
     senderAddress,
     'deposit',
-    [senderScVal, receiverScVal, amountScVal, splitRatioScVal, unlockDateScVal],
+    [senderScVal, receiverScVal, amountScVal, splitRatioScVal, unlockDateScVal, approvalRequiredScVal],
     'deposit transaction'
   );
 };

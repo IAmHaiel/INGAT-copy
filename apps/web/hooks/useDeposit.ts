@@ -39,7 +39,8 @@ export const useDeposit = (senderAddress: string | null, onSuccess?: (txHash: st
         inputs.receiver,
         amountNum,
         inputs.splitRatio,
-        unlockDateEpoch
+        unlockDateEpoch,
+        inputs.approvalRequired
       );
 
       const signedXDR = await signTxWithFreighter(unsignedXDR, senderAddress);

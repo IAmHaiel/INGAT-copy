@@ -10,6 +10,8 @@ import { useXlmPrice } from '@/hooks/useXlmPrice';
 import { formatXlmWithUsd } from '@/lib/utils/price';
 import { useSenderBuckets } from '@/hooks/useSenderBuckets';
 import { useTxSuccessToast, useTxErrorToast } from '@/hooks/useTransactionToast';
+import { buildApproveReleaseTx, submitTransaction } from '@/lib/stellar/contract';
+import { signTxWithFreighter } from '@/lib/stellar/freighter';
 import SenderBucketCard from '@/components/ui/dashboard/SenderBucketCard';
 import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 import Header from '../ui/layout/Header';
@@ -30,6 +32,24 @@ export default function SenderDashboardContainer() {
   } = useSenderBuckets(publicKey);
   const { priceUsd } = useXlmPrice();
   const [currentTime, setCurrentTime] = useState<number>(0);
+  const [isApprovingRelease, setIsApprovingRelease] = useState<boolean>(false);
+  const [releaseError, setReleaseError] = useState<string | null>(null);
+
+  const handleApproveRelease = async (receiverAddress: string, bucketId: number) => {
+    if (!publicKey) return;
+    setIsApprovingRelease(true);
+    setReleaseError(null);
+    try {
+      const unsignedXDR = await buildApproveReleaseTx(publicKey, receiverAddress, bucketId);
+      const signedXDR = await signTxWithFreighter(unsignedXDR, publicKey);
+      const hash = await submitTransaction(signedXDR);
+      useTxSuccessToast(hash, 'Release Approved', 'Successfully approved goal bucket release.');
+    } catch (err) {
+      setReleaseError(err instanceof Error ? err.message : 'Failed to approve release');
+    } finally {
+      setIsApprovingRelease(false);
+    }
+  };
 
   const handleWithdrawSenderGoal = async (receiverAddress: string, bucketId: number, amount: number) => {
     const bucket = buckets.find(b => b.id === bucketId && b.receiverAddress === receiverAddress);
@@ -163,6 +183,10 @@ export default function SenderDashboardContainer() {
                 goalLabel={bucket.goalLabel}
                 onWithdrawGoal={handleWithdrawSenderGoal}
                 isWithdrawing={isWithdrawing === bucket.id}
+                approvalRequired={bucket.approvalRequired}
+                releaseRequest={bucket.releaseRequest}
+                onApproveRelease={handleApproveRelease}
+                isReleaseLoading={isApprovingRelease}
               />
             ))}
           </div>

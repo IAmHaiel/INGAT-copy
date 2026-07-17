@@ -8,6 +8,7 @@ pub struct BucketState {
     pub spending_balance: i128,
     pub goal_balance: i128,
     pub unlock_date: u64,
+    pub approval_required: bool,
 }
 
 #[contracttype]
@@ -29,12 +30,29 @@ pub struct EmergencyRequest {
 }
 
 #[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ReleaseStatus {
+    Pending = 0,
+    Approved = 1,
+    Executed = 2,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ReleaseRequest {
+    pub requested_at: u64,
+    pub grace_period_ends_at: u64,
+    pub status: ReleaseStatus,
+}
+
+#[contracttype]
 pub enum DataKey {
     Initialized,
     Token,
     BucketCount(Address),
     Bucket(Address, u32),
     EmergencyReq(Address, u32),
+    ReleaseReq(Address, u32),
 }
 
 pub fn is_initialized(env: &Env) -> bool {
@@ -67,7 +85,6 @@ pub fn get_bucket(env: &Env, receiver: &Address, bucket_id: u32) -> Option<Bucke
     let key = DataKey::Bucket(receiver.clone(), bucket_id);
     let state: Option<BucketState> = env.storage().persistent().get(&key);
     if state.is_some() {
-        // Extend persistent storage TTL to avoid expiration (e.g. 10,000 ledgers)
         env.storage().persistent().extend_ttl(&key, 10000, 10000);
     }
     state
@@ -90,6 +107,21 @@ pub fn get_emergency_request(env: &Env, receiver: &Address, bucket_id: u32) -> O
 
 pub fn set_emergency_request(env: &Env, receiver: &Address, bucket_id: u32, req: &EmergencyRequest) {
     let key = DataKey::EmergencyReq(receiver.clone(), bucket_id);
+    env.storage().persistent().set(&key, req);
+    env.storage().persistent().extend_ttl(&key, 10000, 10000);
+}
+
+pub fn get_release_request(env: &Env, receiver: &Address, bucket_id: u32) -> Option<ReleaseRequest> {
+    let key = DataKey::ReleaseReq(receiver.clone(), bucket_id);
+    let req: Option<ReleaseRequest> = env.storage().persistent().get(&key);
+    if req.is_some() {
+        env.storage().persistent().extend_ttl(&key, 10000, 10000);
+    }
+    req
+}
+
+pub fn set_release_request(env: &Env, receiver: &Address, bucket_id: u32, req: &ReleaseRequest) {
+    let key = DataKey::ReleaseReq(receiver.clone(), bucket_id);
     env.storage().persistent().set(&key, req);
     env.storage().persistent().extend_ttl(&key, 10000, 10000);
 }

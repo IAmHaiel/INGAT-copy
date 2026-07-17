@@ -11,6 +11,8 @@ import { useWalletContext } from '@/context/WalletContext';
 import { useBucketBalances } from '@/hooks/useBucketBalances';
 import { useWithdraw } from '@/hooks/useWithdraw';
 import { useEmergencyWithdrawal } from '@/hooks/useEmergencyWithdrawal';
+import { buildRequestReleaseTx, submitTransaction } from '@/lib/stellar/contract';
+import { signTxWithFreighter } from '@/lib/stellar/freighter';
 import { fetchReceivedTransactions } from '@/lib/supabase';
 import { TransactionRow } from '@/lib/supabase/types';
 import { useTxSuccessToast, useTxErrorToast } from '@/hooks/useTransactionToast';
@@ -59,6 +61,29 @@ export default function ReceiverDashboardContainer() {
   });
 
   const [depositRecords, setDepositRecords] = useState<TransactionRow[]>([]);
+  const [isRequestingRelease, setIsRequestingRelease] = useState(false);
+
+  const handleRequestRelease = async (bucketId: number) => {
+    if (!publicKey) return;
+    setIsRequestingRelease(true);
+    try {
+      const unsignedXDR = await buildRequestReleaseTx(publicKey, bucketId);
+      const signedXDR = await signTxWithFreighter(unsignedXDR, publicKey);
+      const hash = await submitTransaction(signedXDR);
+      toast.success('Release Requested', {
+        description: 'Sender can now approve. Auto-releases after 7 days if no response.',
+        duration: 5000,
+      });
+      refreshBalances();
+    } catch (err) {
+      toast.error('Release Request Failed', {
+        description: err instanceof Error ? err.message : 'Transaction failed',
+        duration: 5000,
+      });
+    } finally {
+      setIsRequestingRelease(false);
+    }
+  };
 
   const fetchDeposits = useCallback(async () => {
     if (!supabaseClient || !publicKey) return;
@@ -226,25 +251,29 @@ export default function ReceiverDashboardContainer() {
                   onWithdraw={(amount) => handleWithdrawSpending(bucket.id, amount)}
                   isWithdrawing={isWithdrawing === bucket.id}
                 />
-                <GoalBucketCard
-                  bucketId={bucket.id}
-                  balance={bucket.goalBalance}
-                  unlockDate={bucket.unlockDate}
-                  goalLabel={getGoalLabel(bucket.sender, bucket.unlockDate)}
-                  senderAddress={bucket.sender}
-                  receiverAddress={publicKey}
-                  onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
-                  isWithdrawing={isWithdrawing === bucket.id}
-                  emergencyRequest={bucket.emergencyRequest}
-                  onRequestEmergency={(amount) => requestEmergency(bucket.id, amount, bucket.sender)}
-                  onCancelEmergency={() => cancelEmergencyReceiver(bucket.id)}
-                  onExecuteEmergency={() => {
-                    if (bucket.emergencyRequest) {
-                      executeEmergency(bucket.id, bucket.emergencyRequest.amount);
-                    }
-                  }}
-                  isEmergencyLoading={isEmergencyLoading}
-                />
+                  <GoalBucketCard
+                    bucketId={bucket.id}
+                    balance={bucket.goalBalance}
+                    unlockDate={bucket.unlockDate}
+                    goalLabel={getGoalLabel(bucket.sender, bucket.unlockDate)}
+                    senderAddress={bucket.sender}
+                    receiverAddress={publicKey}
+                    onWithdraw={(amount) => handleWithdrawGoal(bucket.id, amount)}
+                    isWithdrawing={isWithdrawing === bucket.id}
+                    emergencyRequest={bucket.emergencyRequest}
+                    onRequestEmergency={(amount) => requestEmergency(bucket.id, amount, bucket.sender)}
+                    onCancelEmergency={() => cancelEmergencyReceiver(bucket.id)}
+                    onExecuteEmergency={() => {
+                      if (bucket.emergencyRequest) {
+                        executeEmergency(bucket.id, bucket.emergencyRequest.amount);
+                      }
+                    }}
+                    isEmergencyLoading={isEmergencyLoading}
+                    approvalRequired={bucket.approvalRequired}
+                    releaseRequest={bucket.releaseRequest}
+                    onRequestRelease={() => handleRequestRelease(bucket.id)}
+                    isReleaseLoading={isRequestingRelease}
+                  />
               </div>
             </div>
           ))}

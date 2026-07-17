@@ -6,6 +6,7 @@ pub mod storage;
 pub mod deposit;
 pub mod withdraw;
 pub mod emergency;
+pub mod release;
 
 use errors::Error;
 use storage::BucketState;
@@ -31,8 +32,9 @@ impl IngatVault {
         amount: i128,
         split_ratio: u32,
         unlock_date: u64,
+        approval_required: bool,
     ) -> Result<(), Error> {
-        deposit::deposit(env, sender, receiver, amount, split_ratio, unlock_date)
+        deposit::deposit(env, sender, receiver, amount, split_ratio, unlock_date, approval_required)
     }
 
     pub fn withdraw_spending(
@@ -103,6 +105,31 @@ impl IngatVault {
         bucket_id: u32,
     ) -> Option<storage::EmergencyRequest> {
         storage::get_emergency_request(&env, &receiver, bucket_id)
+    }
+
+    pub fn request_release(
+        env: Env,
+        receiver: Address,
+        bucket_id: u32,
+    ) -> Result<(), Error> {
+        release::request_release(env, receiver, bucket_id)
+    }
+
+    pub fn approve_release(
+        env: Env,
+        sender: Address,
+        receiver: Address,
+        bucket_id: u32,
+    ) -> Result<(), Error> {
+        release::approve_release(env, sender, receiver, bucket_id)
+    }
+
+    pub fn get_release_request(
+        env: Env,
+        receiver: Address,
+        bucket_id: u32,
+    ) -> Option<storage::ReleaseRequest> {
+        release::get_release_request(env, receiver, bucket_id)
     }
 
     pub fn get_buckets(env: Env, receiver: Address) -> Vec<BucketState> {

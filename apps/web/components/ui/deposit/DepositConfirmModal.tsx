@@ -14,6 +14,7 @@ interface DepositConfirmModalProps {
   goalLabel: string;
   priceUsd: number;
   isSubmitting: boolean;
+  approvalRequired: boolean;
 }
 
 const DepositConfirmModal: React.FC<DepositConfirmModalProps> = ({
@@ -28,6 +29,7 @@ const DepositConfirmModal: React.FC<DepositConfirmModalProps> = ({
   goalLabel,
   priceUsd,
   isSubmitting,
+  approvalRequired,
 }) => {
   if (!isOpen) return null;
 
@@ -128,6 +130,12 @@ const DepositConfirmModal: React.FC<DepositConfirmModalProps> = ({
                 <Calendar size={14} className="text-secondary shrink-0" />
                 <span>{new Date(unlockDate).toLocaleString()}</span>
               </div>
+              {approvalRequired && (
+                <div className="mt-1.5 pt-1.5 border-t border-amber-200/40">
+                  <span className="text-[10px] text-secondary font-bold uppercase tracking-wider block">Release Mode</span>
+                  <p className="text-xs text-on-surface font-medium mt-0.5">Sender approval required after unlock date. Auto-releases after 7 days if no response.</p>
+                </div>
+              )}
               {goalLabel && (
                 <div className="mt-1.5 pt-1.5 border-t border-amber-200/40">
                   <span className="text-[10px] text-secondary font-bold uppercase tracking-wider block">Goal Note</span>
