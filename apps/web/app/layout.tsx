@@ -75,7 +75,7 @@ export default function RootLayout({
             [data-sonner-toast] [data-close-button] svg {
               width: 22px !important;
               height: 22px !important;
-              stroke-width: 4 !important;
+              stroke-width: 2.5 !important;
             }
           `}</style>
         </WalletProvider>
