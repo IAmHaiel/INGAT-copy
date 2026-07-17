@@ -169,11 +169,12 @@ stellar keys generate receiver --network testnet
 
 SENDER=$(stellar keys address sender)
 RECEIVER=$(stellar keys address receiver)
-CONTRACT=CDHP4KWHKFOODLUSR4B4KWFIPXCI3NAUGIBENSISTWZS4TU7O3NGHBKL
+CONTRACT=CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT
 
 # Deposit 20 XLM (7 decimals = 200000000 stroops) with 60/40 split, unlock in 5 minutes
 UNLOCK=$(($(date +%s) + 300))
 
+# TimeOnly mode (no sender approval required — default)
 stellar contract invoke \
   --id $CONTRACT \
   --network testnet \
@@ -183,14 +184,28 @@ stellar contract invoke \
   --receiver $RECEIVER \
   --amount 200000000 \
   --split_ratio 60 \
-  --unlock_date $UNLOCK
+  --unlock_date $UNLOCK \
+  --approval_required false
+
+# TimeAndApproval mode (sender must approve after unlock_date)
+stellar contract invoke \
+  --id $CONTRACT \
+  --network testnet \
+  --source sender \
+  -- deposit \
+  --sender $SENDER \
+  --receiver $RECEIVER \
+  --amount 200000000 \
+  --split_ratio 60 \
+  --unlock_date $UNLOCK \
+  --approval_required true
 
 # Check bucket state
 stellar contract invoke \
   --id $CONTRACT \
   --network testnet \
   --source sender \
-  -- get_bucket \
+  -- get_buckets \
   --receiver $RECEIVER
 
 # Withdraw 5 XLM from spending (always works)
@@ -210,6 +225,36 @@ stellar contract invoke \
   -- withdraw_goal \
   --receiver $RECEIVER \
   --amount 50000000
+
+# --- Phase 4: Condition Unlock (TimeAndApproval mode) ---
+
+# Request release (receiver, after unlock_date)
+stellar contract invoke \
+  --id $CONTRACT \
+  --network testnet \
+  --source receiver \
+  -- request_release \
+  --receiver $RECEIVER \
+  --bucket_id 0
+
+# Check release request status
+stellar contract invoke \
+  --id $CONTRACT \
+  --network testnet \
+  --source sender \
+  -- get_release_request \
+  --receiver $RECEIVER \
+  --bucket_id 0
+
+# Approve release (sender)
+stellar contract invoke \
+  --id $CONTRACT \
+  --network testnet \
+  --source sender \
+  -- approve_release \
+  --sender $SENDER \
+  --receiver $RECEIVER \
+  --bucket_id 0
 ```
 
 ---
@@ -232,11 +277,11 @@ These accounts are already set up on testnet with XLM:
 
 | Contract | ID |
 |----------|------|
-| INGAT Vault | `CDHP4KWHKFOODLUSR4B4KWFIPXCI3NAUGIBENSISTWZS4TU7O3NGHBKL` |
+| INGAT Vault (v2.0.0) | `CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT` |
 | Native XLM SAC | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
 
 Verify on Stellar Explorer:
-- [Vault Contract](https://stellar.expert/explorer/testnet/contract/CDHP4KWHKFOODLUSR4B4KWFIPXCI3NAUGIBENSISTWZS4TU7O3NGHBKL)
+- [Vault Contract](https://stellar.expert/explorer/testnet/contract/CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT)
 - [XLM SAC](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC)
 
 ---

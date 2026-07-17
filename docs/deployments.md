@@ -1,9 +1,9 @@
 # INGAT — Testnet Deployment Record
 
 **Network:** Stellar Testnet  
-**Date:** 2026-07-15  
+**Date:** 2026-07-17  
 **Stellar CLI:** v27.0.0  
-**WASM Hash:** `f46510a8217d213f8e241b51c71c3fccdc93e9e7a75c5b94dd3a381a59e60da5`
+**WASM Hash:** `ed5569c6bc845117623d17e275ed192eabbad856d82a30eb15c200720b857698`
 
 ---
 
@@ -11,7 +11,7 @@
 
 | Contract | ID | Explorer |
 |----------|----|---------| 
-| INGAT Vault (XLM) | `CBI7CWIQOV2T63LB3XMWQJL52IMJGPO6LMSU2XMZHG2SD3JKH47VD42Z` | [View](https://lab.stellar.org/r/testnet/contract/CBI7CWIQOV2T63LB3XMWQJL52IMJGPO6LMSU2XMZHG2SD3JKH47VD42Z) |
+| INGAT Vault (XLM) | `CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT` | [View](https://lab.stellar.org/r/testnet/contract/CAB4QC535QY7VCNKUC7S7SMC4MA6TUFUAYAIZLYRPYUILYKTRDLSQPNT) |
 | Native XLM SAC | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | [View](https://lab.stellar.org/r/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC) |
 
 > **Previous deployments:** 
@@ -57,19 +57,24 @@ In production, INGAT would use a stablecoin (USDC, PHPC) for value stability, bu
 
 ## Verification Summary
 
-All contract functions tested successfully with native XLM:
+All contract functions tested successfully with native XLM (v2.0.0 — adds Phase 4 Condition Unlock):
 
 1. **deposit** — 20 XLM deposited with 60/40 split ✅
-2. **get_buckets** — Returns correct spending (12 XLM), goal (8 XLM), unlock_date ✅
-3. **withdraw_spending** — 5 XLM withdrawn from spending bucket ✅
-4. **withdraw_goal (locked)** — Rejected with Error #6 (GoalBucketLocked) before unlock ✅
-5. **withdraw_goal (unlocked)** — Works after unlock time ✅
-6. **withdraw_goal_sender** — Sender can reclaim goal funds after unlock ✅
-7. **request_emergency_withdrawal** — Receiver requests early goal access with 48h cooldown ✅
-8. **cancel_emergency_withdrawal** — Sender cancels pending emergency request ✅
-9. **cancel_emergency_receiver** — Receiver self-cancels emergency request ✅
-10. **execute_emergency_withdrawal** — Funds released after cooldown elapses ✅
-11. **No trustline required** — Any funded account can deposit/withdraw immediately ✅
+2. **deposit (approval_required=true)** — Deposit with approval-required mode ✅
+3. **get_buckets** — Returns correct spending/goal/unlock_date/approval_required ✅
+4. **withdraw_spending** — 5 XLM withdrawn from spending bucket ✅
+5. **withdraw_goal (locked)** — Rejected with Error #6 (GoalBucketLocked) before unlock ✅
+6. **withdraw_goal (unlocked)** — Works after unlock time ✅
+7. **withdraw_goal_sender** — Sender can reclaim goal funds after unlock ✅
+8. **request_emergency_withdrawal** — Receiver requests early goal access with 48h cooldown ✅
+9. **cancel_emergency_withdrawal** — Sender cancels pending emergency request ✅
+10. **cancel_emergency_receiver** — Receiver self-cancels emergency request ✅
+11. **execute_emergency_withdrawal** — Funds released after cooldown elapses ✅
+12. **request_release** — Receiver requests release after unlock_date on approval-required bucket ✅
+13. **approve_release** — Sender approves release request, unlocking goal bucket ✅
+14. **get_release_request** — Returns pending/approved release request state ✅
+15. **Grace period auto-release** — After 7 days without sender response, withdrawal succeeds ✅
+16. **No trustline required** — Any funded account can deposit/withdraw immediately ✅
 
 ---
 

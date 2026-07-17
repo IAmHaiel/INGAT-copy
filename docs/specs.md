@@ -150,7 +150,7 @@ Sender can view a log of past deposits and how each was split, for transparency.
 
 ---
 
-### Phase 4: Polish & Demo Readiness ✅
+### Phase 4a: Polish & Demo Readiness ✅
 **Modules:** All (cross-cutting)
 
 **Build:**
@@ -164,6 +164,39 @@ Sender can view a log of past deposits and how each was split, for transparency.
 - [x] Full sender → receiver flow can be demoed end-to-end on testnet without manual console intervention.
 
 ---
+
+### Phase 4b: Milestone / Condition Unlock ✅
+**Modules:** Contract (release.rs), Sender Dashboard, Receiver Dashboard, Deposit Form
+
+**Build:**
+- [x] `approval_required: bool` field added to BucketState storage
+- [x] `request_release(receiver, bucket_id)` — receiver triggers after `unlock_date`
+- [x] `approve_release(sender, receiver, bucket_id)` — sender approves release
+- [x] 7-day grace period auto-release if sender does not respond
+- [x] `can_withdraw_goal()` helper checks unlock_date + approval/grace status
+- [x] Deposit form toggle for TimeAndApproval mode
+- [x] Receiver GoalBucketCard shows "Request Release" button
+- [x] Sender SenderBucketCard shows "Approve Release" banner
+- [x] 6 Rust unit tests covering all acceptance criteria
+
+**Acceptance Criteria**
+- [x] Sender can create a Goal bucket with `TimeAndApproval` mode at deposit time
+- [x] Receiver can call `request_release(bucket_id)` only after `unlock_date`
+- [x] Sender can call `approve_release(bucket_id)` after a request, unlocking the bucket
+- [x] Receiver can withdraw automatically without sender approval after 7-day grace period
+- [x] Receiver cannot call `request_release` before `unlock_date`
+- [x] Receiver cannot submit multiple concurrent `request_release` calls
+
+---
+
+## Build Order
+
+1. **Phase 1** — Contract Core (deposit, split, timelocked withdrawal)
+2. **Phase 2** — Wallet & Sender Flow (Freighter, deposit form, allocation history)
+3. **Phase 3** — Receiver Flow (bucket cards, withdrawals)
+4. **Phase 4a** — Polish & Demo Readiness (empty/error states, demo seed)
+5. **Phase 4b** — Milestone / Condition Unlock (TimeAndApproval mode, request/approve release, grace period)
+6. **Phase 5** — Deferred / Out of Scope (see backlog)
 
 ## Tech Stack
 
