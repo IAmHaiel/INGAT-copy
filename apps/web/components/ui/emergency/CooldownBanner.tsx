@@ -91,31 +91,19 @@ export const CooldownBanner: React.FC<CooldownBannerProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 md:flex-shrink-0">
-        {role === 'receiver' && isElapsed && onExecute && (
-          <button
-            onClick={onExecute}
-            disabled={isLoading}
-            className="bg-green-700 hover:bg-green-800 text-white font-bold text-xs px-4 py-2 rounded-lg cursor-pointer transition-colors border-0 disabled:opacity-50"
-          >
-            {isLoading ? 'Processing...' : 'Execute Withdrawal'}
-          </button>
-        )}
-
-        {onCancel && role !== 'receiver' && (
-          <button
-            onClick={onCancel}
-            disabled={isLoading}
-            className={`font-bold text-xs px-4 py-2 rounded-lg cursor-pointer transition-colors border ${
-              role === 'sender'
-                ? 'bg-amber-600 hover:bg-amber-700 text-white border-transparent'
-                : 'bg-white hover:bg-black/5 text-on-surface border-outline'
-            } disabled:opacity-50`}
-          >
-            {isLoading ? 'Processing...' : role === 'sender' ? 'Cancel Access Request' : 'Cancel Request'}
-          </button>
-        )}
-      </div>
+      {role === 'sender' && (
+        <div className="flex flex-wrap gap-2 md:flex-shrink-0">
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              disabled={isLoading}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2 rounded-lg cursor-pointer transition-colors border-0 disabled:opacity-50"
+            >
+              {isLoading ? 'Processing...' : 'Cancel Access Request'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
