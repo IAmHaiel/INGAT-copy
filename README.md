@@ -5,7 +5,7 @@
 
 **A Stellar-native split-remittance protocol where family support and savings goals are secure, transparent, and programmable by default.**
 
- **Track**: Payment & Consumer Applications | [Live App](https://ingat-ten.vercel.app)
+ **Track**: Payment & Consumer Applications | [Live App](https://ingat.vercel.app)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square)
 ![React](https://img.shields.io/badge/React-19-149eca?style=flat-square)
@@ -73,8 +73,8 @@ Overseas Filipino Workers and their families — specifically households that re
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/deveramartin/INGAT.git
-   cd INGAT
+    git clone https://github.com/IAmHaiel/INGAT.git
+    cd INGAT
    ```
 2. Install workspace dependencies:
    ```bash

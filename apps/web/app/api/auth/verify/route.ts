@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
   // Mark nonce as used
   await supabaseAdmin
     .from('auth_nonces')
-    .update({ used: true })
+    .update({ used: true } as never)
     .eq('id', (nonceRecord as { id: string | number }).id);
 
   // Verify the Ed25519 signature (SEP-53 format)

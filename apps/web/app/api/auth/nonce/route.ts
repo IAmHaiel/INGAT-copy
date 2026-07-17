@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const { error } = await supabaseAdmin.from('auth_nonces').insert({
     wallet_address: address,
     nonce,
-  });
+  } as never);
 
   if (error) {
     console.error('[auth/nonce] Failed to store nonce:', error.message);
