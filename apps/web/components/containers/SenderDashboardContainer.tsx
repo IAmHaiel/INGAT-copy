@@ -12,6 +12,7 @@ import { useSenderBuckets } from '@/hooks/useSenderBuckets';
 import { useTxSuccessToast, useTxErrorToast } from '@/hooks/useTransactionToast';
 import { buildApproveReleaseTx, submitTransaction } from '@/lib/stellar/contract';
 import { signTxWithFreighter } from '@/lib/stellar/freighter';
+import { toast } from 'sonner';
 import SenderBucketCard from '@/components/ui/dashboard/SenderBucketCard';
 import TransactionStatus from '@/components/ui/feedback/TransactionStatus';
 import Header from '../ui/layout/Header';
@@ -33,19 +34,23 @@ export default function SenderDashboardContainer() {
   const { priceUsd } = useXlmPrice();
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isApprovingRelease, setIsApprovingRelease] = useState<boolean>(false);
-  const [releaseError, setReleaseError] = useState<string | null>(null);
 
   const handleApproveRelease = async (receiverAddress: string, bucketId: number) => {
     if (!publicKey) return;
     setIsApprovingRelease(true);
-    setReleaseError(null);
     try {
       const unsignedXDR = await buildApproveReleaseTx(publicKey, receiverAddress, bucketId);
       const signedXDR = await signTxWithFreighter(unsignedXDR, publicKey);
-      const hash = await submitTransaction(signedXDR);
-      useTxSuccessToast(hash, 'Release Approved', 'Successfully approved goal bucket release.');
+      await submitTransaction(signedXDR);
+      toast.success('Release Approved', {
+        description: 'Successfully approved goal bucket release.',
+        duration: 5000,
+      });
     } catch (err) {
-      setReleaseError(err instanceof Error ? err.message : 'Failed to approve release');
+      toast.error('Approval Failed', {
+        description: err instanceof Error ? err.message : 'Failed to approve release',
+        duration: 5000,
+      });
     } finally {
       setIsApprovingRelease(false);
     }

@@ -69,7 +69,7 @@ export default function ReceiverDashboardContainer() {
     try {
       const unsignedXDR = await buildRequestReleaseTx(publicKey, bucketId);
       const signedXDR = await signTxWithFreighter(unsignedXDR, publicKey);
-      const hash = await submitTransaction(signedXDR);
+      await submitTransaction(signedXDR);
       toast.success('Release Requested', {
         description: 'Sender can now approve. Auto-releases after 7 days if no response.',
         duration: 5000,
