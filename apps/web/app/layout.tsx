@@ -33,14 +33,16 @@ export default function RootLayout({
           <Toaster 
             position="top-right"
             richColors
+            closeButton
             toastOptions={{
               classNames: {
-                toast: "font-sans shadow-xl rounded-xl border border-outline-variant p-4",
+                toast: "font-sans shadow-xl rounded-xl border border-outline-variant !p-4 !pb-7 relative overflow-hidden",
                 title: "text-sm font-bold text-on-surface",
                 description: "text-xs font-medium text-on-surface-variant",
                 actionButton: "bg-[#005145] hover:bg-[#0f6b5c] text-white font-bold rounded-lg px-3 py-1.5 transition-colors cursor-pointer border-0",
                 success: "bg-[#FAF7F2] text-[#005145] border-[#005145]/20",
-                error: "bg-[#faf2f2] text-red-800 border-red-200"
+                error: "bg-[#faf2f2] text-red-800 border-red-200",
+                closeButton: "!static !ml-auto !mt-0 !bg-transparent !border-0 !text-on-surface-variant hover:!text-on-surface !cursor-pointer !opacity-60 hover:!opacity-100 !transition-opacity"
               }
             }}
           />

@@ -48,6 +48,51 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* Sonner toast progress bar */
+[data-sonner-toast]::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background: currentColor;
+  opacity: 0.15;
+  animation: toast-progress var(--duration, 4000ms) linear forwards;
+  border-radius: 1px;
+}
+
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* Sonner close button positioning */
+[data-sonner-toast] [data-close-button] {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: currentColor !important;
+  opacity: 0.4 !important;
+  transition: opacity 0.2s !important;
+  padding: 2px !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  opacity: 1 !important;
+}
+
+[data-sonner-toast] [data-close-button] svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
