@@ -284,7 +284,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
               )}
               {!isLocked && (
                 <button
-                  onClick={onRequestRelease}
+                  onClick={() => { console.warn('[CLICK] Request Release button clicked, handler:', typeof onRequestRelease); onRequestRelease?.(); }}
                   disabled={!hasBalance || isReleaseLoading}
                   className="w-full py-2.5 rounded-lg font-bold text-sm bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
