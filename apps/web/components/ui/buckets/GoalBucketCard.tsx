@@ -232,7 +232,8 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
         </form>
       ) : (
         <div className="space-y-2">
-          {!isLocked ? (
+          {!isLocked && !approvalRequired ? (
+            // TimeOnly bucket past unlock_date — standard withdraw
             <button
               onClick={() => setIsOpen(true)}
               disabled={!hasBalance || isWithdrawing}
@@ -240,11 +241,17 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
             </button>
-          ) : approvalRequired && releaseRequest?.status === 'Approved' ? (
-            <div className="w-full py-2.5 rounded-lg font-bold text-sm bg-green-50 text-green-700 border border-green-200 text-center">
-              Release approved — unlock date reached
-            </div>
+          ) : !isLocked && approvalRequired && releaseRequest?.status === 'Approved' ? (
+            // TimeAndApproval bucket, release approved — withdraw
+            <button
+              onClick={() => setIsOpen(true)}
+              disabled={!hasBalance || isWithdrawing}
+              className="w-full py-2.5 rounded-lg font-bold text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-all cursor-pointer border-0"
+            >
+              {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
+            </button>
           ) : approvalRequired && releaseRequest?.status === 'Pending' ? (
+            // Release requested, awaiting sender approval
             <div className="w-full py-2.5 rounded-lg font-bold text-sm bg-amber-50 text-amber-700 border border-amber-200 text-center">
               Release requested — awaiting sender approval
             </div>
