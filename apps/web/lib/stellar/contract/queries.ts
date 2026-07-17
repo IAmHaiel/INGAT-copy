@@ -91,6 +91,9 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
       goalBalance: Number(item.goal_balance) / DECIMALS,
       unlockDate: Number(item.unlock_date),
       approvalRequired: item.approval_required === true || item.approval_required === 1 || String(item.approval_required).toLowerCase() === 'true',
+      // DEBUG: expose raw keys for debugging
+      _allKeys: Object.keys(item).join(','),
+      _rawApproval: String(item.approval_required),
     }));
 
     const nowSeconds = Math.floor(Date.now() / 1000);

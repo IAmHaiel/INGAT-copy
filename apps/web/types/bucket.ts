@@ -9,6 +9,9 @@ export interface BucketState {
   approvalRequired: boolean;
   emergencyRequest?: EmergencyRequest | null;
   releaseRequest?: ReleaseRequest;
+  // debug fields
+  _allKeys?: string;
+  _rawApproval?: string;
 }
 
 export type ReleaseStatus = 'Pending' | 'Approved' | 'Executed';

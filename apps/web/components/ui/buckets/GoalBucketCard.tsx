@@ -28,6 +28,8 @@ interface GoalBucketCardProps {
   releaseRequest?: ReleaseRequest | null;
   onRequestRelease?: () => void;
   isReleaseLoading?: boolean;
+  _allKeys?: string;
+  _rawApproval?: string;
 }
 
 const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
@@ -48,6 +50,8 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
   releaseRequest = null,
   onRequestRelease,
   isReleaseLoading = false,
+  _allKeys = '',
+  _rawApproval = '',
 }) => {
   const [amount, setAmount] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -232,8 +236,8 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
         </form>
       ) : (
         <div className="space-y-2">
-          <div className={`text-[10px] font-mono px-2 py-0.5 rounded-full inline-block ${approvalRequired ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            approvalMode: {approvalRequired ? 'ON' : 'OFF'} | type: {typeof approvalRequired} | val: {JSON.stringify(approvalRequired)} | isLocked: {isLocked ? 'YES' : 'NO'} | release: {releaseRequest?.status || 'none'}
+          <div className="text-[10px] font-mono p-2 rounded inline-block bg-yellow-50 text-yellow-800 border border-yellow-200 whitespace-pre-wrap max-w-full overflow-auto">
+            [DEBUG] val={String(approvalRequired)} type={typeof approvalRequired} | keys={_allKeys || 'N/A'} | raw={_rawApproval || 'N/A'}
           </div>
           {!isLocked && !approvalRequired ? (
             // TimeOnly bucket past unlock_date — standard withdraw
