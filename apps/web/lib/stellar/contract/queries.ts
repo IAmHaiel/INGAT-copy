@@ -84,14 +84,15 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
       approval_required: boolean;
     }
 
-    const buckets = (nativeVal as unknown as Array<Record<string, unknown>>).map((item) => ({
+    const rawItems = nativeVal as unknown as Array<Record<string, unknown>>;
+    console.warn('[INGAT_DEBUG] bucket raw items:', rawItems.length, 'keys:', rawItems.length > 0 ? Object.keys(rawItems[0]).join(',') : 'none', 'approval_required:', rawItems.length > 0 ? rawItems[0].approval_required : 'N/A');
+    const buckets = rawItems.map((item) => ({
       id: Number(item.id),
       sender: String(item.sender),
       spendingBalance: Number(item.spending_balance) / DECIMALS,
       goalBalance: Number(item.goal_balance) / DECIMALS,
       unlockDate: Number(item.unlock_date),
       approvalRequired: item.approval_required === true || item.approval_required === 1 || String(item.approval_required).toLowerCase() === 'true',
-      // DEBUG: expose raw keys for debugging
       _allKeys: Object.keys(item).join(','),
       _rawApproval: String(item.approval_required),
     }));

@@ -239,8 +239,8 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
           <div className="text-[10px] font-mono p-2 rounded inline-block bg-yellow-50 text-yellow-800 border border-yellow-200 whitespace-pre-wrap max-w-full overflow-auto">
             [DEBUG] val={String(approvalRequired)} type={typeof approvalRequired} | keys={_allKeys || 'N/A'} | raw={_rawApproval || 'N/A'}
           </div>
-          {!isLocked && !approvalRequired ? (
-            // TimeOnly bucket past unlock_date — standard withdraw
+          {!isLocked && !releaseRequest && releaseRequest !== null ? (
+            // TimeOnly bucket past unlock_date — standard withdraw (releaseRequest not fetched means not approval bucket)
             <button
               onClick={() => setIsOpen(true)}
               disabled={!hasBalance || isWithdrawing}
@@ -248,7 +248,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
             </button>
-          ) : !isLocked && approvalRequired && releaseRequest?.status === 'Approved' ? (
+          ) : !isLocked && releaseRequest?.status === 'Approved' ? (
             // TimeAndApproval bucket, release approved — withdraw
             <button
               onClick={() => setIsOpen(true)}
@@ -257,7 +257,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
             </button>
-          ) : approvalRequired && releaseRequest?.status === 'Pending' ? (
+          ) : releaseRequest?.status === 'Pending' ? (
             // Release requested, awaiting sender approval
             <div className="w-full py-2.5 rounded-lg font-bold text-sm bg-amber-50 text-amber-700 border border-amber-200 text-center">
               Release requested — awaiting sender approval
@@ -280,7 +280,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
                 <ShieldAlert size={16} />
                 Request Early Access
               </button>
-              {approvalRequired && !isLocked && (
+              {!isLocked && (
                 <button
                   onClick={onRequestRelease}
                   disabled={!hasBalance || isReleaseLoading}
