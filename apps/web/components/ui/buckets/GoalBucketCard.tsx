@@ -298,7 +298,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
         </form>
       ) : (
         <div className="space-y-2">
-          {!isLocked && !effectiveApprovalRequired ? (
+          {hasBalance && !isLocked && !effectiveApprovalRequired ? (
             // TimeOnly bucket past unlock_date — standard withdraw
             <button
               onClick={() => setIsOpen(true)}
@@ -307,7 +307,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
             >
               {isWithdrawing ? 'Processing...' : 'Withdraw Unlocked Savings'}
             </button>
-          ) : !isLocked && effectiveApprovalRequired && (releaseRequest?.status === 'Approved' || localReleaseStatus === 'Approved') ? (
+          ) : hasBalance && !isLocked && effectiveApprovalRequired && (releaseRequest?.status === 'Approved' || localReleaseStatus === 'Approved') ? (
             // TimeAndApproval bucket, release approved — withdraw
             <div className="space-y-2">
               <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
