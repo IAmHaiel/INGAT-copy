@@ -1,5 +1,6 @@
 import { rpc, Networks } from '@stellar/stellar-sdk';
 
+// BUILD_CACHE_BUST: c4412fa — edit this line to force Vercel to recompile this chunk
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
 
