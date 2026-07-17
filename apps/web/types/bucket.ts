@@ -7,11 +7,9 @@ export interface BucketState {
   goalBalance: number;
   unlockDate: number; // unix timestamp in seconds
   approvalRequired: boolean;
+  _isApprovalBucket: boolean;
   emergencyRequest?: EmergencyRequest | null;
   releaseRequest?: ReleaseRequest;
-  // debug fields
-  _allKeys?: string;
-  _rawApproval?: string;
 }
 
 export type ReleaseStatus = 'Pending' | 'Approved' | 'Executed';

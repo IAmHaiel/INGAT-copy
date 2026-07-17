@@ -85,19 +85,20 @@ export const fetchBucketBalances = async (receiverAddress: string): Promise<Buck
     }
 
     const rawItems = nativeVal as unknown as Array<Record<string, unknown>>;
-    if (rawItems.length > 0) {
-      const first = rawItems[0];
-      const mapped = first.approval_required === true || first.approval_required === 1 || String(first.approval_required).toLowerCase() === 'true';
-      console.warn('[INGAT_DEBUG] raw=', first.approval_required, 'typeof=', typeof first.approval_required, 'mapped=', mapped, 'keys=', Object.keys(first).join(','));
-    }
-    const buckets = rawItems.map((item) => ({
-      id: Number(item.id),
-      sender: String(item.sender),
-      spendingBalance: Number(item.spending_balance) / DECIMALS,
-      goalBalance: Number(item.goal_balance) / DECIMALS,
-      unlockDate: Number(item.unlock_date),
-      approvalRequired: item.approval_required === true || item.approval_required === 1 || String(item.approval_required).toLowerCase() === 'true',
-    }));
+    const buckets = rawItems.map((item) => {
+      const isApproval = item.approval_required === true || item.approval_required === 1 || String(item.approval_required).toLowerCase() === 'true';
+      return {
+        id: Number(item.id),
+        sender: String(item.sender),
+        spendingBalance: Number(item.spending_balance) / DECIMALS,
+        goalBalance: Number(item.goal_balance) / DECIMALS,
+        unlockDate: Number(item.unlock_date),
+        approvalRequired: isApproval,
+        // Use _isApprovalBucket as the SOURCE OF TRUTH for approval status in the UI
+        // This bypasses any data flow issues with the approvalRequired field
+        _isApprovalBucket: isApproval,
+      };
+    });
 
     const nowSeconds = Math.floor(Date.now() / 1000);
     const bucketsWithEmergency = await Promise.all(
