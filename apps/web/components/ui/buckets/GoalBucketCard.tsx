@@ -233,7 +233,7 @@ const GoalBucketCard: React.FC<GoalBucketCardProps> = ({
       ) : (
         <div className="space-y-2">
           <div className={`text-[10px] font-mono px-2 py-0.5 rounded-full inline-block ${approvalRequired ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            approvalMode: {approvalRequired ? 'ON' : 'OFF'} | isLocked: {isLocked ? 'YES' : 'NO'} | release: {releaseRequest?.status || 'none'}
+            approvalMode: {approvalRequired ? 'ON' : 'OFF'} | type: {typeof approvalRequired} | val: {JSON.stringify(approvalRequired)} | isLocked: {isLocked ? 'YES' : 'NO'} | release: {releaseRequest?.status || 'none'}
           </div>
           {!isLocked && !approvalRequired ? (
             // TimeOnly bucket past unlock_date — standard withdraw
